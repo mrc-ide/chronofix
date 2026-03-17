@@ -44,14 +44,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">simulate_data</span><span class="op">(</span></span>
-<span>  <span class="va">n_per_group</span>,</span>
-<span>  <span class="va">group_names</span>,</span>
-<span>  <span class="va">delay_map</span>,</span>
-<span>  <span class="va">delay_params</span>,</span>
-<span>  <span class="va">error_params</span>,</span>
-<span>  <span class="va">date_range</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">simulate_data</span><span class="op">(</span><span class="va">n_per_group</span>, <span class="va">group_names</span>, <span class="va">delay_info</span>, <span class="va">error_params</span>, <span class="va">date_range</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -67,15 +60,11 @@
 being simulated.</p></dd>
 
 
-<dt id="arg-delay-map">delay_map<a class="anchor" aria-label="anchor" href="#arg-delay-map"></a></dt>
-<dd><p>A data frame that defines the delays between events. It must
-contain the columns <code>from</code> (character), <code>to</code> (character), and <code>group</code> (list
-of numeric or character group IDs).</p></dd>
-
-
-<dt id="arg-delay-params">delay_params<a class="anchor" aria-label="anchor" href="#arg-delay-params"></a></dt>
-<dd><p>A data frame containing the parameters (<code>mean_delay</code>,
-<code>cv_delay</code>) for each delay. Consider combining delay_map and delay_params?</p></dd>
+<dt id="arg-delay-info">delay_info<a class="anchor" aria-label="anchor" href="#arg-delay-info"></a></dt>
+<dd><p>A data frame that defines the delays between events, and
+their distributions and parameters. It must contain the columns <code>from</code>
+(character), <code>to</code> (character), <code>group</code> (list of numeric or character group
+IDs), <code>distribution</code> (character), <code>mean</code> (numeric) and <code>cv</code> (numeric)</p></dd>
 
 
 <dt id="arg-error-params">error_params<a class="anchor" aria-label="anchor" href="#arg-error-params"></a></dt>
@@ -94,8 +83,8 @@ of numeric or character group IDs).</p></dd>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Define the delay_map data frame</span></span></span>
-<span class="r-in"><span><span class="va">delay_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Define the delay_info data frame</span></span></span>
+<span class="r-in"><span><span class="va">delay_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"onset"</span>, <span class="st">"onset"</span>, <span class="st">"onset"</span>,</span></span>
 <span class="r-in"><span>           <span class="st">"hospitalisation"</span>, <span class="st">"onset"</span>, <span class="st">"hospitalisation"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"report"</span>, <span class="st">"death"</span>, <span class="st">"hospitalisation"</span>,</span></span>
@@ -107,25 +96,15 @@ of numeric or character group IDs).</p></dd>
 <span class="r-in"><span>    <span class="st">"hospitalised-alive"</span>,</span></span>
 <span class="r-in"><span>    <span class="st">"hospitalised-alive"</span>, </span></span>
 <span class="r-in"><span>    <span class="st">"hospitalised-dead"</span>,</span></span>
-<span class="r-in"><span>    <span class="st">"hospitalised-dead"</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Define the delay parameters data frame</span></span></span>
-<span class="r-in"><span><span class="va">delay_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"community-alive"</span>, <span class="st">"community-dead"</span>, <span class="st">"hospitalised-alive"</span>,</span></span>
-<span class="r-in"><span>            <span class="st">"hospitalised-dead"</span>, <span class="st">"community-dead"</span>, <span class="st">"hospitalised-alive"</span>,</span></span>
-<span class="r-in"><span>            <span class="st">"hospitalised-alive"</span>, <span class="st">"hospitalised-dead"</span>, <span class="st">"hospitalised-dead"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"onset"</span>, <span class="st">"onset"</span>, <span class="st">"onset"</span>, <span class="st">"onset"</span>, <span class="st">"onset"</span>, <span class="st">"onset"</span>,</span></span>
-<span class="r-in"><span>           <span class="st">"hospitalisation"</span>, <span class="st">"onset"</span>, <span class="st">"hospitalisation"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"report"</span>, <span class="st">"report"</span>, <span class="st">"report"</span>, <span class="st">"report"</span>, <span class="st">"death"</span>, <span class="st">"hospitalisation"</span>,</span></span>
-<span class="r-in"><span>         <span class="st">"discharge"</span>, <span class="st">"hospitalisation"</span>, <span class="st">"death"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  delay_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">7</span>, <span class="fl">20</span>, <span class="fl">7</span>, <span class="fl">12</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  delay_cv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="st">"hospitalised-dead"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  distribution <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gamma"</span>, <span class="st">"gamma"</span>, <span class="st">"gamma"</span>, <span class="st">"gamma"</span>,</span></span>
+<span class="r-in"><span>                   <span class="st">"log-normal"</span>, <span class="st">"log-normal"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">7</span>, <span class="fl">20</span>, <span class="fl">7</span>, <span class="fl">12</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  cv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Define other parameters</span></span></span>
-<span class="r-in"><span><span class="va">n_per_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">delay_params</span><span class="op">$</span><span class="va">group</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">n_per_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">delay_info</span><span class="op">$</span><span class="va">group</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">group_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"community-alive"</span>, <span class="st">"community-dead"</span>, <span class="st">"hospitalised-alive"</span>,</span></span>
 <span class="r-in"><span>            <span class="st">"hospitalised-dead"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">error_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>prop_missing_data <span class="op">=</span> <span class="fl">0.2</span>, prob_error <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></span>
@@ -136,8 +115,7 @@ of numeric or character group IDs).</p></dd>
 <span class="r-in"><span><span class="va">sim_result</span> <span class="op">&lt;-</span> <span class="fu">simulate_data</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  n_per_group <span class="op">=</span> <span class="va">n_per_group</span>,</span></span>
 <span class="r-in"><span>  group_names <span class="op">=</span> <span class="va">group_names</span>,</span></span>
-<span class="r-in"><span>  delay_map <span class="op">=</span> <span class="va">delay_map</span>,</span></span>
-<span class="r-in"><span>  delay_params <span class="op">=</span> <span class="va">delay_params</span>,</span></span>
+<span class="r-in"><span>  delay_info <span class="op">=</span> <span class="va">delay_info</span>,</span></span>
 <span class="r-in"><span>  error_params <span class="op">=</span> <span class="va">error_params</span>,</span></span>
 <span class="r-in"><span>  date_range <span class="op">=</span> <span class="va">date_range</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
@@ -174,58 +152,58 @@ of numeric or character group IDs).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 28 28 hospitalised-alive 20191.32        20199.30 20198.73       NA  20209.32</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 29 29 hospitalised-alive 20164.26        20171.94 20170.42       NA  20198.99</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 30 30 hospitalised-alive 20222.95        20232.34 20230.73       NA  20250.08</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 31 31  hospitalised-dead 20307.35        20312.74 20316.10 20324.69        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 32 32  hospitalised-dead 20263.58        20272.43 20272.51 20280.30        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 33 33  hospitalised-dead 20164.93        20171.69 20171.21 20182.04        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 34 34  hospitalised-dead 20196.28        20204.29 20203.19 20216.85        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 35 35  hospitalised-dead 20277.05        20282.48 20283.61 20290.34        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 36 36  hospitalised-dead 20263.10        20268.42 20274.01 20279.82        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 37 37  hospitalised-dead 20252.50        20257.57 20263.00 20267.38        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 38 38  hospitalised-dead 20175.81        20183.80 20187.57 20193.42        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 39 39  hospitalised-dead 20175.44        20180.98 20192.96 20192.81        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 40 40  hospitalised-dead 20173.27        20180.02 20184.66 20186.75        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 31  hospitalised-dead 20307.35        20312.85 20317.91 20326.14        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 32  hospitalised-dead 20161.43        20168.13 20171.57 20176.53        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 33  hospitalised-dead 20249.76        20259.00 20260.10 20267.00        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 34  hospitalised-dead 20306.37        20315.63 20314.58 20329.07        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 35  hospitalised-dead 20276.75        20284.05 20282.33 20292.73        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 36  hospitalised-dead 20200.26        20205.99 20212.10 20217.72        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 37  hospitalised-dead 20277.05        20282.58 20283.85 20291.80        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 38  hospitalised-dead 20219.33        20226.21 20234.45 20237.39        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 39  hospitalised-dead 20252.50        20257.71 20268.31 20270.73        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 40  hospitalised-dead 20175.81        20183.82 20187.57 20193.62        NA</span>
 <span class="r-in"><span><span class="va">sim_result</span><span class="op">$</span><span class="va">observed_data</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    id              group      onset hospitalisation     report      death</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   1    community-alive 2025-03-15            &lt;NA&gt; 2025-05-21       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   2    community-alive 2025-04-12            &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   1    community-alive       &lt;NA&gt;            &lt;NA&gt; 2025-05-21       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   2    community-alive 2025-04-12            &lt;NA&gt; 2025-04-18       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3   3    community-alive 2025-05-24            &lt;NA&gt; 2025-06-03       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   4    community-alive 2025-05-13            &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   4    community-alive 2025-04-13            &lt;NA&gt; 2025-06-06       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5   5    community-alive 2025-04-06            &lt;NA&gt; 2025-04-14       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   6    community-alive       &lt;NA&gt;            &lt;NA&gt; 2025-08-21       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   6    community-alive 2025-08-12            &lt;NA&gt; 2025-08-21       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 7   7    community-alive 2025-08-19            &lt;NA&gt; 2025-08-30       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 8   8    community-alive 2025-08-10            &lt;NA&gt; 2025-08-19       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9   9    community-alive 2025-06-19            &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 10    community-alive 2025-04-13            &lt;NA&gt; 2025-04-24       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11 11     community-dead 2025-06-29            &lt;NA&gt; 2025-07-07       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12 12     community-dead 2025-04-08            &lt;NA&gt; 2025-04-16 2025-04-25</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13 13     community-dead 2025-07-08            &lt;NA&gt; 2025-07-14 2025-06-19</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14 14     community-dead 2025-06-23            &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15 15     community-dead 2025-05-09            &lt;NA&gt; 2025-08-12 2025-05-19</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16 16     community-dead 2025-07-19            &lt;NA&gt; 2025-07-31 2025-08-04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17 17     community-dead 2025-04-17            &lt;NA&gt; 2025-04-28 2025-04-26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18 18     community-dead 2025-05-12            &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 19 19     community-dead       &lt;NA&gt;            &lt;NA&gt; 2025-04-26 2025-04-30</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 20 20     community-dead       &lt;NA&gt;            &lt;NA&gt; 2025-05-09       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 21 21 hospitalised-alive 2025-08-27      2025-04-04 2025-04-05       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9   9    community-alive       &lt;NA&gt;            &lt;NA&gt; 2025-06-29       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 10    community-alive 2025-03-15            &lt;NA&gt; 2025-04-24       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 11     community-dead 2025-06-29            &lt;NA&gt;       &lt;NA&gt; 2025-07-10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 12     community-dead 2025-04-08            &lt;NA&gt; 2025-04-16       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 13     community-dead 2025-07-08            &lt;NA&gt; 2025-07-14       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 14     community-dead 2025-06-23            &lt;NA&gt; 2025-07-07 2025-07-05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 15     community-dead 2025-05-09            &lt;NA&gt; 2025-05-18 2025-05-19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 16     community-dead       &lt;NA&gt;            &lt;NA&gt; 2025-07-31 2025-08-04</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 17     community-dead 2025-04-17            &lt;NA&gt; 2025-04-28       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 18     community-dead 2025-05-12            &lt;NA&gt; 2025-05-24 2025-05-25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 19     community-dead 2025-04-17            &lt;NA&gt; 2025-04-26 2025-06-19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 20     community-dead 2025-04-29            &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 21 hospitalised-alive 2025-03-26      2025-08-12 2025-04-05       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 22 22 hospitalised-alive 2025-04-08      2025-04-15 2025-04-15       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 23 23 hospitalised-alive       &lt;NA&gt;      2025-08-17 2025-08-20       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 24 24 hospitalised-alive 2025-04-06      2025-04-14 2025-04-15       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 25 25 hospitalised-alive 2025-06-07            &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 26 26 hospitalised-alive 2025-04-18      2025-04-23       &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 27 27 hospitalised-alive 2025-07-30      2025-08-07       &lt;NA&gt;       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 23 hospitalised-alive 2025-08-10      2025-08-17 2025-08-20       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 24 hospitalised-alive       &lt;NA&gt;            &lt;NA&gt; 2025-04-15       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 25 hospitalised-alive       &lt;NA&gt;      2025-06-16       &lt;NA&gt;       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 26 hospitalised-alive 2025-04-18            &lt;NA&gt; 2025-05-01       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 27 hospitalised-alive 2025-07-30      2025-08-07 2025-08-05       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 28 28 hospitalised-alive 2025-04-13      2025-04-21 2025-04-20       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 29 29 hospitalised-alive 2025-03-17      2025-03-24       &lt;NA&gt;       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 30 30 hospitalised-alive 2025-05-14      2025-07-28 2025-05-22       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 31 31  hospitalised-dead 2025-08-07      2025-08-12 2025-08-16 2025-07-25</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 32 32  hospitalised-dead 2025-06-24      2025-07-03 2025-07-03 2025-07-11</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 33 33  hospitalised-dead 2025-03-17      2025-03-24       &lt;NA&gt; 2025-04-04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 34 34  hospitalised-dead 2025-04-18      2025-04-26 2025-04-25 2025-05-08</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 35 35  hospitalised-dead       &lt;NA&gt;      2025-07-13 2025-07-14 2025-07-21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 36 36  hospitalised-dead 2025-06-24            &lt;NA&gt; 2025-07-05 2025-07-10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 37 37  hospitalised-dead 2025-06-13            &lt;NA&gt; 2025-06-23       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 38 38  hospitalised-dead       &lt;NA&gt;      2025-04-05 2025-04-09 2025-04-15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 39 39  hospitalised-dead 2025-03-28            &lt;NA&gt; 2025-04-14 2025-04-14</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 40 40  hospitalised-dead       &lt;NA&gt;      2025-04-02 2025-04-06 2025-04-08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 29 hospitalised-alive 2025-03-17      2025-03-24 2025-03-23       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 30 hospitalised-alive       &lt;NA&gt;            &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 31  hospitalised-dead 2025-08-07      2025-08-12 2025-08-17       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 32  hospitalised-dead 2025-03-14      2025-03-21 2025-03-24       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 33  hospitalised-dead 2025-06-10      2025-06-19 2025-06-21 2025-06-27</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 34  hospitalised-dead 2025-08-06      2025-08-15 2025-08-14       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 35  hospitalised-dead 2025-07-07      2025-07-15 2025-07-28 2025-07-23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 36  hospitalised-dead 2025-04-22      2025-04-27 2025-05-04 2025-07-25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 37  hospitalised-dead 2025-07-08      2025-07-13 2025-07-14 2025-07-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 38  hospitalised-dead 2025-05-11      2025-05-18       &lt;NA&gt; 2025-05-29</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 39  hospitalised-dead 2025-06-13      2025-06-18 2025-06-29 2025-07-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 40  hospitalised-dead       &lt;NA&gt;      2025-04-05 2025-04-09 2025-04-15</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     discharge</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1        &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2        &lt;NA&gt;</span>
@@ -247,15 +225,15 @@ of numeric or character group IDs).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 18       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 19       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 20       &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 21       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 2025-05-18</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 22 2025-05-15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 23 2025-08-29</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 24 2025-05-07</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 25       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 2025-07-05</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 26 2025-05-18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 27 2025-08-26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 28 2025-05-01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 29 2025-04-20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 30 2025-06-11</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 31       &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 32       &lt;NA&gt;</span>
@@ -269,45 +247,45 @@ of numeric or character group IDs).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 40       &lt;NA&gt;</span>
 <span class="r-in"><span><span class="va">sim_result</span><span class="op">$</span><span class="va">error_indicators</span> <span class="co"># true error indicators</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    id              group onset hospitalisation report death discharge</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   1    community-alive  TRUE              NA  FALSE    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   2    community-alive FALSE              NA     NA    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   1    community-alive    NA              NA  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   2    community-alive FALSE              NA  FALSE    NA        NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3   3    community-alive FALSE              NA  FALSE    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   4    community-alive FALSE              NA     NA    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   4    community-alive  TRUE              NA   TRUE    NA        NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5   5    community-alive FALSE              NA  FALSE    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   6    community-alive    NA              NA  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   6    community-alive FALSE              NA  FALSE    NA        NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 7   7    community-alive FALSE              NA  FALSE    NA        NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 8   8    community-alive FALSE              NA  FALSE    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9   9    community-alive FALSE              NA     NA    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 10    community-alive FALSE              NA  FALSE    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11 11     community-dead FALSE              NA  FALSE    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12 12     community-dead FALSE              NA  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13 13     community-dead FALSE              NA  FALSE  TRUE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14 14     community-dead FALSE              NA     NA    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15 15     community-dead FALSE              NA   TRUE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16 16     community-dead FALSE              NA  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17 17     community-dead FALSE              NA  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18 18     community-dead FALSE              NA     NA    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 19 19     community-dead    NA              NA  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 20 20     community-dead    NA              NA  FALSE    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 21 21 hospitalised-alive  TRUE           FALSE  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9   9    community-alive    NA              NA  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 10    community-alive  TRUE              NA  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 11     community-dead FALSE              NA     NA FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 12     community-dead FALSE              NA  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 13     community-dead FALSE              NA  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 14     community-dead FALSE              NA  FALSE FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 15     community-dead FALSE              NA  FALSE FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 16     community-dead    NA              NA  FALSE FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 17     community-dead FALSE              NA  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 18     community-dead FALSE              NA  FALSE FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 19     community-dead FALSE              NA  FALSE  TRUE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 20     community-dead FALSE              NA     NA    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 21 hospitalised-alive FALSE            TRUE  FALSE    NA     FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 22 22 hospitalised-alive FALSE           FALSE  FALSE    NA     FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 23 23 hospitalised-alive    NA           FALSE  FALSE    NA     FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 24 24 hospitalised-alive FALSE           FALSE  FALSE    NA     FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 25 25 hospitalised-alive FALSE              NA     NA    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 26 26 hospitalised-alive FALSE           FALSE     NA    NA     FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 27 27 hospitalised-alive FALSE           FALSE     NA    NA     FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 23 hospitalised-alive FALSE           FALSE  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 24 hospitalised-alive    NA              NA  FALSE    NA     FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 25 hospitalised-alive    NA           FALSE     NA    NA      TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 26 hospitalised-alive FALSE              NA  FALSE    NA     FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 27 hospitalised-alive FALSE           FALSE  FALSE    NA        NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 28 28 hospitalised-alive FALSE           FALSE  FALSE    NA     FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 29 29 hospitalised-alive FALSE           FALSE     NA    NA     FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 30 30 hospitalised-alive FALSE            TRUE  FALSE    NA     FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 31 31  hospitalised-dead FALSE           FALSE  FALSE  TRUE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 32 32  hospitalised-dead FALSE           FALSE  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 33 33  hospitalised-dead FALSE           FALSE     NA FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 34 34  hospitalised-dead FALSE           FALSE  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 35 35  hospitalised-dead    NA           FALSE  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 36 36  hospitalised-dead FALSE              NA  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 37 37  hospitalised-dead FALSE              NA  FALSE    NA        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 38 38  hospitalised-dead    NA           FALSE  FALSE FALSE        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 39 39  hospitalised-dead FALSE              NA  FALSE FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 29 hospitalised-alive FALSE           FALSE  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 30 hospitalised-alive    NA              NA     NA    NA     FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 31  hospitalised-dead FALSE           FALSE  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 32  hospitalised-dead FALSE           FALSE  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 33  hospitalised-dead FALSE           FALSE  FALSE FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 34  hospitalised-dead FALSE           FALSE  FALSE    NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 35  hospitalised-dead FALSE           FALSE   TRUE FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 36  hospitalised-dead FALSE           FALSE  FALSE  TRUE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 37  hospitalised-dead FALSE           FALSE  FALSE FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 38  hospitalised-dead FALSE           FALSE     NA FALSE        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 39  hospitalised-dead FALSE           FALSE  FALSE FALSE        NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 40 40  hospitalised-dead    NA           FALSE  FALSE FALSE        NA</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
