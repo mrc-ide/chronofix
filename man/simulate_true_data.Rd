@@ -15,7 +15,7 @@ being simulated.}
 \item{delay_info}{A data frame that defines the delays between events, and
 their distributions and parameters. It must contain the columns \code{from}
 (character), \code{to} (character), \code{group} (list of numeric or character group
-IDs), \code{distribution} (character), \code{mean} (numeric) and \code{cv} (numeric)ams?}
+IDs), \code{distribution} (character), \code{mean} (numeric) and \code{cv} (numeric)}
 
 \item{date_range}{A vector of two integer dates for the simulation range.}
 }
