@@ -8,7 +8,7 @@
 #' @param delay_info A data frame that defines the delays between events, and
 #'   their distributions and parameters. It must contain the columns `from`
 #'   (character), `to` (character), `group` (list of numeric or character group
-#'   IDs), `distribution` (character), `mean` (numeric) and `cv` (numeric)ams?
+#'   IDs), `distribution` (character), `mean` (numeric) and `cv` (numeric)
 #' @param error_params A list containing `prop_missing_data` and `prob_error`.
 #' @param date_range A vector of two integer dates for the simulation range.
 #'
