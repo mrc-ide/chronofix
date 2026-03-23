@@ -229,7 +229,8 @@ propose_estimated_dates <- function(to_update, augmented_data, observed_dates,
         observed_dates[i] + monty::monty_random_real(rng)
     } else {
       augmented_data$estimated_dates[i] <-
-        sample_from_delay(i, augmented_data$estimated_dates, group,
+        sample_from_delay(i, augmented_data$estimated_dates, 
+                          augmented_data$error_indicators, group,
                           model_info, rng)
     }
   }
