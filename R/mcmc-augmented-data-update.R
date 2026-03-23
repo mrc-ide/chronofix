@@ -69,13 +69,25 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
     return(augmented_data)
   }
   
+  ## Also update any dates connected to i that are erroneous or missing to
+  ## ensure that they stay consistent with the newly proposed date
+  is_date_connected <- model_info$is_date_connected[, , group]
+  connected_to_i <- which(is_date_connected[i, ])
+  err_ind <- augmented_data$error_indicators
+  
+  connected_missing_or_error <- connected_to_i[
+    is.na(err_ind[connected_to_i]) | isTRUE(err_ind[connected_to_i])
+  ]
+  
+  to_update <- c(i, connected_missing_or_error)
+  
   augmented_data_new <- 
-    propose_estimated_dates(i, augmented_data, observed_dates, group,
+    propose_estimated_dates(to_update, augmented_data, observed_dates, group,
                             model_info, rng)
   
   accept_prob <-
-    calc_accept_prob(i, augmented_data_new, augmented_data, observed_dates,
-                     group, prob_error, model_info, date_range)
+    calc_accept_prob(to_update, augmented_data_new, augmented_data,
+                     observed_dates, group, prob_error, model_info, date_range)
 
   accept <- log(monty::monty_random_real(rng)) < accept_prob
   if (accept) {
