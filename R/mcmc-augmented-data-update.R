@@ -135,8 +135,8 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
 
 
 # Sample new date using randomly selected delay
-sample_from_delay <- function(i, estimated_dates, group, model_info,
-                              rng) {
+sample_from_delay <- function(i, estimated_dates, error_indicators, group,
+                              model_info, rng) {
   
   is_date_in_delay <- model_info$is_date_in_delay[i, , group]
   
@@ -146,12 +146,19 @@ sample_from_delay <- function(i, estimated_dates, group, model_info,
                            model_info$delay_from[which_delays], 
                            model_info$delay_to[which_delays])
   
-  ## Filter to only delays where the other date is available (needed for swap)
+  ## Filter to delays where the other date is available (needed for swap)
   valid_delays <- which_delays[!is.na(estimated_dates[other_date_idx])]
   other_date_idx <- other_date_idx[!is.na(estimated_dates[other_date_idx])]
   
+  ## Of the valid delays, prioritise those where the other date is "correct"
+  is_correct <- !is.na(error_indicators[other_date_idx]) &
+    !error_indicators[other_date_idx]
+  if (any(is_correct)) {
+    valid_delays <- valid_delays[is_correct]
+    other_date_idx <- other_date_idx[is_correct]
+  }
   
-  ## If it is involved in several delays, randomly select one
+  ## Randomly select from the valid delays
   delay_idx <- if (length(valid_delays) == 1) 1 else 
     ceiling(length(valid_delays) * monty::monty_random_real(rng))
   selected_delay <- valid_delays[delay_idx]
