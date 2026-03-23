@@ -76,7 +76,7 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
   err_ind <- augmented_data$error_indicators
   
   connected_missing_or_error <- connected_to_i[
-    is.na(err_ind[connected_to_i]) | isTRUE(err_ind[connected_to_i])
+    is.na(err_ind[connected_to_i]) | err_ind[connected_to_i]
   ]
   
   to_update <- c(i, connected_missing_or_error)
