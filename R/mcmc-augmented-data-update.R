@@ -340,7 +340,6 @@ calc_proposal_density <- function(updated, augmented_data, group, model_info) {
     calc_resampling_order(updated, augmented_data$error_indicators,
                           is_date_connected)
   
-  dates <- which(is_date_in_group)
   is_updated <- seq_along(augmented_data$error_indicators) %in% updated
   available_dates <- which(is_date_in_group & !is_updated)
   
@@ -354,14 +353,27 @@ calc_proposal_density <- function(updated, augmented_data, group, model_info) {
     ## is 0, hence only need to calculate for error (TRUE) or missing (NA)
     
     if (!isFALSE(augmented_data$error_indicators[i])) {
-      ## which dates were available for sampling
+      
+      ## which delays have at least one available "other" date
       is_delay_available <- 
         colSums(is_date_in_delay[available_dates, , drop = FALSE]) > 0
-      ## which delays could be sampled from
-      can_sample_from_delay <- is_date_in_delay[i, ] & 
-        is_delay_available
+      can_sample_from_delay <- is_date_in_delay[i, ] & is_delay_available
       
-      ## error or missing - proposal is based on delay(s)
+      ## idx for "other" date in each valid delay
+      other_date_idx <- ifelse(
+        model_info$delay_from[can_sample_from_delay] != i,
+        model_info$delay_from[can_sample_from_delay],
+        model_info$delay_to[can_sample_from_delay]
+      )
+      
+      ## "correct" connected dates are prioritised
+      err_ind <- augmented_data$error_indicators
+      is_correct_other <- !is.na(err_ind[other_date_idx]) &
+        !err_ind[other_date_idx]
+      if (any(is_correct_other)) {
+        can_sample_from_delay[can_sample_from_delay] <- is_correct_other
+      }
+      
       delay_cv <- model_info$delay_cv[can_sample_from_delay]
       delay_mean <- model_info$delay_mean[can_sample_from_delay]
       delay_distribution <- model_info$delay_distribution[can_sample_from_delay]
