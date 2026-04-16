@@ -69,26 +69,15 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
     return(augmented_data)
   }
   
-  ## Also update any dates connected to i that are erroneous or missing to
-  ## ensure that they stay consistent with the newly proposed date
-  is_date_connected <- model_info$is_date_connected[, , group]
-  connected_to_i <- which(is_date_connected[i, ])
-  err_ind <- augmented_data$error_indicators
-  
-  connected_missing_or_error <- connected_to_i[
-    is.na(err_ind[connected_to_i]) | err_ind[connected_to_i]
-  ]
-  
-  to_update <- c(i, connected_missing_or_error)
-  
-  augmented_data_new <- 
-    propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            model_info, rng)
+  proposed <- propose_estimated_dates(i, augmented_data, observed_dates, group,
+                                      model_info, rng)
+  augmented_data_new <- proposed$augmented_data
+  updated <- proposed$updated
   
   accept_prob <-
-    calc_accept_prob(to_update, augmented_data_new, augmented_data,
+    calc_accept_prob(updated, augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info, date_range)
-
+  
   accept <- log(monty::monty_random_real(rng)) < accept_prob
   if (accept) {
     augmented_data <- augmented_data_new
@@ -131,7 +120,7 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
   
   augmented_data_new <- 
     propose_estimated_dates(i, augmented_data, observed_dates, group,
-                            model_info, rng, TRUE)
+                            model_info, rng, TRUE)$augmented_data
   
   accept_prob <-
     calc_accept_prob(i, augmented_data_new, augmented_data, observed_dates,
@@ -229,25 +218,55 @@ propose_estimated_dates <- function(to_update, augmented_data, observed_dates,
       !augmented_data$error_indicators[to_update]
   }
   
-  augmented_data$estimated_dates[to_update] <- NA
+  is_date_in_group <- model_info$is_date_in_group[, group]
+  is_date_connected <- model_info$is_date_connected[, , group]
   
-  resampling_order <- 
-    calc_resampling_order(to_update, augmented_data$error_indicators,
-                          model_info$is_date_connected[, , group])
+  ## Queue starts with the originally requested dates. When updating a
+  ## single date, connected missing/erroneous dates are added to the queue
+  ## sequentially
+  queue <- to_update
+  sampled <- integer(0)
+  cascade <- length(to_update) == 1
   
-  for (i in resampling_order) {
+  while (length(queue) > 0) {
+    
+    ## Set current queue to NA and determine resampling order. Dates
+    ## outside the queue retain their current values as anchors
+    augmented_data$estimated_dates[queue] <- NA
+    resampling_order <- calc_resampling_order(queue,
+                                              augmented_data$error_indicators,
+                                              is_date_connected)
+  
+    ## Take next date in order, resample it
+    i <- resampling_order[1]
+    
     if (isFALSE(augmented_data$error_indicators[i])) {
       augmented_data$estimated_dates[i] <-
         observed_dates[i] + monty::monty_random_real(rng)
     } else {
       augmented_data$estimated_dates[i] <-
-        sample_from_delay(i, augmented_data$estimated_dates, 
+        sample_from_delay(i, augmented_data$estimated_dates,
                           augmented_data$error_indicators, group,
                           model_info, rng)
     }
+    
+    sampled <- c(sampled, i)
+    queue <- queue[-match(i, queue)]
+    
+    ## Cascade: find dates connected to i that are missing/erroneous and
+    ## not yet sampled or already queued
+    if (cascade) {
+      err_ind <- augmented_data$error_indicators
+      connected_to_i <- which(is_date_connected[i, ] & is_date_in_group)
+      newly_found <- connected_to_i[
+        (is.na(err_ind[connected_to_i]) | err_ind[connected_to_i]) &
+          !(connected_to_i %in% c(sampled, queue))
+      ]
+      queue <- c(queue, newly_found)
+    }
   }
   
-  augmented_data
+  list(augmented_data = augmented_data, updated = sampled)
 }
 
 
@@ -432,7 +451,7 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
   # systematically sample new errors and missing dates based on new non-errors
   augmented_data_new <- 
     propose_estimated_dates(event_order, augmented_data, observed_dates, group,
-                            model_info, rng, TRUE)
+                            model_info, rng, TRUE)$augmented_data
 
   accept_prob <-
     calc_accept_prob(event_order, augmented_data_new, augmented_data,
