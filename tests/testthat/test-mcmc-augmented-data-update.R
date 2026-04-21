@@ -238,6 +238,47 @@ test_that("updating error indicator cascades to connected dates", {
   expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
 })
 
+test_that("calc_accept_prob correctly calculates a positive ratio for a better fit", {
+  delay_map <- toy_model()$delay_map
+  dates <- c("onset", "hospitalisation", "report", "death", "discharge")
+  model_info <- make_model_info(delay_map, dates)
+  
+  # Set tight distributions: Mean = 10, CV = 0.1
+  model_info$delay_mean <- rep(10, 6)
+  model_info$delay_cv <- rep(0.1, 6)
+  prob_error <- 0.05
+  date_range <- c(0, 1000)
+  group <- 2 # community-dead (onset -> report, onset -> death)
+  
+  # Current: delay from onset -> report is only 2 days, model wants 10
+  augmented_data <- list(
+    estimated_dates = c(100.0, NA, 102.0, 110.0, NA),
+    error_indicators = c(NA, NA, FALSE, FALSE, NA)
+  )
+  
+  # Proposed: delay is exactly 10 days
+  augmented_data_new <- list(
+    estimated_dates = c(100.0, NA, 110.0, 110.0, NA),
+    error_indicators = c(NA, NA, FALSE, FALSE, NA)
+  )
+  
+  updated <- 3
+
+  log_accept_ratio <- calc_accept_prob(
+    updated, augmented_data_new, augmented_data,
+    observed_dates = c(NA, NA, 102, 110, NA), # observed matches current exactly
+    group, prob_error, model_info, date_range, is_batch = FALSE
+  )
+  
+  # check that the ratio is positive (new state is much better than old state)
+  expect_gt(log_accept_ratio, 0)
+  
+  # check that very high ratio leads to acceptance
+  # exp(log_accept_ratio) will be > 1, so any probability draw will be < than it
+  expect_true(exp(log_accept_ratio) >= 1)
+})
+
+
 test_that("updating estimated date cascades to connected missing/erroneous dates", {
   delay_map <- toy_model()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
