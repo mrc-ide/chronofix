@@ -136,6 +136,12 @@ test_that("updating error indicator cascades to connected dates", {
   augmented_data_proposed <- proposed$augmented_data
   updated_dates <- proposed$updated
   
+  # check proposal
+  expect_true(augmented_data_proposed$error_indicators[i])
+  expect_true(augmented_data_proposed$estimated_dates[i] !=
+                augmented_data$estimated_dates[i])
+  expect_true(all(c(1, 4) %in% updated_dates))
+  
   accept_prob <- calc_accept_prob(updated_dates, augmented_data_proposed,
                                   augmented_data, observed_dates, group,
                                   prob_error, model_info, date_range)
@@ -171,6 +177,11 @@ test_that("updating error indicator cascades to connected dates", {
   augmented_data_proposed <- proposed$augmented_data
   updated_dates <- proposed$updated
   
+  # check proposal
+  expect_false(augmented_data_proposed$error_indicators[i])
+  expect_equal(floor(augmented_data_proposed$estimated_dates[i]), observed_dates[i])
+  expect_true(1 %in% updated_dates)
+  
   accept_prob <- calc_accept_prob(updated_dates, augmented_data_proposed,
                                   augmented_data, observed_dates, group,
                                   prob_error, model_info, date_range)
@@ -205,6 +216,12 @@ test_that("updating error indicator cascades to connected dates", {
                                       model_info, rng1, update_errors = TRUE)
   augmented_data_proposed <- proposed$augmented_data
   updated_dates <- proposed$updated
+  
+  # check proposal
+  expect_false(augmented_data_proposed$error_indicators[i])
+  expect_equal(floor(augmented_data_proposed$estimated_dates[i]), observed_dates[i])
+  expect_true(4 %in% updated_dates) # death date 4 is missing so should update
+  expect_false(1 %in% updated_dates) # onset date 1 is correct (no update)
   
   accept_prob <- calc_accept_prob(updated_dates, augmented_data_proposed,
                                   augmented_data, observed_dates, group,
