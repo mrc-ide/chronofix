@@ -76,7 +76,8 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
   
   accept_prob <-
     calc_accept_prob(updated, augmented_data_new, augmented_data,
-                     observed_dates, group, prob_error, model_info, date_range)
+                     observed_dates, group, prob_error, model_info, date_range,
+                     is_batch = FALSE)
   
   accept <- log(monty::monty_random_real(rng)) < accept_prob
   if (accept) {
@@ -118,13 +119,16 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
     return(augmented_data)
   }
   
-  augmented_data_new <- 
+  proposed <- 
     propose_estimated_dates(i, augmented_data, observed_dates, group,
-                            model_info, rng, TRUE)$augmented_data
+                            model_info, rng, TRUE)
+  
+  augmented_data_new <- proposed$augmented_data
+  updated <- proposed$updated
   
   accept_prob <-
-    calc_accept_prob(i, augmented_data_new, augmented_data, observed_dates,
-                     group, prob_error, model_info, date_range)
+    calc_accept_prob(updated, augmented_data_new, augmented_data, observed_dates,
+                     group, prob_error, model_info, date_range, is_batch = FALSE)
 
   accept <- log(monty::monty_random_real(rng)) < accept_prob
   if (accept) {
@@ -221,41 +225,57 @@ propose_estimated_dates <- function(to_update, augmented_data, observed_dates,
   is_date_in_group <- model_info$is_date_in_group[, group]
   is_date_connected <- model_info$is_date_connected[, , group]
   
-  ## Queue starts with the originally requested dates. When updating a
-  ## single date, connected missing/erroneous dates are added to the queue
-  ## sequentially
-  queue <- to_update
   sampled <- integer(0)
   cascade <- length(to_update) == 1
   
-  while (length(queue) > 0) {
+  if (!cascade) {
+    # Updating batches e.g. swaps
+    # Calculating the order once for the entire batch to preserve anchors
+    augmented_data$estimated_dates[to_update] <- NA
+    resampling_order <- calc_batch_resampling_order(
+      to_update,
+      augmented_data$error_indicators,
+      is_date_connected
+      )
     
-    ## Set current queue to NA and determine resampling order. Dates
-    ## outside the queue retain their current values as anchors
-    augmented_data$estimated_dates[queue] <- NA
-    resampling_order <- calc_resampling_order(queue,
-                                              augmented_data$error_indicators,
-                                              is_date_connected)
-  
-    ## Take next date in order, resample it
-    i <- resampling_order[1]
-    
-    if (isFALSE(augmented_data$error_indicators[i])) {
-      augmented_data$estimated_dates[i] <-
-        observed_dates[i] + monty::monty_random_real(rng)
-    } else {
-      augmented_data$estimated_dates[i] <-
-        sample_from_delay(i, augmented_data$estimated_dates,
-                          augmented_data$error_indicators, group,
-                          model_info, rng)
+    for (i in resampling_order) {
+      if (isFALSE(augmented_data$error_indicators[i])) {
+        # sample correct date uniformly
+        augmented_data$estimated_dates[i] <-
+          observed_dates[i] + monty::monty_random_real(rng)
+      } else {
+        # sample error/missing dates from delays
+        augmented_data$estimated_dates[i] <-
+          sample_from_delay(i, augmented_data$estimated_dates, 
+                            augmented_data$error_indicators, group,
+                            model_info, rng)
+      }
+      sampled <- c(sampled, i)
     }
     
-    sampled <- c(sampled, i)
-    queue <- queue[-match(i, queue)]
+  } else {
+    # Updating single dates and connected missing/erroneous dates
+    queue <- to_update
     
-    ## Cascade: find dates connected to i that are missing/erroneous and
-    ## not yet sampled or already queued
-    if (cascade) {
+    while (length(queue) > 0) {
+      i <- queue[1]
+      augmented_data$estimated_dates[i] <- NA
+      
+      if (isFALSE(augmented_data$error_indicators[i])) {
+        augmented_data$estimated_dates[i] <-
+          observed_dates[i] + monty::monty_random_real(rng)
+      } else {
+        augmented_data$estimated_dates[i] <-
+          sample_from_delay(i, augmented_data$estimated_dates,
+                            augmented_data$error_indicators, group,
+                            model_info, rng)
+      }
+    
+      sampled <- c(sampled, i)
+      queue <- queue[-1]
+      
+      ## Cascade: find dates connected to i that are missing/erroneous and
+      ## not yet sampled or already queued
       err_ind <- augmented_data$error_indicators
       connected_to_i <- which(is_date_connected[i, ] & is_date_in_group)
       newly_found <- connected_to_i[
@@ -274,7 +294,7 @@ propose_estimated_dates <- function(to_update, augmented_data, observed_dates,
 ## augmented_data_new where updated is the indices of the updated date(s)
 calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
                              observed_dates, group, prob_error, model_info,
-                             date_range) {
+                             date_range, is_batch = FALSE) {
   
   is_delay_in_group <- model_info$is_delay_in_group[, group]
 
@@ -302,7 +322,7 @@ calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
   if (any(is.infinite(ll_delays_new))) {
     ## Covering two cases here:
     ## 1. a proposed delay is negative so we want to auto-reject
-    ## 2. we haveended up in a situation that such a small delay has been drawn
+    ## 2. we have ended up in a situation that such a small delay has been drawn
     ##    that when recalculated from the dates it is essentially 0 and 
     ##    distribution has infinite density at 0 (CV > 1). Let's reject for
     ##    the moment
@@ -340,27 +360,36 @@ calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
   }
   
   prop_current <- 
-    calc_proposal_density(updated, augmented_data, group, model_info)
+    calc_proposal_density(updated, augmented_data, group, model_info, is_batch)
   prop_new <- 
-    calc_proposal_density(updated, augmented_data_new, group, model_info)
+    calc_proposal_density(updated, augmented_data_new, group, model_info, is_batch)
   ratio_prop <- prop_current - prop_new
   
   ratio_post + ratio_prop
 }
 
 
-calc_proposal_density <- function(updated, augmented_data, group, model_info) {
+calc_proposal_density <- function(updated, augmented_data, group, model_info,
+                                  is_batch = FALSE) {
   
   is_date_in_delay <- model_info$is_date_in_delay[, , group]
   is_date_in_group <- model_info$is_date_in_group[, group]
   is_date_connected <- model_info$is_date_connected[, , group]
   
-  resampling_order <- 
-    calc_resampling_order(updated, augmented_data$error_indicators,
-                          is_date_connected)
-  
-  is_updated <- seq_along(augmented_data$error_indicators) %in% updated
-  available_dates <- which(is_date_in_group & !is_updated)
+  if (is_batch) {
+    resampling_order <- calc_batch_resampling_order(updated,
+                                                   augmented_data$error_indicators,
+                                                   is_date_connected)
+    # in the batch case all dates in `updated` are cleared to NA upfront before
+    # any sampling happens - so only dates not in `updated` are available as anchors
+    is_updated <- seq_along(augmented_data$error_indicators) %in% updated
+    available_dates <- which(is_date_in_group & !is_updated)
+  } else {
+    resampling_order <- calc_cascade_resampling_order(updated, is_date_connected)
+    # in  the cascade case, only one date is cleared at a time - all other dates
+    # have their values from the previous iteration and can be used as anchors
+    available_dates <- which(is_date_in_group)
+  }
   
   d <- rep(0, length(updated))
   
@@ -455,7 +484,8 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
 
   accept_prob <-
     calc_accept_prob(event_order, augmented_data_new, augmented_data,
-                     observed_dates, group, prob_error, model_info, date_range)
+                     observed_dates, group, prob_error, model_info, date_range,
+                     is_batch = TRUE)
   
   accept <- log(monty::monty_random_real(rng)) < accept_prob
   if (accept) {
@@ -467,12 +497,10 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
 }
 
 
-calc_resampling_order <- function(to_resample, error_indicators,
-                                  is_date_connected) {
+calc_batch_resampling_order <- function(to_resample, error_indicators,
+                                       is_date_connected) {
   
-  if (length(to_resample) == 1) {
-    return(to_resample)
-  }
+  if (length(to_resample) == 1) return(to_resample)
   
   ## resample non-errors first
   err_ind <- error_indicators[to_resample]
@@ -482,14 +510,13 @@ calc_resampling_order <- function(to_resample, error_indicators,
   remaining_to_resample <- to_resample[!is_non_error]
   
   if (length(remaining_to_resample) > 0) {
-    
     while (length(remaining_to_resample) > 1) {
       # Find all dates connected to available dates
       is_connected <- 
         rowSums(is_date_connected[remaining_to_resample, resampling_order,
                                   drop = FALSE]) > 0
       connected_dates <- remaining_to_resample[is_connected]
-      
+
       # Earliest connected event according to resampling_order
       earliest_idx <- which(remaining_to_resample %in% connected_dates)[1]
       date_to_sample <- remaining_to_resample[earliest_idx]
@@ -498,7 +525,35 @@ calc_resampling_order <- function(to_resample, error_indicators,
       resampling_order <- c(resampling_order, date_to_sample)
       remaining_to_resample <- remaining_to_resample[-earliest_idx]
     }
-    
+    resampling_order <- c(resampling_order, remaining_to_resample)
+  }
+  
+  resampling_order
+}
+
+
+calc_cascade_resampling_order <- function(to_resample, is_date_connected) {
+  
+  if (length(to_resample) == 1) return(to_resample)
+  
+  ## In a cascade, the index of the single date being updated is the starting
+  ## point for resampling the connected dates
+  resampling_order <- to_resample[1]
+  remaining_to_resample <- to_resample[-1]
+  
+  if (length(remaining_to_resample) > 0) {
+    while (length(remaining_to_resample) > 1) {
+      is_connected <- 
+        rowSums(is_date_connected[remaining_to_resample, resampling_order,
+                                  drop = FALSE]) > 0
+      connected_dates <- remaining_to_resample[is_connected]
+      
+      earliest_idx <- which(remaining_to_resample %in% connected_dates)[1]
+      date_to_sample <- remaining_to_resample[earliest_idx]
+      
+      resampling_order <- c(resampling_order, date_to_sample)
+      remaining_to_resample <- remaining_to_resample[-earliest_idx]
+    }
     resampling_order <- c(resampling_order, remaining_to_resample)
   }
   
