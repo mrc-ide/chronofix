@@ -319,7 +319,7 @@ calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
     model_info$delay_cv, model_info$delay_from, model_info$delay_to,
     model_info$delay_distribution, is_delay_in_group)
   
-  if (any(is.infinite(ll_delays_new))) {
+  if (any(!is.finite(ll_delays_new))) {
     ## Covering two cases here:
     ## 1. a proposed delay is negative so we want to auto-reject
     ## 2. we have ended up in a situation that such a small delay has been drawn
@@ -355,7 +355,7 @@ calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
   ratio_post <- ratio_ll_delays + ratio_ll_errors
 
   ## No need to calculate proposal correction if ratio_post is -Inf
-  if (ratio_post == -Inf) {
+  if (is.na(ratio_post) || ratio_post == -Inf) {
     return(-Inf)
   }
   
@@ -363,7 +363,10 @@ calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
     calc_proposal_density(updated, augmented_data, group, model_info, is_batch)
   prop_new <- 
     calc_proposal_density(updated, augmented_data_new, group, model_info, is_batch)
+  
   ratio_prop <- prop_current - prop_new
+  
+  if (is.na(ratio_prop)) return(-Inf)
   
   ratio_post + ratio_prop
 }
