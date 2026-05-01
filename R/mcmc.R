@@ -30,7 +30,8 @@ mcmc_run <- function(model,
                                  initial = initial,
                                  n_chains = control$n_chains, runner = runner,
                                  burnin = control$burnin, 
-                                 thinning_factor = control$thinning_factor)
+                                 thinning_factor = control$thinning_factor,
+                                 save_full_chains = TRUE)
   
   ## Unpack augmented data
   samples$data <- unpack_augmented_data(samples$data, model$data_packer)
