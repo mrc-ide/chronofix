@@ -228,7 +228,7 @@ test_that("estimated dates proposed correctly", {
                          error_indicators = c(NA, NA, FALSE, TRUE, NA))
   augmented_data_new <- 
     propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            model_info, rng, FALSE)
+                            model_info, rng)
   expect_equal(augmented_data$error_indicators,
                augmented_data_new$error_indicators)
   expect_equal(augmented_data$estimated_dates[-to_update],
@@ -245,7 +245,7 @@ test_that("estimated dates proposed correctly", {
                          error_indicators = c(NA, NA, FALSE, TRUE, NA))
   augmented_data_new <- 
     propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            model_info, rng, FALSE)
+                            model_info, rng)
   expect_equal(augmented_data$error_indicators,
                augmented_data_new$error_indicators)
   expect_equal(augmented_data$estimated_dates[-to_update],
@@ -253,74 +253,23 @@ test_that("estimated dates proposed correctly", {
   expect_equal(augmented_data_new$estimated_dates[to_update],
                sample_from_delay(to_update, augmented_data_new$estimated_dates,
                                  group, model_info, rng1))
-  
-  
-  ## group 2, propose new (missing) onset date
-  group <- 2
-  to_update <- 1
-  observed_dates <- c(NA, NA, 40, 68, NA)
-  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
-                         error_indicators = c(NA, NA, FALSE, TRUE, NA))
-  augmented_data_new <- 
-    propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            model_info, rng, FALSE)
-  expect_equal(augmented_data$error_indicators,
-               augmented_data_new$error_indicators)
-  expect_equal(augmented_data$estimated_dates[-to_update],
-               augmented_data_new$estimated_dates[-to_update])
-  expect_equal(augmented_data_new$estimated_dates[to_update],
-               sample_from_delay(to_update, augmented_data_new$estimated_dates,
-                                 group, model_info, rng1))
-  
-  
-  ## group 2, propose new report date, going from correct to error
-  group <- 2
-  to_update <- 3
-  observed_dates <- c(NA, NA, 40, 68, NA)
-  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
-                         error_indicators = c(NA, NA, FALSE, TRUE, NA))
-  augmented_data_new <- 
-    propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            model_info, rng, TRUE)
-  expect_equal(augmented_data$error_indicators[-to_update],
-               augmented_data_new$error_indicators[-to_update])
-  expect_equal(augmented_data$error_indicators[to_update], FALSE)
-  expect_equal(augmented_data$estimated_dates[-to_update],
-               augmented_data_new$estimated_dates[-to_update])
-  expect_equal(augmented_data_new$estimated_dates[to_update],
-               sample_from_delay(to_update, augmented_data_new$estimated_dates,
-                                 group, model_info, rng1))
-  
-  
-  ## group 2, propose new death date, going from error to correct
-  group <- 2
-  to_update <- 4
-  observed_dates <- c(NA, NA, 40, 68, NA)
-  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
-                         error_indicators = c(NA, NA, FALSE, TRUE, NA))
-  augmented_data_new <- 
-    propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            model_info, rng, TRUE)
-  expect_equal(augmented_data$error_indicators[-to_update],
-               augmented_data_new$error_indicators[-to_update])
-  expect_equal(augmented_data$error_indicators[to_update], TRUE)
-  expect_equal(augmented_data$estimated_dates[-to_update],
-               augmented_data_new$estimated_dates[-to_update])
-  expect_equal(augmented_data_new$estimated_dates[to_update],
-               observed_dates[to_update] + monty::monty_random_real(rng1))
   
   
   ## group 2, propose all dates, swapping errors
   group <- 2
-  to_update <- c(3, 1, 4)
+  
   observed_dates <- c(NA, NA, 40, 68, NA)
   augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
-                         error_indicators = c(NA, NA, FALSE, TRUE, NA))
+                         error_indicators = c(NA, NA, TRUE, FALSE, NA))
+  resampling_order <-
+    calc_resampling_order(model_info$event_order[[group]],
+                          augmented_data$error_indicators,
+                          model_info$is_date_connected[, , group])
   augmented_data_new <- 
-    propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            model_info, rng, TRUE)
+    propose_estimated_dates(resampling_order, augmented_data, observed_dates,
+                            group, model_info, rng)
   expect_equal(augmented_data_new$error_indicators, 
-               c(NA, NA, TRUE, FALSE, NA))
+               augmented_data$error_indicators)
   estimated_dates <- rep(NA, 5)
   ## date 4 will be sampled based on observed date
   estimated_dates[4] <- observed_dates[4] + monty::monty_random_real(rng1)
@@ -386,13 +335,16 @@ test_that("proposal density calculated correctly", {
   ##               onset (date 1) to report (date 3)
   ## then death is proposed based on delay 2 (gamma),
   ##               onset (date 1) to death (date 4)
-  updated <- c(1, 3, 4)
+  resampling_order <-
+    calc_resampling_order(model_info$event_order[[group]],
+                          augmented_data$error_indicators,
+                          model_info$is_date_connected[, , group])
   d <- sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
                     augmented_data$estimated_dates[1],
                   shape = params[1, c(1, 2)], rate = params[2, c(1, 2)],
                   log = TRUE))
-  expect_equal(
-    calc_proposal_density(updated, augmented_data, group, model_info), d)
+  expect_equal(calc_proposal_density(
+    resampling_order, augmented_data, group, model_info), d)
   
   
   # group 4, 3 dates
@@ -462,7 +414,8 @@ test_that("acceptance probability calculated correctly", {
   date_range <- c(0, 101)
   
   ## separate function for calculating acceptance probability
-  calc_accept <- function(updated, augmented_data_new, augmented_data, group) {
+  calc_accept <- function(resampling_order, reverse_resampling_order,
+                          augmented_data_new, augmented_data, group) {
     ll_delays_current <- 
       datefixer_log_likelihood_delays1(augmented_data$estimated_dates,
                                        model_info$delay_mean, 
@@ -494,9 +447,11 @@ test_that("acceptance probability calculated correctly", {
     ratio_post <- ratio_ll_delays + ratio_ll_errors
     
     prop_current <- 
-      calc_proposal_density(updated, augmented_data, group, model_info)
+      calc_proposal_density(reverse_resampling_order, augmented_data,
+                            group, model_info)
     prop_new <- 
-      calc_proposal_density(updated, augmented_data_new, group, model_info)
+      calc_proposal_density(resampling_order, augmented_data_new,
+                            group, model_info)
     ratio_prop <- prop_current - prop_new
     
     ratio_post + ratio_prop
@@ -509,76 +464,100 @@ test_that("acceptance probability calculated correctly", {
                          error_indicators = c(NA, NA, FALSE, TRUE, NA))
   
   ## updating error death (date 4) but matching observed date so auto-reject
-  updated <- 4
+  resampling_order <- 4
+  reverse_resampling_order <- 4
   augmented_data_new <- list(estimated_dates = c(20.5, NA, 40.2, 68.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(updated, augmented_data_new, augmented_data,
+    calc_accept_prob(resampling_order, reverse_resampling_order,
+                     augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
     -Inf)
   
   ## updating death (date 4) but outside date range so auto-reject
-  updated <- 4
+  resampling_order <- 4
+  reverse_resampling_order <- 4
   augmented_data_new <- list(estimated_dates = c(20.5, NA, 40.2, 150.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(updated, augmented_data_new, augmented_data,
+    calc_accept_prob(resampling_order, reverse_resampling_order,
+                     augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
     -Inf)
   
   
   ## updating onset (date 1) but outside date range so auto-reject
-  updated <- 1
+  resampling_order <- 1
+  reverse_resampling_order <- 1
   augmented_data_new <- list(estimated_dates = c(-20.5, NA, 40.2, 50.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(updated, augmented_data_new, augmented_data,
+    calc_accept_prob(resampling_order, reverse_resampling_order,
+                     augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
     -Inf)
   
   ## updating onset (date 1) but negative delay resulting so auto-reject
-  updated <- 1
+  resampling_order <- 1
+  reverse_resampling_order <- 1
   augmented_data_new <- list(estimated_dates = c(43.5, NA, 40.2, 50.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(updated, augmented_data_new, augmented_data,
+    calc_accept_prob(resampling_order, reverse_resampling_order,
+                     augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
     -Inf)
   
   ## updating onset (date 1)
-  updated <- 1
+  resampling_order <- 1
+  reverse_resampling_order <- 1
   augmented_data_new <- list(estimated_dates = c(10.5, NA, 40.2, 50.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(updated, augmented_data_new, augmented_data,
+    calc_accept_prob(resampling_order, reverse_resampling_order,
+                     augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-    calc_accept(updated, augmented_data_new, augmented_data, group))
+    calc_accept(resampling_order, reverse_resampling_order,
+                augmented_data_new, augmented_data, group))
   
   
   ## updating death (date 4), switching to correct
-  updated <- 4
+  resampling_order <- 4
+  reverse_resampling_order <- 4
   augmented_data_new <- list(estimated_dates = c(20.5, NA, 40.2, 68.1, NA),
                              error_indicators = c(NA, NA, FALSE, FALSE, NA))
   expect_equal(
-    calc_accept_prob(updated, augmented_data_new, augmented_data,
+    calc_accept_prob(resampling_order, reverse_resampling_order,
+                     augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-    calc_accept(updated, augmented_data_new, augmented_data, group))
+    calc_accept(resampling_order, reverse_resampling_order,
+                augmented_data_new, augmented_data, group))
   
   ## updating all dates, swapping errors
   updated <- c(1, 3, 4)
   augmented_data_new <- list(estimated_dates = c(10.5, NA, 50.2, 68.1, NA),
                              error_indicators = c(NA, NA, TRUE, FALSE, NA))
+  resampling_order <-
+    calc_resampling_order(model_info$event_order[[group]],
+                          augmented_data_new$error_indicators,
+                          model_info$is_date_connected[, , group])
+  reverse_resampling_order <-
+    calc_resampling_order(model_info$event_order[[group]],
+                          augmented_data$error_indicators,
+                          model_info$is_date_connected[, , group])
   expect_equal(
-    calc_accept_prob(updated, augmented_data_new, augmented_data,
+    calc_accept_prob(resampling_order, reverse_resampling_order,
+                     augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-    calc_accept(updated, augmented_data_new, augmented_data, group))
+    calc_accept(resampling_order, reverse_resampling_order,
+                augmented_data_new, augmented_data, group))
   
   
   ## group 4
@@ -588,12 +567,21 @@ test_that("acceptance probability calculated correctly", {
                          error_indicators = c(FALSE, TRUE, FALSE, NA, NA))
   
   ## updating all dates, swapping errors
-  updated <- c(1, 2, 3, 4)
   augmented_data_new <- list(estimated_dates = c(2.3, 5.2, 33.2, 40.1, NA),
                              error_indicators = c(TRUE, FALSE, TRUE, NA, NA))
+  resampling_order <-
+    calc_resampling_order(model_info$event_order[[group]],
+                          augmented_data_new$error_indicators,
+                          model_info$is_date_connected[, , group])
+  reverse_resampling_order <-
+    calc_resampling_order(model_info$event_order[[group]],
+                          augmented_data$error_indicators,
+                          model_info$is_date_connected[, , group])
   expect_equal(
-    calc_accept_prob(updated, augmented_data_new, augmented_data,
+    calc_accept_prob(resampling_order, reverse_resampling_order,
+                     augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-    calc_accept(updated, augmented_data_new, augmented_data, group))
+    calc_accept(resampling_order, reverse_resampling_order,
+                augmented_data_new, augmented_data, group))
 })

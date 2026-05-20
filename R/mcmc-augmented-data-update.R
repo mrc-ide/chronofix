@@ -211,8 +211,7 @@ sample_from_delay1 <- function(mean, cv, distribution, rng) {
 
 # propose new estimated dates for date indices in to_update
 propose_estimated_dates <- function(resampling_order, augmented_data,
-                                    observed_dates, group, model_info, rng, 
-                                    update_errors = FALSE) {
+                                    observed_dates, group, model_info, rng) {
   
   augmented_data$estimated_dates[resampling_order] <- NA
   
@@ -316,7 +315,6 @@ calc_proposal_density <- function(resampling_order, augmented_data,
   
   is_date_in_delay <- model_info$is_date_in_delay[, , group]
   is_date_in_group <- model_info$is_date_in_group[, group]
-  is_date_connected <- model_info$is_date_connected[, , group]
   
   dates <- which(is_date_in_group)
   is_resampled <- 
@@ -406,8 +404,7 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
   # systematically sample new errors and missing dates based on new non-errors
   augmented_data_new <- 
     propose_estimated_dates(resampling_order, augmented_data_new,
-                            observed_dates, group,
-                            model_info, rng, TRUE)
+                            observed_dates, group, model_info, rng)
 
   accept_prob <-
     calc_accept_prob(resampling_order, reverse_resampling_order,
