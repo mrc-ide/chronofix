@@ -69,15 +69,15 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
     return(augmented_data)
   }
   
-  resampling_order <- i
-  reverse_resampling_order <- i
+  sampling_order <- i
+  sampling_order_reverse <- i
   
   augmented_data_new <- 
-    propose_estimated_dates(resampling_order, augmented_data, observed_dates,
+    propose_estimated_dates(sampling_order, augmented_data, observed_dates,
                             group, model_info, rng)
   
   accept_prob <-
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data, observed_dates,
                      group, prob_error, model_info, date_range)
 
@@ -122,15 +122,15 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
   }
   
   augmented_data_new <- change_error_indicators(augmented_data, i)
-  resampling_order <- i
-  reverse_resampling_order <- i
+  sampling_order <- i
+  sampling_order_reverse <- i
   
   augmented_data_new <- 
-    propose_estimated_dates(resampling_order, augmented_data_new,
+    propose_estimated_dates(sampling_order, augmented_data_new,
                             observed_dates, group, model_info, rng)
   
   accept_prob <-
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data, observed_dates,
                      group, prob_error, model_info, date_range)
 
@@ -210,12 +210,12 @@ sample_from_delay1 <- function(mean, cv, distribution, rng) {
 
 
 # propose new estimated dates for date indices in to_update
-propose_estimated_dates <- function(resampling_order, augmented_data,
+propose_estimated_dates <- function(sampling_order, augmented_data,
                                     observed_dates, group, model_info, rng) {
   
-  augmented_data$estimated_dates[resampling_order] <- NA
+  augmented_data$estimated_dates[sampling_order] <- NA
   
-  for (i in resampling_order) {
+  for (i in sampling_order) {
     if (isFALSE(augmented_data$error_indicators[i])) {
       augmented_data$estimated_dates[i] <-
         observed_dates[i] + monty::monty_random_real(rng)
@@ -232,7 +232,7 @@ propose_estimated_dates <- function(resampling_order, augmented_data,
 
 ## calculate the (log) acceptance probability for updating augmented_data to
 ## augmented_data_new where updated is the indices of the updated date(s)
-calc_accept_prob <- function(resampling_order, reverse_resampling_order,
+calc_accept_prob <- function(sampling_order, sampling_order_reverse,
                              augmented_data_new, augmented_data,
                              observed_dates, group, prob_error, model_info,
                              date_range) {
@@ -241,14 +241,14 @@ calc_accept_prob <- function(resampling_order, reverse_resampling_order,
 
   ## are error indicators TRUE with estimated date matching observed date
   incompatible_error_and_date <-
-    !is.na(augmented_data_new$error_indicators[resampling_order]) &
-    augmented_data_new$error_indicators[resampling_order] == TRUE &
-    (floor(augmented_data_new$estimated_dates[resampling_order]) == 
-       observed_dates[resampling_order])
+    !is.na(augmented_data_new$error_indicators[sampling_order]) &
+    augmented_data_new$error_indicators[sampling_order] == TRUE &
+    (floor(augmented_data_new$estimated_dates[sampling_order]) == 
+       observed_dates[sampling_order])
   ## are estimated dates outside the date range 
   date_outside_range <- 
-    augmented_data_new$estimated_dates[resampling_order] < date_range[1] |
-    augmented_data_new$estimated_dates[resampling_order] >= date_range[2]
+    augmented_data_new$estimated_dates[sampling_order] < date_range[1] |
+    augmented_data_new$estimated_dates[sampling_order] >= date_range[2]
   reject <- any(incompatible_error_and_date) || any(date_outside_range)
   if (reject) {
     return(-Inf)
@@ -300,9 +300,9 @@ calc_accept_prob <- function(resampling_order, reverse_resampling_order,
     return(-Inf)
   }
   
-  prop_current <- calc_proposal_density(reverse_resampling_order,
+  prop_current <- calc_proposal_density(sampling_order_reverse,
                                         augmented_data, group, model_info)
-  prop_new <- calc_proposal_density(resampling_order, augmented_data_new,
+  prop_new <- calc_proposal_density(sampling_order, augmented_data_new,
                                     group, model_info)
   ratio_prop <- prop_current - prop_new
   
@@ -310,7 +310,7 @@ calc_accept_prob <- function(resampling_order, reverse_resampling_order,
 }
 
 
-calc_proposal_density <- function(resampling_order, augmented_data,
+calc_proposal_density <- function(sampling_order, augmented_data,
                                   group, model_info) {
   
   is_date_in_delay <- model_info$is_date_in_delay[, , group]
@@ -318,14 +318,14 @@ calc_proposal_density <- function(resampling_order, augmented_data,
   
   dates <- which(is_date_in_group)
   is_resampled <- 
-    seq_along(augmented_data$error_indicators) %in% resampling_order
+    seq_along(augmented_data$error_indicators) %in% sampling_order
   available_dates <- which(is_date_in_group & !is_resampled)
   
-  d <- rep(0, length(resampling_order))
+  d <- rep(0, length(sampling_order))
   
-  for (j in seq_along(resampling_order)) {
+  for (j in seq_along(sampling_order)) {
     
-    i <- resampling_order[j]
+    i <- sampling_order[j]
     
     ## if non-error (FALSE) - proposal is uniform over one day so log-density 
     ## is 0, hence only need to calculate for error (TRUE) or missing (NA)
@@ -393,21 +393,21 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
   
   augmented_data_new <- change_error_indicators(augmented_data, event_order)
   
-  resampling_order <- 
-    calc_resampling_order(event_order, augmented_data_new$error_indicators,
+  sampling_order <- 
+    calc_sampling_order(event_order, augmented_data_new$error_indicators,
                           model_info$is_date_connected[, , group])
   
-  reverse_resampling_order <- 
-    calc_resampling_order(event_order, augmented_data$error_indicators,
+  sampling_order_reverse <- 
+    calc_sampling_order(event_order, augmented_data$error_indicators,
                           model_info$is_date_connected[, , group])
 
   # systematically sample new errors and missing dates based on new non-errors
   augmented_data_new <- 
-    propose_estimated_dates(resampling_order, augmented_data_new,
+    propose_estimated_dates(sampling_order, augmented_data_new,
                             observed_dates, group, model_info, rng)
 
   accept_prob <-
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data, observed_dates,
                      group, prob_error, model_info, date_range)
   
@@ -421,7 +421,7 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
 }
 
 
-calc_resampling_order <- function(to_resample, error_indicators,
+calc_sampling_order <- function(to_resample, error_indicators,
                                   is_date_connected) {
   
   if (length(to_resample) == 1) {
@@ -431,7 +431,7 @@ calc_resampling_order <- function(to_resample, error_indicators,
   ## resample non-errors first
   err_ind <- error_indicators[to_resample]
   is_non_error <- !err_ind & !is.na(err_ind)
-  resampling_order <- to_resample[is_non_error]
+  sampling_order <- to_resample[is_non_error]
   
   remaining_to_resample <- to_resample[!is_non_error]
   
@@ -440,23 +440,23 @@ calc_resampling_order <- function(to_resample, error_indicators,
     while (length(remaining_to_resample) > 1) {
       # Find all dates connected to available dates
       is_connected <- 
-        rowSums(is_date_connected[remaining_to_resample, resampling_order,
+        rowSums(is_date_connected[remaining_to_resample, sampling_order,
                                   drop = FALSE]) > 0
       connected_dates <- remaining_to_resample[is_connected]
       
-      # Earliest connected event according to resampling_order
+      # Earliest connected event according to sampling_order
       earliest_idx <- which(remaining_to_resample %in% connected_dates)[1]
       date_to_sample <- remaining_to_resample[earliest_idx]
       
       # Update resampling order and remove from remaining
-      resampling_order <- c(resampling_order, date_to_sample)
+      sampling_order <- c(sampling_order, date_to_sample)
       remaining_to_resample <- remaining_to_resample[-earliest_idx]
     }
     
-    resampling_order <- c(resampling_order, remaining_to_resample)
+    sampling_order <- c(sampling_order, remaining_to_resample)
   }
   
-  resampling_order
+  sampling_order
 }
 
 change_error_indicators <- function(augmented_data, i) {
