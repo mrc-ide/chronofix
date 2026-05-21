@@ -1,4 +1,4 @@
-test_that("resampling order calculated correctly", {
+test_that("sampling order calculated correctly", {
   delay_map <- toy_model()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
@@ -9,28 +9,28 @@ test_that("resampling order calculated correctly", {
   ## the order in to_resample and whether or not errors or missing dates have
   ## delay-connected dates to use for sampling
   expect_equal(
-    calc_resampling_order(c(1, 3), c(FALSE, NA, TRUE, NA, NA),
+    calc_sampling_order(c(1, 3), c(FALSE, NA, TRUE, NA, NA),
                           model_info$is_date_connected[, , 1]), c(1, 3))
   expect_equal(
-    calc_resampling_order(c(1, 3), c(TRUE, NA, FALSE, NA, NA),
+    calc_sampling_order(c(1, 3), c(TRUE, NA, FALSE, NA, NA),
                           model_info$is_date_connected[, , 1]), c(3, 1))
   expect_equal(
-    calc_resampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, FALSE, NA),
+    calc_sampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, FALSE, NA),
                           model_info$is_date_connected[, , 2]), c(4, 3, 1))
   expect_equal(
-    calc_resampling_order(c(1, 4, 3), c(FALSE, NA, TRUE, TRUE, NA),
+    calc_sampling_order(c(1, 4, 3), c(FALSE, NA, TRUE, TRUE, NA),
                           model_info$is_date_connected[, , 2]), c(1, 4, 3))
   expect_equal(
-    calc_resampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, NA, NA),
+    calc_sampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, NA, NA),
                           model_info$is_date_connected[, , 2]), c(3, 1, 4))
   expect_equal(
-    calc_resampling_order(c(5, 3, 2, 1), c(TRUE, NA, FALSE, NA, TRUE),
+    calc_sampling_order(c(5, 3, 2, 1), c(TRUE, NA, FALSE, NA, TRUE),
                           model_info$is_date_connected[, , 3]), c(3, 1, 2, 5))
   expect_equal(
-    calc_resampling_order(c(5, 3, 2, 1), c(FALSE, NA, TRUE, NA, FALSE),
+    calc_sampling_order(c(5, 3, 2, 1), c(FALSE, NA, TRUE, NA, FALSE),
                           model_info$is_date_connected[, , 3]), c(5, 1, 3, 2))
   expect_equal(
-    calc_resampling_order(c(5, 3, 2, 1), c(TRUE, FALSE, FALSE, NA, NA),
+    calc_sampling_order(c(5, 3, 2, 1), c(TRUE, FALSE, FALSE, NA, NA),
                           model_info$is_date_connected[, , 3]), c(3, 2, 5, 1))
 })
 
@@ -261,12 +261,12 @@ test_that("estimated dates proposed correctly", {
   observed_dates <- c(NA, NA, 40, 68, NA)
   augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
                          error_indicators = c(NA, NA, TRUE, FALSE, NA))
-  resampling_order <-
-    calc_resampling_order(model_info$event_order[[group]],
+  sampling_order <-
+    calc_sampling_order(model_info$event_order[[group]],
                           augmented_data$error_indicators,
                           model_info$is_date_connected[, , group])
   augmented_data_new <- 
-    propose_estimated_dates(resampling_order, augmented_data, observed_dates,
+    propose_estimated_dates(sampling_order, augmented_data, observed_dates,
                             group, model_info, rng)
   expect_equal(augmented_data_new$error_indicators, 
                augmented_data$error_indicators)
@@ -335,8 +335,8 @@ test_that("proposal density calculated correctly", {
   ##               onset (date 1) to report (date 3)
   ## then death is proposed based on delay 2 (gamma),
   ##               onset (date 1) to death (date 4)
-  resampling_order <-
-    calc_resampling_order(model_info$event_order[[group]],
+  sampling_order <-
+    calc_sampling_order(model_info$event_order[[group]],
                           augmented_data$error_indicators,
                           model_info$is_date_connected[, , group])
   d <- sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
@@ -344,7 +344,7 @@ test_that("proposal density calculated correctly", {
                   shape = params[1, c(1, 2)], rate = params[2, c(1, 2)],
                   log = TRUE))
   expect_equal(calc_proposal_density(
-    resampling_order, augmented_data, group, model_info), d)
+    sampling_order, augmented_data, group, model_info), d)
   
   
   # group 4, 3 dates
@@ -414,7 +414,7 @@ test_that("acceptance probability calculated correctly", {
   date_range <- c(0, 101)
   
   ## separate function for calculating acceptance probability
-  calc_accept <- function(resampling_order, reverse_resampling_order,
+  calc_accept <- function(sampling_order, sampling_order_reverse,
                           augmented_data_new, augmented_data, group) {
     ll_delays_current <- 
       datefixer_log_likelihood_delays1(augmented_data$estimated_dates,
@@ -447,10 +447,10 @@ test_that("acceptance probability calculated correctly", {
     ratio_post <- ratio_ll_delays + ratio_ll_errors
     
     prop_current <- 
-      calc_proposal_density(reverse_resampling_order, augmented_data,
+      calc_proposal_density(sampling_order_reverse, augmented_data,
                             group, model_info)
     prop_new <- 
-      calc_proposal_density(resampling_order, augmented_data_new,
+      calc_proposal_density(sampling_order, augmented_data_new,
                             group, model_info)
     ratio_prop <- prop_current - prop_new
     
@@ -464,24 +464,24 @@ test_that("acceptance probability calculated correctly", {
                          error_indicators = c(NA, NA, FALSE, TRUE, NA))
   
   ## updating error death (date 4) but matching observed date so auto-reject
-  resampling_order <- 4
-  reverse_resampling_order <- 4
+  sampling_order <- 4
+  sampling_order_reverse <- 4
   augmented_data_new <- list(estimated_dates = c(20.5, NA, 40.2, 68.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
     -Inf)
   
   ## updating death (date 4) but outside date range so auto-reject
-  resampling_order <- 4
-  reverse_resampling_order <- 4
+  sampling_order <- 4
+  sampling_order_reverse <- 4
   augmented_data_new <- list(estimated_dates = c(20.5, NA, 40.2, 150.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
@@ -489,74 +489,74 @@ test_that("acceptance probability calculated correctly", {
   
   
   ## updating onset (date 1) but outside date range so auto-reject
-  resampling_order <- 1
-  reverse_resampling_order <- 1
+  sampling_order <- 1
+  sampling_order_reverse <- 1
   augmented_data_new <- list(estimated_dates = c(-20.5, NA, 40.2, 50.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
     -Inf)
   
   ## updating onset (date 1) but negative delay resulting so auto-reject
-  resampling_order <- 1
-  reverse_resampling_order <- 1
+  sampling_order <- 1
+  sampling_order_reverse <- 1
   augmented_data_new <- list(estimated_dates = c(43.5, NA, 40.2, 50.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
     -Inf)
   
   ## updating onset (date 1)
-  resampling_order <- 1
-  reverse_resampling_order <- 1
+  sampling_order <- 1
+  sampling_order_reverse <- 1
   augmented_data_new <- list(estimated_dates = c(10.5, NA, 40.2, 50.1, NA),
                              error_indicators = c(NA, NA, FALSE, TRUE, NA))
   expect_equal(
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-    calc_accept(resampling_order, reverse_resampling_order,
+    calc_accept(sampling_order, sampling_order_reverse,
                 augmented_data_new, augmented_data, group))
   
   
   ## updating death (date 4), switching to correct
-  resampling_order <- 4
-  reverse_resampling_order <- 4
+  sampling_order <- 4
+  sampling_order_reverse <- 4
   augmented_data_new <- list(estimated_dates = c(20.5, NA, 40.2, 68.1, NA),
                              error_indicators = c(NA, NA, FALSE, FALSE, NA))
   expect_equal(
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-    calc_accept(resampling_order, reverse_resampling_order,
+    calc_accept(sampling_order, sampling_order_reverse,
                 augmented_data_new, augmented_data, group))
   
   ## updating all dates, swapping errors
   updated <- c(1, 3, 4)
   augmented_data_new <- list(estimated_dates = c(10.5, NA, 50.2, 68.1, NA),
                              error_indicators = c(NA, NA, TRUE, FALSE, NA))
-  resampling_order <-
-    calc_resampling_order(model_info$event_order[[group]],
+  sampling_order <-
+    calc_sampling_order(model_info$event_order[[group]],
                           augmented_data_new$error_indicators,
                           model_info$is_date_connected[, , group])
-  reverse_resampling_order <-
-    calc_resampling_order(model_info$event_order[[group]],
+  sampling_order_reverse <-
+    calc_sampling_order(model_info$event_order[[group]],
                           augmented_data$error_indicators,
                           model_info$is_date_connected[, , group])
   expect_equal(
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-    calc_accept(resampling_order, reverse_resampling_order,
+    calc_accept(sampling_order, sampling_order_reverse,
                 augmented_data_new, augmented_data, group))
   
   
@@ -569,19 +569,19 @@ test_that("acceptance probability calculated correctly", {
   ## updating all dates, swapping errors
   augmented_data_new <- list(estimated_dates = c(2.3, 5.2, 33.2, 40.1, NA),
                              error_indicators = c(TRUE, FALSE, TRUE, NA, NA))
-  resampling_order <-
-    calc_resampling_order(model_info$event_order[[group]],
+  sampling_order <-
+    calc_sampling_order(model_info$event_order[[group]],
                           augmented_data_new$error_indicators,
                           model_info$is_date_connected[, , group])
-  reverse_resampling_order <-
-    calc_resampling_order(model_info$event_order[[group]],
+  sampling_order_reverse <-
+    calc_sampling_order(model_info$event_order[[group]],
                           augmented_data$error_indicators,
                           model_info$is_date_connected[, , group])
   expect_equal(
-    calc_accept_prob(resampling_order, reverse_resampling_order,
+    calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-    calc_accept(resampling_order, reverse_resampling_order,
+    calc_accept(sampling_order, sampling_order_reverse,
                 augmented_data_new, augmented_data, group))
 })
