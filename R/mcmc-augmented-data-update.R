@@ -485,7 +485,7 @@ calc_cascade_sampling_order <- function(i, event_order,
   sampling_order <- i
   cascade_candidates <- event_order[event_order != i]
   is_cascade_candidate <- 
-    vlapply(error_indicators[cascade_candidates], function (x) !isFALSE(x))
+    !vlapply(error_indicators[cascade_candidates], isFALSE)
   cascade_candidates <- cascade_candidates[is_cascade_candidate]
   
   while (length(cascade_candidates) > 0) {
