@@ -122,8 +122,20 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
   }
   
   augmented_data_new <- change_error_indicators(augmented_data, i)
-  sampling_order <- i
-  sampling_order_reverse <- i
+  if (control$cascade_sampling) {
+    sampling_order <- 
+      calc_cascade_sampling_order(i, model_info$event_order[[group]],
+                                  augmented_data_new$error_indicators,
+                                  model_info$is_date_connected[, , group])
+    sampling_order_reverse <- 
+      calc_cascade_sampling_order(i, model_info$event_order[[group]],
+                                  augmented_data$error_indicators,
+                                  model_info$is_date_connected[, , group])
+  } else {
+    sampling_order <- i
+    sampling_order_reverse <- i
+  }
+  
   
   augmented_data_new <- 
     propose_estimated_dates(sampling_order, augmented_data_new,
@@ -422,7 +434,7 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
 
 
 calc_sampling_order <- function(to_resample, error_indicators,
-                                  is_date_connected) {
+                                is_date_connected) {
   
   if (length(to_resample) == 1) {
     return(to_resample)
@@ -458,6 +470,39 @@ calc_sampling_order <- function(to_resample, error_indicators,
   
   sampling_order
 }
+
+
+calc_cascade_sampling_order <- function(i, event_order,
+                                        error_indicators, is_date_connected) {
+  if (!isFALSE(error_indicators[i])) {
+    has_anchor <- any(is_date_connected[event_order, i] & 
+                        vlapply(error_indicators[event_order], isFALSE))
+    if (!has_anchor) {
+      return(i)
+    }
+  }
+  
+  sampling_order <- i
+  cascade_candidates <- event_order[event_order != i]
+  is_cascade_candidate <- 
+    vlapply(error_indicators[cascade_candidates], function (x) !isFALSE(x))
+  cascade_candidates <- cascade_candidates[is_cascade_candidate]
+  
+  while (length(cascade_candidates) > 0) {
+    is_cascadable <- rowSums(
+      is_date_connected[cascade_candidates, sampling_order, drop = FALSE]) > 0
+    to_cascade <- cascade_candidates[is_cascadable]
+    if (length(to_cascade) == 0) {
+      return(sampling_order)
+    } else {
+      sampling_order <- c(sampling_order, to_cascade)
+      cascade_candidates <- cascade_candidates[!is_cascadable]
+    }
+  }
+  
+  sampling_order
+}
+
 
 change_error_indicators <- function(augmented_data, i) {
   augmented_data$error_indicators[i] <- !augmented_data$error_indicators[i]
