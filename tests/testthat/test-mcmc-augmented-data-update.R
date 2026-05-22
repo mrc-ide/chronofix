@@ -35,6 +35,203 @@ test_that("sampling order calculated correctly", {
 })
 
 
+test_that("cascade resampling order calculated correctly", {
+  delay_map <- toy_model()$delay_map
+  dates <- c("onset", "hospitalisation", "report", "death", "discharge")
+  model_info <- make_model_info(delay_map, dates)
+  
+  # group 2: onset(1) to report(3) and onset(1) to death(4)
+  # 3 and 4 NOT directly connected
+  
+  event_order <- model_info$event_order[[2]]
+  is_date_connected <- model_info$is_date_connected[, , 2]
+  
+  ## anchor = 3
+  ## all correct, no cascade
+  expect_equal(
+    calc_cascade_sampling_order(3, event_order, c(FALSE, NA, FALSE, FALSE, NA),
+                                is_date_connected),
+    3)
+  
+  ## anchor = 3
+  ## 3 (correct) only connected to a correct date, no cascade
+  expect_equal(
+    calc_cascade_sampling_order(3, event_order, c(FALSE, NA, FALSE, NA, NA),
+                                is_date_connected),
+    3)
+  
+  ## anchor = 3
+  ## 3 (correct) --> 1 (erroneous) --> 4 (missing)
+  expect_equal(
+    calc_cascade_sampling_order(3, event_order, c(TRUE, NA, FALSE, NA, NA),
+                                is_date_connected),
+    c(3, 1, 4))
+  
+  ## same as above but 1 is missing instead (makes no difference)
+  ## anchor = 3
+  ## 3 (correct) --> 1 (missing) --> 4 (missing)
+  expect_equal(
+    calc_cascade_sampling_order(3, event_order, c(NA, NA, FALSE, NA, NA),
+                                is_date_connected),
+    c(3, 1, 4))
+  
+  ## anchor = 3
+  ## 3 (correct) --> 1 (erroneous)
+  expect_equal(
+    calc_cascade_sampling_order(3, event_order, c(TRUE, NA, FALSE, FALSE, NA),
+                                is_date_connected),
+    c(3, 1))
+  
+  ## anchor = 3
+  ## 3 (erroneous) cannot cascade as not connected to a correct date
+  expect_equal(
+    calc_cascade_sampling_order(3, event_order, c(NA, NA, TRUE, NA, NA),
+                                is_date_connected),
+    3)
+  
+  ## same as above but 1 is correct (makes no difference)
+  ## anchor = 3
+  ## 3 (erroneous) cannot cascade
+  expect_equal(
+    calc_cascade_sampling_order(3, event_order, c(FALSE, NA, TRUE, NA, NA),
+                                is_date_connected),
+    3)
+  
+  
+  ## anchor = 1
+  ## 1 (correct) --> 3 (erroneous) and 1 --> 4 (missing)
+  ## event order determines order in which we do those
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(FALSE, NA, TRUE, NA, NA),
+                                is_date_connected),
+    c(1, 3, 4))
+  
+  ## anchor = 1
+  ## 1 (correct) --> 3 (erroneous)
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(FALSE, NA, TRUE, FALSE, NA),
+                                is_date_connected),
+    c(1, 3))
+  
+  ## anchor = 1
+  ## 1 (erroneous), no cascade as all connected dates corret
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, FALSE, NA),
+                                is_date_connected),
+    1)
+  
+  ## anchor = 1
+  ## 1 (erroneous) cannot cascade as not connected to correct date
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(TRUE, NA, TRUE, NA, NA),
+                                is_date_connected),
+    1)
+  
+  ## anchor = 1
+  ## 1 (erroneous) --> 4 (erroneous)
+  ## can cascade as 1 is connected to correct date 3
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, NA, NA),
+                                is_date_connected),
+    c(1, 4))
+  
+  
+  # group 4: onset(1) to report(3) and onset(1) to hospitalisation (2) then
+  #          hospitalisation (2) to death (4)
+  
+  event_order <- model_info$event_order[[4]]
+  is_date_connected <- model_info$is_date_connected[, , 4]
+  
+  ## anchor = 1
+  ## all correct, no cascade
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(FALSE, FALSE, FALSE, FALSE, NA),
+                                is_date_connected),
+    1)
+  
+  ## anchor = 1
+  ## 1 (correct) only connected to correct dates, no cascade
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(FALSE, FALSE, FALSE, NA, NA),
+                                is_date_connected),
+    1)
+  
+  ## anchor = 1
+  ## 1 (correct) --> 2 (erroneous) and 1 --> 3 (missing)
+  ## then 2 --> 4 (missing)
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(FALSE, TRUE, NA, NA, NA),
+                                is_date_connected),
+    c(1, 2, 3, 4))
+  
+  ## anchor = 1
+  ## 1 (correct) --> 2 (erroneous) --> 4 (missing)
+  ## no cascade to 3 (correct) 
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(FALSE, TRUE, FALSE, NA, NA),
+                                is_date_connected),
+    c(1, 2, 4))
+  
+  ## anchor = 1
+  ## 1 (correct) --> 3 (erroneous)
+  ## no cascade to 2 (correct) 
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(FALSE, FALSE, TRUE, NA, NA),
+                                is_date_connected),
+    c(1, 3))
+  
+  ## anchor = 1
+  ## cannot cascade as 1 (erroneous) not connected to a correct date
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(TRUE, NA, TRUE, FALSE, NA),
+                                is_date_connected),
+    1)
+  
+  ## anchor = 1
+  ## 1 (erroneous) --> 2 (erroneous) --> 4 (missing)
+  ## can cascade as 1 (erroneous) connected to correct date 3
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, TRUE, NA),
+                                is_date_connected),
+    c(1, 2, 4))
+  
+  ## anchor = 1
+  ## 1 (erroneous) --> 3 (missing)
+  ## can cascade as 1 (erroneous) connected to correct date 2
+  expect_equal(
+    calc_cascade_sampling_order(1, event_order, c(TRUE, FALSE, NA, TRUE, NA),
+                                is_date_connected),
+    c(1, 3))
+  
+  ## anchor = 2
+  ## 2 (correct) --> 1 (erroneous) and 2 (correct) --> 4 (missing)
+  ## then 1 (erroneous) --> 3 (missing)
+  ## can cascade as 1 (erroneous) connected to correct date 2
+  expect_equal(
+    calc_cascade_sampling_order(2, event_order, c(TRUE, FALSE, NA, NA, NA),
+                                is_date_connected),
+    c(2, 1, 4, 3))
+  
+  
+  ## anchor = 2
+  ## 2 (erroneous) --> 1 (erroneous) --> 3 (missing)
+  ## can cascade as 2 (erroneous) connected to correct date 4
+  expect_equal(
+    calc_cascade_sampling_order(2, event_order, c(TRUE, TRUE, NA, FALSE, NA),
+                                is_date_connected),
+    c(2, 1, 3))
+  
+  ## anchor = 2
+  ## 2 (erroneous) --> 4 (erroneous)
+  ## can cascade as 2 (erroneous) connected to correct date 1
+  expect_equal(
+    calc_cascade_sampling_order(2, event_order, c(FALSE, TRUE, NA, TRUE, NA),
+                                is_date_connected),
+    c(2, 4))
+  
+})
+
+
 test_that("updating estimated dates skipped correctly", {
   delay_map <- toy_model()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
@@ -584,4 +781,31 @@ test_that("acceptance probability calculated correctly", {
                      date_range),
     calc_accept(sampling_order, sampling_order_reverse,
                 augmented_data_new, augmented_data, group))
+})
+
+
+test_that("has_mixed_errors returns TRUE only when both TRUE and FALSE present", {
+  # Only non-errors
+  expect_false(has_mixed_errors(c(FALSE, FALSE)))
+  expect_false(has_mixed_errors(c(FALSE, FALSE, FALSE)))
+  
+  # Only errors
+  expect_false(has_mixed_errors(c(TRUE, TRUE)))
+  
+  # Only missing
+  expect_false(has_mixed_errors(c(NA, NA)))
+  
+  # Non-errors and missing (no TRUE)
+  expect_false(has_mixed_errors(c(FALSE, NA)))
+  expect_false(has_mixed_errors(c(FALSE, FALSE, NA)))
+  
+  # Errors and missing (no FALSE)
+  expect_false(has_mixed_errors(c(TRUE, NA)))
+  expect_false(has_mixed_errors(c(TRUE, TRUE, NA)))
+  
+  # Mixed: both FALSE and TRUE present (NA irrelevant)
+  expect_true(has_mixed_errors(c(FALSE, TRUE)))
+  expect_true(has_mixed_errors(c(FALSE, TRUE, NA)))
+  expect_true(has_mixed_errors(c(TRUE, FALSE, FALSE)))
+  expect_true(has_mixed_errors(c(NA, FALSE, TRUE, NA)))
 })
