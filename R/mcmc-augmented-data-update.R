@@ -474,6 +474,9 @@ calc_sampling_order <- function(to_resample, error_indicators,
 
 calc_cascade_sampling_order <- function(i, event_order,
                                         error_indicators, is_date_connected) {
+  
+  ## If date i is missing or erroneous, check if there is a connected date
+  ## that is correct to anchor against
   if (!isFALSE(error_indicators[i])) {
     has_anchor <- any(is_date_connected[event_order, i] & 
                         vlapply(error_indicators[event_order], isFALSE))
@@ -483,18 +486,26 @@ calc_cascade_sampling_order <- function(i, event_order,
   }
   
   sampling_order <- i
+  
+  ## cascade_candidates are dates not already in sampling_order that are
+  ## missing or erroneous
   cascade_candidates <- event_order[event_order != i]
   is_cascade_candidate <- 
     !vlapply(error_indicators[cascade_candidates], isFALSE)
   cascade_candidates <- cascade_candidates[is_cascade_candidate]
   
   while (length(cascade_candidates) > 0) {
+    ## identify which of cascade_candidates are connected to dates in
+    ## sampling_order
     is_cascadable <- rowSums(
       is_date_connected[cascade_candidates, sampling_order, drop = FALSE]) > 0
     to_cascade <- cascade_candidates[is_cascadable]
     if (length(to_cascade) == 0) {
+      ## none connected so return
       return(sampling_order)
     } else {
+      ## add connected cascade candidates to sampling_order and remove
+      ## from cascade candidates
       sampling_order <- c(sampling_order, to_cascade)
       cascade_candidates <- cascade_candidates[!is_cascadable]
     }
