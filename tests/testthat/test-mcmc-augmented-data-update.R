@@ -9,29 +9,37 @@ test_that("sampling order calculated correctly", {
   ## the order in to_resample and whether or not errors or missing dates have
   ## delay-connected dates to use for sampling
   expect_equal(
-    calc_sampling_order(c(1, 3), c(FALSE, NA, TRUE, NA, NA),
-                          model_info$is_date_connected[, , 1]), c(1, 3))
+    calc_batch_sampling_order(c(1, 3), c(FALSE, NA, TRUE, NA, NA),
+                              model_info$is_date_connected[, , 1]),
+    c(1, 3))
   expect_equal(
-    calc_sampling_order(c(1, 3), c(TRUE, NA, FALSE, NA, NA),
-                          model_info$is_date_connected[, , 1]), c(3, 1))
+    calc_batch_sampling_order(c(1, 3), c(TRUE, NA, FALSE, NA, NA),
+                              model_info$is_date_connected[, , 1]),
+    c(3, 1))
   expect_equal(
-    calc_sampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, FALSE, NA),
-                          model_info$is_date_connected[, , 2]), c(4, 3, 1))
+    calc_batch_sampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, FALSE, NA),
+                              model_info$is_date_connected[, , 2]),
+    c(4, 3, 1))
   expect_equal(
-    calc_sampling_order(c(1, 4, 3), c(FALSE, NA, TRUE, TRUE, NA),
-                          model_info$is_date_connected[, , 2]), c(1, 4, 3))
+    calc_batch_sampling_order(c(1, 4, 3), c(FALSE, NA, TRUE, TRUE, NA),
+                              model_info$is_date_connected[, , 2]),
+    c(1, 4, 3))
   expect_equal(
-    calc_sampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, NA, NA),
-                          model_info$is_date_connected[, , 2]), c(3, 1, 4))
+    calc_batch_sampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, NA, NA),
+                              model_info$is_date_connected[, , 2]), 
+    c(3, 1, 4))
   expect_equal(
-    calc_sampling_order(c(5, 3, 2, 1), c(TRUE, NA, FALSE, NA, TRUE),
-                          model_info$is_date_connected[, , 3]), c(3, 1, 2, 5))
+    calc_batch_sampling_order(c(5, 3, 2, 1), c(TRUE, NA, FALSE, NA, TRUE),
+                              model_info$is_date_connected[, , 3]), 
+    c(3, 1, 2, 5))
   expect_equal(
-    calc_sampling_order(c(5, 3, 2, 1), c(FALSE, NA, TRUE, NA, FALSE),
-                          model_info$is_date_connected[, , 3]), c(5, 1, 3, 2))
+    calc_batch_sampling_order(c(5, 3, 2, 1), c(FALSE, NA, TRUE, NA, FALSE),
+                              model_info$is_date_connected[, , 3]),
+    c(5, 1, 3, 2))
   expect_equal(
-    calc_sampling_order(c(5, 3, 2, 1), c(TRUE, FALSE, FALSE, NA, NA),
-                          model_info$is_date_connected[, , 3]), c(3, 2, 5, 1))
+    calc_batch_sampling_order(c(5, 3, 2, 1), c(TRUE, FALSE, FALSE, NA, NA),
+                              model_info$is_date_connected[, , 3]), 
+    c(3, 2, 5, 1))
 })
 
 
@@ -145,7 +153,8 @@ test_that("cascade resampling order calculated correctly", {
   ## anchor = 1
   ## all correct, no cascade
   expect_equal(
-    calc_cascade_sampling_order(1, event_order, c(FALSE, FALSE, FALSE, FALSE, NA),
+    calc_cascade_sampling_order(1, event_order, 
+                                c(FALSE, FALSE, FALSE, FALSE, NA),
                                 is_date_connected),
     1)
   
@@ -309,7 +318,7 @@ test_that("updating error indicators skipped correctly", {
                          error_indicators = c(NA, NA, FALSE, TRUE, NA))
   augmented_data_new <- 
     update_error_indicators1(i, augmented_data, observed_dates, group,
-                            prob_error, model_info, date_range, control, rng)
+                             prob_error, model_info, date_range, control, rng)
   ## augmented_data and rng should be unchanged
   expect_equal(augmented_data, augmented_data_new)
   expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
@@ -459,9 +468,9 @@ test_that("estimated dates proposed correctly", {
   augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
                          error_indicators = c(NA, NA, TRUE, FALSE, NA))
   sampling_order <-
-    calc_sampling_order(model_info$event_order[[group]],
-                          augmented_data$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(model_info$event_order[[group]],
+                              augmented_data$error_indicators,
+                              model_info$is_date_connected[, , group])
   augmented_data_new <- 
     propose_estimated_dates(sampling_order, augmented_data, observed_dates,
                             group, model_info, rng)
@@ -533,9 +542,9 @@ test_that("proposal density calculated correctly", {
   ## then death is proposed based on delay 2 (gamma),
   ##               onset (date 1) to death (date 4)
   sampling_order <-
-    calc_sampling_order(model_info$event_order[[group]],
-                          augmented_data$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(model_info$event_order[[group]],
+                              augmented_data$error_indicators,
+                              model_info$is_date_connected[, , group])
   d <- sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
                     augmented_data$estimated_dates[1],
                   shape = params[1, c(1, 2)], rate = params[2, c(1, 2)],
@@ -741,13 +750,13 @@ test_that("acceptance probability calculated correctly", {
   augmented_data_new <- list(estimated_dates = c(10.5, NA, 50.2, 68.1, NA),
                              error_indicators = c(NA, NA, TRUE, FALSE, NA))
   sampling_order <-
-    calc_sampling_order(model_info$event_order[[group]],
-                          augmented_data_new$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(model_info$event_order[[group]],
+                              augmented_data_new$error_indicators,
+                              model_info$is_date_connected[, , group])
   sampling_order_reverse <-
-    calc_sampling_order(model_info$event_order[[group]],
-                          augmented_data$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(model_info$event_order[[group]],
+                              augmented_data$error_indicators,
+                              model_info$is_date_connected[, , group])
   expect_equal(
     calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
@@ -767,13 +776,13 @@ test_that("acceptance probability calculated correctly", {
   augmented_data_new <- list(estimated_dates = c(2.3, 5.2, 33.2, 40.1, NA),
                              error_indicators = c(TRUE, FALSE, TRUE, NA, NA))
   sampling_order <-
-    calc_sampling_order(model_info$event_order[[group]],
-                          augmented_data_new$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(model_info$event_order[[group]],
+                              augmented_data_new$error_indicators,
+                              model_info$is_date_connected[, , group])
   sampling_order_reverse <-
-    calc_sampling_order(model_info$event_order[[group]],
-                          augmented_data$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(model_info$event_order[[group]],
+                              augmented_data$error_indicators,
+                              model_info$is_date_connected[, , group])
   expect_equal(
     calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
@@ -784,7 +793,8 @@ test_that("acceptance probability calculated correctly", {
 })
 
 
-test_that("has_mixed_errors returns TRUE only when both TRUE and FALSE present", {
+test_that("has_mixed_errors returns TRUE only when both TRUE and FALSE 
+          present", {
   # Only non-errors
   expect_false(has_mixed_errors(c(FALSE, FALSE)))
   expect_false(has_mixed_errors(c(FALSE, FALSE, FALSE)))
