@@ -406,12 +406,12 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
   augmented_data_new <- change_error_indicators(augmented_data, event_order)
   
   sampling_order <- 
-    calc_sampling_order(event_order, augmented_data_new$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(event_order, augmented_data_new$error_indicators,
+                              model_info$is_date_connected[, , group])
   
   sampling_order_reverse <- 
-    calc_sampling_order(event_order, augmented_data$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(event_order, augmented_data$error_indicators,
+                              model_info$is_date_connected[, , group])
 
   # systematically sample new errors and missing dates based on new non-errors
   augmented_data_new <- 
@@ -433,8 +433,8 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
 }
 
 
-calc_sampling_order <- function(to_resample, error_indicators,
-                                is_date_connected) {
+calc_batch_sampling_order <- function(to_resample, error_indicators,
+                                      is_date_connected) {
   
   if (length(to_resample) == 1) {
     return(to_resample)
