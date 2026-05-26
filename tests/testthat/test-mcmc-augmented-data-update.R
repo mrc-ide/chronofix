@@ -444,6 +444,7 @@ test_that("estimated dates proposed correctly", {
   
   
   ## group 2, propose new (error) death date
+  ## based on delay 2, onset (date 1) to death (date 4)
   group <- 2
   to_update <- 4
   observed_dates <- c(NA, NA, 40, 68, NA)
@@ -457,7 +458,7 @@ test_that("estimated dates proposed correctly", {
   expect_equal(augmented_data$estimated_dates[-to_update],
                augmented_data_new$estimated_dates[-to_update])
   expect_equal(augmented_data_new$estimated_dates[to_update],
-               sample_from_delay(to_update, augmented_data_new$estimated_dates,
+               sample_from_delay(to_update, augmented_data_new,
                                  group, model_info, rng1))
   
   
@@ -476,15 +477,16 @@ test_that("estimated dates proposed correctly", {
                             group, model_info, rng)
   expect_equal(augmented_data_new$error_indicators, 
                augmented_data$error_indicators)
-  estimated_dates <- rep(NA, 5)
+  cmp <- list(estimated_dates = rep(NA, 5),
+              error_indicators = augmented_data$error_indicators)
   ## date 4 will be sampled based on observed date
-  estimated_dates[4] <- observed_dates[4] + monty::monty_random_real(rng1)
+  cmp$estimated_dates[4] <- observed_dates[4] + monty::monty_random_real(rng1)
   ## will then sample date 1 (connected to date 4) and then date 3
-  estimated_dates[1] <- 
-    sample_from_delay(1, estimated_dates, group, model_info, rng1)
-  estimated_dates[3] <- 
-    sample_from_delay(3, estimated_dates, group, model_info, rng1)
-  expect_equal(augmented_data_new$estimated_dates, estimated_dates)
+  cmp$estimated_dates[1] <- 
+    sample_from_delay(1, cmp, group, model_info, rng1)
+  cmp$estimated_dates[3] <- 
+    sample_from_delay(3, cmp, group, model_info, rng1)
+  expect_equal(augmented_data_new$estimated_dates, cmp$estimated_dates)
   
 })
 
@@ -525,13 +527,12 @@ test_that("proposal density calculated correctly", {
   
   ## group 2, updated missing onset date 
   ## based on delay 1 (gamma), onset (date 1) to report (date 3)
-  ## and delay 2 (gamma), onset (date 1) to death (date 4)
-  ## the two delays are equally likely to be used
+  ## but not delay 2 (gamma), onset (date 1) to death (date 4)
+  ## because date 3 is correct and date 4 is not
   updated <- 1
-  d <- log(sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
-                        augmented_data$estimated_dates[1],
-                      shape = params[1, c(1, 2)], 
-                      rate = params[2, c(1, 2)]))) - log(2)
+  d <- dgamma(augmented_data$estimated_dates[3] - 
+                augmented_data$estimated_dates[1],
+              shape = params[1, 1], rate = params[2, 1], log = TRUE)
   expect_equal(
     calc_proposal_density(updated, augmented_data, group, model_info), d)
   
@@ -551,6 +552,34 @@ test_that("proposal density calculated correctly", {
                   log = TRUE))
   expect_equal(calc_proposal_density(
     sampling_order, augmented_data, group, model_info), d)
+  
+  ## group 2, updated missing onset date 
+  ## based on delay 1 (gamma), onset (date 1) to report (date 3)
+  ## and delay 2 (gamma), onset (date 1) to death (date 4)
+  ## the two delays are equally likely to be used as dates 3 and 4 both correct
+  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
+                         error_indicators = c(NA, NA, FALSE, FALSE, NA))
+  updated <- 1
+  d <- log(sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
+                        augmented_data$estimated_dates[1],
+                      shape = params[1, c(1, 2)], 
+                      rate = params[2, c(1, 2)]))) - log(2)
+  expect_equal(
+    calc_proposal_density(updated, augmented_data, group, model_info), d)
+  
+  ## group 2, updated missing onset date 
+  ## based on delay 1 (gamma), onset (date 1) to report (date 3)
+  ## and delay 2 (gamma), onset (date 1) to death (date 4)
+  ## the two delays are equally likely to be used as dates 3 and 4 both error
+  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
+                         error_indicators = c(NA, NA, FALSE, FALSE, NA))
+  updated <- 1
+  d <- log(sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
+                        augmented_data$estimated_dates[1],
+                      shape = params[1, c(1, 2)], 
+                      rate = params[2, c(1, 2)]))) - log(2)
+  expect_equal(
+    calc_proposal_density(updated, augmented_data, group, model_info), d)
   
   
   # group 4, 3 dates
@@ -572,13 +601,12 @@ test_that("proposal density calculated correctly", {
   
   ## group 4, updated error hospitalisation date 
   ## based on delay 5 (log-normal), onset (date 1) to hospitalisation (date 2)
-  ## and delay 6 (log-normal), hospitalisation (date 2) to death (date 4)
-  ## the two delays are equally likely to be used
+  ## but not delay 6 (log-normal), hospitalisation (date 2) to death (date 4)
+  ## because date 1 is correct and date 4 is missing
   updated <- 2
-  d <- log(sum(dlnorm(augmented_data$estimated_dates[c(2, 4)] - 
-                        augmented_data$estimated_dates[c(1, 2)],
-                      meanlog = params[1, c(5, 6)], 
-                      sdlog = params[2, c(5, 6)]))) - log(2)
+  d <- dlnorm(augmented_data$estimated_dates[2] - 
+                augmented_data$estimated_dates[1],
+              meanlog = params[1, 5], sdlog = params[2, 5], log = TRUE)
   expect_equal(
     calc_proposal_density(updated, augmented_data, group, model_info), d)
   
@@ -602,6 +630,38 @@ test_that("proposal density calculated correctly", {
                     augmented_data$estimated_dates[c(1, 2)],
                   meanlog = params[1, c(5, 6)], sdlog = params[2, c(5, 6)],
                   log = TRUE))
+  expect_equal(
+    calc_proposal_density(updated, augmented_data, group, model_info), d)
+  
+  
+  ## group 4, updated error hospitalisation date 
+  ## based on delay 5 (log-normal), onset (date 1) to hospitalisation (date 2)
+  ## and delay 6 (log-normal), hospitalisation (date 2) to death (date 4)
+  ## the two delays are equally likely to be used
+  ## because both date 1 and 4 are correct
+  updated <- 2
+  augmented_data <- list(estimated_dates = c(10.3, 15.4, 30.2, 40.1, NA),
+                         error_indicators = c(FALSE, TRUE, FALSE, FALSE, NA))
+  d <- log(sum(dlnorm(augmented_data$estimated_dates[c(2, 4)] - 
+                        augmented_data$estimated_dates[c(1, 2)],
+                      meanlog = params[1, c(5, 6)], 
+                      sdlog = params[2, c(5, 6)]))) - log(2)
+  expect_equal(
+    calc_proposal_density(updated, augmented_data, group, model_info), d)
+  
+  
+  ## group 4, updated error hospitalisation date 
+  ## based on delay 5 (log-normal), onset (date 1) to hospitalisation (date 2)
+  ## and delay 6 (log-normal), hospitalisation (date 2) to death (date 4)
+  ## the two delays are equally likely to be used
+  ## because neither date 1 nor 4 are correct
+  updated <- 2
+  augmented_data <- list(estimated_dates = c(10.3, 15.4, 30.2, 40.1, NA),
+                         error_indicators = c(TRUE, TRUE, FALSE, NA, NA))
+  d <- log(sum(dlnorm(augmented_data$estimated_dates[c(2, 4)] - 
+                        augmented_data$estimated_dates[c(1, 2)],
+                      meanlog = params[1, c(5, 6)], 
+                      sdlog = params[2, c(5, 6)]))) - log(2)
   expect_equal(
     calc_proposal_density(updated, augmented_data, group, model_info), d)
 })
