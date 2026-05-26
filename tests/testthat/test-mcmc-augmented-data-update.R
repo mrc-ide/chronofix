@@ -852,7 +852,6 @@ test_that("acceptance probability calculated correctly", {
                 augmented_data_new, augmented_data, group))
 })
 
-
 test_that("has_mixed_errors returns TRUE only when both TRUE and FALSE 
           present", {
   # Only non-errors
@@ -879,3 +878,4 @@ test_that("has_mixed_errors returns TRUE only when both TRUE and FALSE
   expect_true(has_mixed_errors(c(TRUE, FALSE, FALSE)))
   expect_true(has_mixed_errors(c(NA, FALSE, TRUE, NA)))
 })
+
