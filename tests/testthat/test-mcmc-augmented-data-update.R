@@ -444,6 +444,7 @@ test_that("estimated dates proposed correctly", {
   
   
   ## group 2, propose new (error) death date
+  ## based on delay 2, onset (date 1) to death (date 4)
   group <- 2
   to_update <- 4
   observed_dates <- c(NA, NA, 40, 68, NA)
