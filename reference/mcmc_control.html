@@ -60,7 +60,8 @@
 <span>  cv_sdlog <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  prob_update_estimated_dates <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  prob_update_error_indicators <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  prob_error_swap <span class="op">=</span> <span class="fl">1</span></span>
+<span>  prob_error_swap <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  cascade_sampling <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -150,6 +151,11 @@ accordingly) at each iteration in the MCMC</p></dd>
 <dd><p>The probability of proposing to swap all errors to
 non-errors and vice versa (excluding missing dates) for individuals with at
 least one error and non-error at each iteration in the MCMC</p></dd>
+
+
+<dt id="arg-cascade-sampling">cascade_sampling<a class="anchor" aria-label="anchor" href="#arg-cascade-sampling"></a></dt>
+<dd><p>Logical, indicating whether or not to use cascade
+sampling for estimated dates when updating an error indicator</p></dd>
 
 </dl></div>
     <div id="value">
