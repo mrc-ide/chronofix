@@ -1,4 +1,4 @@
 library(testthat)
-library(datefixer)
+library(chronofix)
 
-test_check("datefixer")
+test_check("chronofix")

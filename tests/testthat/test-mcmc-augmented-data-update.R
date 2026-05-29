@@ -683,7 +683,7 @@ test_that("acceptance probability calculated correctly", {
   calc_accept <- function(sampling_order, sampling_order_reverse,
                           augmented_data_new, augmented_data, group) {
     ll_delays_current <- 
-      datefixer_log_likelihood_delays1(augmented_data$estimated_dates,
+      chronofix_log_likelihood_delays1(augmented_data$estimated_dates,
                                        model_info$delay_mean, 
                                        model_info$delay_cv,
                                        model_info$delay_from, 
@@ -691,7 +691,7 @@ test_that("acceptance probability calculated correctly", {
                                        model_info$delay_distribution,
                                        model_info$is_delay_in_group[, group])
     ll_delays_new <- 
-      datefixer_log_likelihood_delays1(augmented_data_new$estimated_dates,
+      chronofix_log_likelihood_delays1(augmented_data_new$estimated_dates,
                                        model_info$delay_mean, 
                                        model_info$delay_cv,
                                        model_info$delay_from, 
@@ -700,11 +700,11 @@ test_that("acceptance probability calculated correctly", {
                                        model_info$is_delay_in_group[, group])
     
     ll_errors_current <-
-      datefixer_log_likelihood_errors(prob_error, 
+      chronofix_log_likelihood_errors(prob_error, 
                                       augmented_data$error_indicators,
                                       date_range)
     ll_errors_new <-
-      datefixer_log_likelihood_errors(prob_error, 
+      chronofix_log_likelihood_errors(prob_error, 
                                       augmented_data_new$error_indicators,
                                       date_range)
     
