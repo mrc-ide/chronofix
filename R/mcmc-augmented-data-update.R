@@ -255,7 +255,7 @@ calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
   }
   
   ## new delays log likelihood
-  ll_delays_new <- datefixer_log_likelihood_delays1(
+  ll_delays_new <- chronofix_log_likelihood_delays1(
     augmented_data_new$estimated_dates, model_info$delay_mean, 
     model_info$delay_cv, model_info$delay_from, model_info$delay_to,
     model_info$delay_distribution, is_delay_in_group)
@@ -271,7 +271,7 @@ calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
   }
   
   ## current delays log likelihood
-  ll_delays_current <- datefixer_log_likelihood_delays1(
+  ll_delays_current <- chronofix_log_likelihood_delays1(
     augmented_data$estimated_dates, model_info$delay_mean, model_info$delay_cv,
     model_info$delay_from, model_info$delay_to, model_info$delay_distribution,
     is_delay_in_group)
@@ -284,10 +284,10 @@ calc_accept_prob <- function(updated, augmented_data_new, augmented_data,
     ratio_ll_errors <- 0 
   } else {
     ## current errors log likelihood
-    ll_errors_current <- datefixer_log_likelihood_errors(
+    ll_errors_current <- chronofix_log_likelihood_errors(
       prob_error, augmented_data$error_indicators, date_range)
     ## new errors log likelihood
-    ll_errors_new <- datefixer_log_likelihood_errors(
+    ll_errors_new <- chronofix_log_likelihood_errors(
       prob_error, augmented_data_new$error_indicators, date_range)
     
     ratio_ll_errors <- ll_errors_new - ll_errors_current

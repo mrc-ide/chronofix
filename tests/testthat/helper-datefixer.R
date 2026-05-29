@@ -56,9 +56,9 @@ toy_model <- function(named_groups = TRUE, control = mcmc_control()) {
   )
   
   ## setup model
-  hyperparameters <- datefixer_hyperparameters()
+  hyperparameters <- chronofix_hyperparameters()
   
-  model <- datefixer_model(sim_result$observed_data, params$delay_map, 
+  model <- chronofix_model(sim_result$observed_data, params$delay_map, 
                            hyperparameters, control)
   
   list(model = model,

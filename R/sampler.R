@@ -1,24 +1,24 @@
-#' Datefixer sampler
+#' chronofix sampler
 #' @param control Object produced by `mcmc_control()`
-#' @return A monty sampler configured for the datefixer model.
+#' @return A monty sampler configured for the chronofix model.
 #' @export
-datefixer_sampler <- function(control) {
+chronofix_sampler <- function(control) {
   monty::monty_sampler(
-    "datefixer sampler",
-    "datefixer sampler",
+    "chronofix sampler",
+    "chronofix sampler",
     control,
-    datefixer_sampler_initialise,
-    datefixer_sampler_step,
+    chronofix_sampler_initialise,
+    chronofix_sampler_step,
     properties = monty::monty_sampler_properties(allow_augmented_data = TRUE))
 }
 
 
-datefixer_sampler_initialise <- function(state_chain, control, model, rng) {
+chronofix_sampler_initialise <- function(state_chain, control, model, rng) {
   return(NULL)
 }
 
 
-datefixer_sampler_step <- function(state_chain, state_sampler, control, 
+chronofix_sampler_step <- function(state_chain, state_sampler, control, 
                                    model, rng) {
   
   state_chain <- update_pars_delay(state_chain, control, model, rng)
