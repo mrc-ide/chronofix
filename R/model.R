@@ -1,6 +1,6 @@
-##' Create a datefixer model
+##' Create a chronofix model
 ##'
-##' @title Create a datefixer model
+##' @title Create a chronofix model
 ##'
 ##' @param data Observed data
 ##'
@@ -10,10 +10,10 @@
 ##' 
 ##' @param control List of control parameters
 ##' 
-##' @return A datefixer model
+##' @return A chronofix model
 ##'
 ##' @export
-datefixer_model <- function(data, delay_map, hyperparameters, control) {
+chronofix_model <- function(data, delay_map, hyperparameters, control) {
   
   x <- validate_data_and_delays(data, delay_map)
 
@@ -33,7 +33,7 @@ datefixer_model <- function(data, delay_map, hyperparameters, control) {
   
   data_packer <- make_augmented_data_packer(observed_dates)
   
-  density <- make_datefixer_density(parameters, groups, model_info, date_range,
+  density <- make_chronofix_density(parameters, groups, model_info, date_range,
                                     hyperparameters, data_packer)
   
   augmented_data_update <- 
@@ -77,7 +77,7 @@ datefixer_model <- function(data, delay_map, hyperparameters, control) {
 ##' @return List of hyperparameters
 ##'
 ##' @export
-datefixer_hyperparameters <- function(prob_error_shape1 = 1,
+chronofix_hyperparameters <- function(prob_error_shape1 = 1,
                                       prob_error_shape2 = 1,
                                       delay_mean_scale = 10,
                                       delay_cv_scale = 10) {
@@ -210,13 +210,13 @@ make_model_info <- function(delay_map, dates) {
 }
 
 
-make_datefixer_density <- function(parameters, groups, model_info, date_range,
+make_chronofix_density <- function(parameters, groups, model_info, date_range,
                                    hyperparameters, data_packer) {
   
   density <- function(pars) {
     names(pars) <- parameters
     
-    log_likelihood <- datefixer_log_likelihood(pars, groups, model_info,
+    log_likelihood <- chronofix_log_likelihood(pars, groups, model_info,
                                                date_range, data_packer)
   }
   
@@ -252,18 +252,18 @@ make_prior <- function(parameters, hyperparameters, domain) {
 }
 
 
-datefixer_log_likelihood <- function(pars, groups, model_info, date_range,
+chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
                                      data_packer) {
   augmented_data <- unpack_augmented_data(attr(pars, "data"), data_packer)
   
-  ll_errors <- datefixer_log_likelihood_errors(pars[["prob_error"]],
+  ll_errors <- chronofix_log_likelihood_errors(pars[["prob_error"]],
                                                augmented_data$error_indicators,
                                                date_range)
   
   delays <- seq_along(model_info$delay_from)
   
   ll_delays <- 
-    datefixer_log_likelihood_delays(augmented_data$estimated_dates,
+    chronofix_log_likelihood_delays(augmented_data$estimated_dates,
                                     groups,
                                     pars[paste0("delay_mean", delays)],
                                     pars[paste0("delay_cv", delays)],
@@ -275,7 +275,7 @@ datefixer_log_likelihood <- function(pars, groups, model_info, date_range,
 }
 
 
-datefixer_log_likelihood_errors <- function(prob_error, error_indicators,
+chronofix_log_likelihood_errors <- function(prob_error, error_indicators,
                                             date_range) {
   n_errors <- sum(error_indicators, na.rm = TRUE)
   n_non_errors <- sum(!error_indicators, na.rm = TRUE)
@@ -288,14 +288,14 @@ datefixer_log_likelihood_errors <- function(prob_error, error_indicators,
 }
 
 
-datefixer_log_likelihood_delays <- function(estimated_dates, groups, delay_means,
+chronofix_log_likelihood_delays <- function(estimated_dates, groups, delay_means,
                                             delay_cvs, model_info) {
   
   ll_delays <- array(0, c(length(groups), length(delay_means)))
   for (i in unique(groups)) {
     group_i <- groups == i
     ll_delays[group_i, ] <- 
-      datefixer_log_likelihood_delays1(estimated_dates[group_i, , drop = FALSE],
+      chronofix_log_likelihood_delays1(estimated_dates[group_i, , drop = FALSE],
                                        delay_means,
                                        delay_cvs,
                                        model_info$delay_from,
@@ -309,7 +309,7 @@ datefixer_log_likelihood_delays <- function(estimated_dates, groups, delay_means
 }
 
 
-datefixer_log_likelihood_delays1 <- function(estimated_dates, delay_means,
+chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_means,
                                              delay_cvs, delay_from, delay_to,
                                              delay_distribution,
                                              is_delay_in_group) {
