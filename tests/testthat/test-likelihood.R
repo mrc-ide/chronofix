@@ -20,7 +20,7 @@ test_that("error log-likelihood calculated correctly", {
     n_errors * log(diff(date_range) - 1)
   
   expect_equal(
-    datefixer_log_likelihood_errors(prob_error, error_indicators, date_range),
+    chronofix_log_likelihood_errors(prob_error, error_indicators, date_range),
     ll_expected)
 })
 
@@ -75,7 +75,7 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 1, onset & report
   estimated_dates <- c(3.5, NA, 6.5, NA, NA)
-  ll <- datefixer_log_likelihood_delays1(estimated_dates, delay_means,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
                                          delay_cvs, delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 1])
@@ -83,7 +83,7 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 1, onset & report, negative delay
   estimated_dates <- c(3.5, NA, 2.5, NA, NA)
-  ll <- datefixer_log_likelihood_delays1(estimated_dates, delay_means,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
                                          delay_cvs, delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 1])
@@ -92,7 +92,7 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 2, onset, report & death
   estimated_dates <- c(3.5, NA, 6.5, 7, NA)
-  ll <- datefixer_log_likelihood_delays1(estimated_dates, delay_means,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
                                          delay_cvs, delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 2])
@@ -100,7 +100,7 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 2, onset, report & death, negative delay
   estimated_dates <- c(3.5, NA, 6.5, 1, NA)
-  ll <- datefixer_log_likelihood_delays1(estimated_dates, delay_means,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
                                          delay_cvs, delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 2])
@@ -109,7 +109,7 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 3, onset, report, hospitalisation & discharge
   estimated_dates <- c(3.5, 8.4, 6.5, NA, 12.1)
-  ll <- datefixer_log_likelihood_delays1(estimated_dates, delay_means,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
                                          delay_cvs, delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 3])
@@ -117,7 +117,7 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 3, onset, report, hospitalisation & discharge, negative delay
   estimated_dates <- c(3.5, 8.4, 6.5, NA, 7.3)
-  ll <- datefixer_log_likelihood_delays1(estimated_dates, delay_means,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
                                          delay_cvs, delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 3])
@@ -126,7 +126,7 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 4, onset, report, hospitalisation & death
   estimated_dates <- c(3.5, 8.4, 6.5, 12.1, NA)
-  ll <- datefixer_log_likelihood_delays1(estimated_dates, delay_means,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
                                          delay_cvs, delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 4])
@@ -134,7 +134,7 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 3, onset, report, hospitalisation & discharge, negative delay
   estimated_dates <- c(3.5, 8.4, 6.5, 7.3, NA)
-  ll <- datefixer_log_likelihood_delays1(estimated_dates, delay_means,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
                                          delay_cvs, delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 4])
@@ -183,13 +183,13 @@ test_that("log-likelihood aggregates correctly", {
   ## error log-likelihood by row
   ll_errors <- 
     apply(error_indicators, 1, 
-          function(x) datefixer_log_likelihood_errors(prob_error, x, date_range)
+          function(x) chronofix_log_likelihood_errors(prob_error, x, date_range)
     )
   
   ## delay log-likelihood by row (and delay)
   calc_ll_delay1 <- function(i) {
     group <- which(model_info$groups == data$true_data$group[i])
-    datefixer_log_likelihood_delays1(
+    chronofix_log_likelihood_delays1(
       estimated_dates[i, ], delay_means, delay_cvs, model_info$delay_from,
       model_info$delay_to, model_info$delay_distribution,
       model_info$is_delay_in_group[, group])
