@@ -1,9 +1,9 @@
-Package: datefixer
+Package: chronofix
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: datefixer is an R package for Bayesian estimation of event dates
+Description: chronofix is an R package for Bayesian estimation of event dates
  and delay distributions using epidemiological line-list data. It is designed
  to handle commonly encountered issues with line-list datasets during outbreaks,
  including missing event dates (e.g., symptom onset, hospitalisation, or death)
