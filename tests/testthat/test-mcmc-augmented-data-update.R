@@ -792,6 +792,51 @@ test_that("acceptance probability calculated correctly", {
                 augmented_data_new, augmented_data, group))
 })
 
+test_that("acceptance probability is positive for a better fitting proposed state", {
+  delay_map <- toy_model()$delay_map
+  dates <- c("onset", "hospitalisation", "report", "death", "discharge")
+  model_info <- make_model_info(delay_map, dates)
+  
+  ## Set tight delay distributions so that moving report closer to the
+  ## expected onset -> report delay gives a clearly better fit.
+  model_info$delay_mean <- rep(10, 6)
+  model_info$delay_cv <- rep(0.1, 6)
+  
+  prob_error <- 0.05
+  date_range <- c(0, 1000)
+  group <- 2
+  
+  observed_dates <- c(NA, NA, 102, 110, NA)
+  
+  ## Current: onset -> report delay is 2 days
+  augmented_data <- list(
+    estimated_dates = c(100.0, NA, 102.0, 110.0, NA),
+    error_indicators = c(NA, NA, FALSE, FALSE, NA)
+  )
+  
+  ## Proposed: onset -> report delay is 10 days
+  augmented_data_new <- list(
+    estimated_dates = c(100.0, NA, 110.0, 110.0, NA),
+    error_indicators = c(NA, NA, FALSE, FALSE, NA)
+  )
+  
+  sampling_order <- 3
+  sampling_order_reverse <- 3
+  
+  log_accept_ratio <- calc_accept_prob(
+    sampling_order,
+    sampling_order_reverse,
+    augmented_data_new,
+    augmented_data,
+    observed_dates,
+    group,
+    prob_error,
+    model_info,
+    date_range
+  )
+  
+  expect_gt(log_accept_ratio, 0)
+})
 
 test_that("has_mixed_errors returns TRUE only when both TRUE and FALSE 
           present", {
