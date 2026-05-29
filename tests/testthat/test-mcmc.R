@@ -5,7 +5,7 @@ test_that("Can run mcmc", {
   model <- toy_model(control = control)$model
   initial <- mcmc_initial(model)
   
-  sampler <- datefixer_sampler(control)
+  sampler <- chronofix_sampler(control)
   samples <- mcmc_run(model, sampler, initial, control)
   
   expect_equal(dim(samples$pars), c(length(model$parameters), 50, 3))
