@@ -848,10 +848,10 @@ test_that("acceptance probability calculated correctly", {
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
-
     calc_accept(sampling_order, sampling_order_reverse,
                 augmented_data_new, augmented_data, group))
 })
+
 
 test_that("has_mixed_errors returns TRUE only when both TRUE and FALSE 
           present", {
