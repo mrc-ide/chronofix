@@ -98,6 +98,9 @@ mcmc_run <- function(model,
 ##' @param prob_error_swap The probability of proposing to swap all errors to
 ##' non-errors and vice versa (excluding missing dates) for individuals with at
 ##' least one error and non-error at each iteration in the MCMC
+##' 
+##' @param cascade_sampling Logical, indicating whether or not to use cascade
+##'   sampling for estimated dates when updating an error indicator
 ##'
 ##' @return List of control parameters
 ##'
@@ -117,7 +120,8 @@ mcmc_control <- function(n_steps = 1000,
                          cv_sdlog = 1,
                          prob_update_estimated_dates = 0.1,
                          prob_update_error_indicators = 0.1,
-                         prob_error_swap = 1) {
+                         prob_error_swap = 1,
+                         cascade_sampling = FALSE) {
   
   list(n_steps = n_steps,
        burnin = burnin,
@@ -134,7 +138,8 @@ mcmc_control <- function(n_steps = 1000,
        cv_sdlog = cv_sdlog,
        prob_update_estimated_dates = prob_update_estimated_dates,
        prob_update_error_indicators = prob_update_error_indicators,
-       prob_error_swap = prob_error_swap)
+       prob_error_swap = prob_error_swap,
+       cascade_sampling = cascade_sampling)
 }
 
 ##' Create initial parameter values

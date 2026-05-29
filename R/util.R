@@ -29,3 +29,7 @@ squote <- function(x) {
   sprintf("'%s'", x)
 }
 
+
+vlapply <- function(...) {
+  vapply(..., FUN.VALUE = TRUE)
+}
