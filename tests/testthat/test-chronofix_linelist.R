@@ -211,3 +211,33 @@ test_that("chronofix_linelist writes xlsx output", {
   expect_true(file.exists(path))
   expect_false(any(grepl("_p_error$", names(result))))
 })
+
+test_that("chronofix_linelist flags filename and fileext mismatch", {
+  mock <- make_mock_data()
+  path <- tempfile(fileext = ".xlsx")
+  
+  expect_error(
+    result <-
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      observed_data = mock$observed,
+      format = "csv",
+      filename = path),
+    "Extension mismatch: 'filename' has extension '.xlsx' but 'format' is set to 'csv'.",
+    fixed = TRUE
+  )
+  
+  path <- tempfile(fileext = ".csv")
+  
+  expect_error(
+    result <-
+      chronofix_linelist(
+        mcmc_output = mock$mcmc,
+        observed_data = mock$observed,
+        format = "xlsx",
+        filename = path),
+    "Extension mismatch: 'filename' has extension '.csv' but 'format' is set to 'xlsx'.",
+    fixed = TRUE
+  )
+  
+})
