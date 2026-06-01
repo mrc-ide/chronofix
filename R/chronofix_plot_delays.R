@@ -38,13 +38,18 @@ chronofix_plot_delays <- function(mcmc_output,
     }
     clean_group <- paste(raw_group, collapse = ", ")
     clean_group <- tools::toTitleCase(gsub("[-_]", " ", clean_group))
+    clean_group_wrapped <- paste(strwrap(clean_group, width = 40), collapse = "\n")
     
     # clean up delays
     from_name <- tools::toTitleCase(as.character(delay_map$from[i]))
     to_name <- tools::toTitleCase(as.character(delay_map$to[i]))
     
-    panel_title <- sprintf("Group: %s\nDelay: %s to %s",
-                           clean_group, from_name, to_name)
+    panel_title <- sprintf(
+      "Group: %s\nDelay: %s to %s",
+      clean_group_wrapped,
+      from_name,
+      to_name
+    )
     
     mean_samps <- pars_flat[paste0("delay_mean", i), ]
     cv_samps <- pars_flat[paste0("delay_cv", i), ]
@@ -124,7 +129,8 @@ chronofix_plot_delays <- function(mcmc_output,
       subtitle = "Dashed curve: Posterior Median. Dotted line: Peak Density. Shaded area: 95% CrI."
     ) +
     theme(
-      strip.text = element_text(face = "bold", size = 10, margin = margin(b = 5, t = 5)),
+      strip.text = element_text(face = "bold", size = 9, lineheight = 0.95,
+                                margin = margin(b = 6, t = 6)),
       strip.background = element_rect(fill = "#f8f9fa", color = "#cccccc"),
       panel.grid.minor = element_blank(),
       axis.title = element_text(face = "bold"),
