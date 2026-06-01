@@ -1,6 +1,6 @@
 #' @title Plot Estimated Delay Distributions
 #' 
-#' @param mcmc_output Output list from mcmc_run()
+#' @param mcmc_output Output list from `chronofix_mcmc_run()`
 #' @param delay_map The delay_map used for the model setup
 #' @param n_points Number of points along the x-axis to evaluate (default 200)
 #' 
