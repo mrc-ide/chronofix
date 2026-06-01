@@ -6,9 +6,10 @@
 #' 
 #' @import ggplot2
 #' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
-plot_delay_distributions <- function(mcmc_output,
-                                     delay_map,
-                                     n_points = 200) {
+#' @export
+chronofix_plot_delays <- function(mcmc_output,
+                                  delay_map,
+                                  n_points = 200) {
   
   pars_array <- mcmc_output$pars
   n_params <- dim(pars_array)[1]
