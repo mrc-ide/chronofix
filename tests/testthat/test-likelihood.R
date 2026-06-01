@@ -142,7 +142,7 @@ test_that("individual delay log-likelihood calculated correctly", {
 })
 
 test_that("log-likelihood aggregates correctly", {
-  control <- mcmc_control()
+  control <- chronofix_mcmc_control()
   toy <- toy_model(control = control)
   model <- toy$model
   data <- toy$data
