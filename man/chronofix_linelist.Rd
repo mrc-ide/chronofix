@@ -24,7 +24,7 @@ as an error (default 0.5).}
 
 \item{format}{File format for the corrected linelist. Default xlsx.}
 
-\item{filename}{Output file path. If NULL, defaults to "corrected_linelist.xlsx".}
+\item{filename}{Output file path. If NULL, defaults to "chronofix_linelist.xlsx".}
 
 \item{show_p_error}{Logical. If FALSE (default), posterior probability
 columns are hidden in Excel.}

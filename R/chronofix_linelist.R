@@ -6,7 +6,7 @@
 ##' @param error_threshold Posterior probability threshold to classify a date
 ##'  as an error (default 0.5).
 ##' @param format File format for the corrected linelist. Default xlsx.
-##' @param filename Output file path. If NULL, defaults to "corrected_linelist.xlsx".
+##' @param filename Output file path. If NULL, defaults to "chronofix_linelist.xlsx".
 ##' @param show_p_error Logical. If FALSE (default), posterior probability
 ##'  columns are hidden in Excel.
 ##'
@@ -85,7 +85,7 @@ chronofix_linelist <- function(mcmc_output = NULL,
   # Export as CSV
   if (tolower(format) == "csv") {
     message("Note: Saving to CSV removes all coloured formatting")
-    if (is.null(filename)) filename <- "corrected_linelist.csv"
+    if (is.null(filename)) filename <- "chronofix_linelist.csv"
     write.csv(results_data, filename, row.names = FALSE)
     message("Saved CSV linelist to ", filename)
     return(invisible(results_data))
@@ -93,7 +93,7 @@ chronofix_linelist <- function(mcmc_output = NULL,
   
   # Export as XLSX
   if (tolower(format) == "xlsx") {
-    if (is.null(filename)) filename <- "corrected_linelist.xlsx"
+    if (is.null(filename)) filename <- "chronofix_linelist.xlsx"
     wb <- openxlsx::createWorkbook()
     
     openxlsx::addWorksheet(wb, "Corrected Dates")
