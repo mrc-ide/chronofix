@@ -26,13 +26,19 @@ correct_linelist <- function(mcmc_output = NULL,
   
   if (missing(mcmc_output)) stop("'mcmc_output' is missing.")
   if (missing(observed_data)) stop("'observed_data' is missing.")
+  if (!"group" %in% colnames(observed_data)) {
+    stop("No 'group' column found in observed_data")
+  }
+  if (!tolower(format) %in% c("xlsx", "csv")) {
+    stop("The 'format' argument must be either 'xlsx' or 'csv'.")
+  }
   
   est_dates_flat <- mcmc_output$data$estimated_dates
   error_ind_array <- mcmc_output$data$error_indicators
   
   # convert dates back to numeric to apply the dimensions
   # [individuals, events, iterations, chains]
-  est_dates_numeric <- as.numeric(est_dates_flat)
+  est_dates_numeric <- as.numeric(as.Date(est_dates_flat))
   dim(est_dates_numeric) <- dim(error_ind_array)
   
   # calculate posterior summaries - mean/median across iterations and chains 
@@ -51,12 +57,7 @@ correct_linelist <- function(mcmc_output = NULL,
   event_names <- paste0(toupper(substr(raw_names, 1, 1)), substring(raw_names, 2))
   
   results_data <- data.frame(ID = seq_len(n_individuals))
-  
-  if ("group" %in% colnames(observed_data)) {
-    results_data$Group <- observed_data$group
-  } else {
-    warning("No 'group' column found in observed_data")
-  }
+  results_data$Group <- observed_data$group
   
   status_matrix <- matrix(NA, nrow = n_individuals, ncol = n_events)
   
@@ -171,5 +172,4 @@ correct_linelist <- function(mcmc_output = NULL,
     return(invisible(results_data))
   }
   
-  stop("The 'format' argument must be either 'xlsx' or 'csv'.")
 }

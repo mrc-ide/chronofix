@@ -156,7 +156,7 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
 
 
 # Sample new date using randomly selected delay
-sample_from_delay <- function(i, estimated_dates, group, model_info,
+sample_from_delay <- function(i, augmented_data, group, model_info,
                               rng) {
   
   is_date_in_delay <- model_info$is_date_in_delay[i, , group]
@@ -168,9 +168,18 @@ sample_from_delay <- function(i, estimated_dates, group, model_info,
                            model_info$delay_to[which_delays])
   
   ## Filter to only delays where the other date is available (needed for swap)
-  valid_delays <- which_delays[!is.na(estimated_dates[other_date_idx])]
-  other_date_idx <- other_date_idx[!is.na(estimated_dates[other_date_idx])]
+  is_available_date <- !is.na(augmented_data$estimated_dates[other_date_idx])
+  valid_delays <- which_delays[is_available_date]
+  other_date_idx <- other_date_idx[is_available_date]
   
+  if (length(valid_delays) > 1) {
+    is_correct <- 
+      vlapply(augmented_data$error_indicators[other_date_idx], isFALSE)
+    if (any(is_correct)) {
+      valid_delays <- valid_delays[is_correct]
+      other_date_idx <- other_date_idx[is_correct]
+    } 
+  }
   
   ## If it is involved in several delays, randomly select one
   delay_idx <- if (length(valid_delays) == 1) 1 else 
@@ -178,7 +187,7 @@ sample_from_delay <- function(i, estimated_dates, group, model_info,
   selected_delay <- valid_delays[delay_idx]
   
   ## Find the other date in this date pair
-  other_date <- estimated_dates[other_date_idx[delay_idx]]
+  other_date <- augmented_data$estimated_dates[other_date_idx[delay_idx]]
   
   ## Is date i the 'from' or 'to' in this delay
   is_from <- (i == model_info$delay_from[selected_delay])
@@ -233,8 +242,7 @@ propose_estimated_dates <- function(sampling_order, augmented_data,
         observed_dates[i] + monty::monty_random_real(rng)
     } else {
       augmented_data$estimated_dates[i] <-
-        sample_from_delay(i, augmented_data$estimated_dates, group,
-                          model_info, rng)
+        sample_from_delay(i, augmented_data, group, model_info, rng)
     }
   }
   
@@ -267,7 +275,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   }
   
   ## new delays log likelihood
-  ll_delays_new <- datefixer_log_likelihood_delays1(
+  ll_delays_new <- chronofix_log_likelihood_delays1(
     augmented_data_new$estimated_dates, model_info$delay_mean, 
     model_info$delay_cv, model_info$delay_from, model_info$delay_to,
     model_info$delay_distribution, is_delay_in_group)
@@ -283,7 +291,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   }
   
   ## current delays log likelihood
-  ll_delays_current <- datefixer_log_likelihood_delays1(
+  ll_delays_current <- chronofix_log_likelihood_delays1(
     augmented_data$estimated_dates, model_info$delay_mean, model_info$delay_cv,
     model_info$delay_from, model_info$delay_to, model_info$delay_distribution,
     is_delay_in_group)
@@ -296,10 +304,10 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
     ratio_ll_errors <- 0 
   } else {
     ## current errors log likelihood
-    ll_errors_current <- datefixer_log_likelihood_errors(
+    ll_errors_current <- chronofix_log_likelihood_errors(
       prob_error, augmented_data$error_indicators, date_range)
     ## new errors log likelihood
-    ll_errors_new <- datefixer_log_likelihood_errors(
+    ll_errors_new <- chronofix_log_likelihood_errors(
       prob_error, augmented_data_new$error_indicators, date_range)
     
     ratio_ll_errors <- ll_errors_new - ll_errors_current
@@ -327,6 +335,7 @@ calc_proposal_density <- function(sampling_order, augmented_data,
   
   is_date_in_delay <- model_info$is_date_in_delay[, , group]
   is_date_in_group <- model_info$is_date_in_group[, group]
+  is_date_connected <- model_info$is_date_connected[, , group]
   
   dates <- which(is_date_in_group)
   is_resampled <- 
@@ -344,8 +353,16 @@ calc_proposal_density <- function(sampling_order, augmented_data,
     
     if (!isFALSE(augmented_data$error_indicators[i])) {
       ## which dates were available for sampling
+      connected_dates <- available_dates[is_date_connected[i, available_dates]]
+      if (length(connected_dates) > 1) {
+        is_correct <- 
+          vlapply(augmented_data$error_indicators[connected_dates], isFALSE)
+        if (sum(is_correct) > 0) {
+          connected_dates <- connected_dates[is_correct]
+        }
+      }
       is_delay_available <- 
-        colSums(is_date_in_delay[available_dates, , drop = FALSE]) > 0
+        colSums(is_date_in_delay[connected_dates, , drop = FALSE]) > 0
       ## which delays could be sampled from
       can_sample_from_delay <- is_date_in_delay[i, ] & 
         is_delay_available
@@ -406,12 +423,12 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
   augmented_data_new <- change_error_indicators(augmented_data, event_order)
   
   sampling_order <- 
-    calc_sampling_order(event_order, augmented_data_new$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(event_order, augmented_data_new$error_indicators,
+                              model_info$is_date_connected[, , group])
   
   sampling_order_reverse <- 
-    calc_sampling_order(event_order, augmented_data$error_indicators,
-                          model_info$is_date_connected[, , group])
+    calc_batch_sampling_order(event_order, augmented_data$error_indicators,
+                              model_info$is_date_connected[, , group])
 
   # systematically sample new errors and missing dates based on new non-errors
   augmented_data_new <- 
@@ -433,8 +450,8 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
 }
 
 
-calc_sampling_order <- function(to_resample, error_indicators,
-                                is_date_connected) {
+calc_batch_sampling_order <- function(to_resample, error_indicators,
+                                      is_date_connected) {
   
   if (length(to_resample) == 1) {
     return(to_resample)
