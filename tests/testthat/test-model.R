@@ -245,24 +245,24 @@ test_that("date range is calculated correctly", {
   
   ## Note there is always  +1 on the right hand side to include the one-day
   ## period of the latest possible date
-  control <- mcmc_control()
+  control <- chronofix_mcmc_control()
   ## default date buffer is 30 days
   expect_equal(calc_date_range(observed_dates, control), 
                c(min_date - 30, max_date + 30 + 1)) 
 
-  control <- mcmc_control(date_buffer = 45)
+  control <- chronofix_mcmc_control(date_buffer = 45)
   expect_equal(calc_date_range(observed_dates, control), 
                c(min_date - 45, max_date + 45 + 1))
   
-  control <- mcmc_control(earliest_possible_date = "2025-02-01")
+  control <- chronofix_mcmc_control(earliest_possible_date = "2025-02-01")
   expect_equal(calc_date_range(observed_dates, control), 
                c(date_to_int("2025-02-01"), max_date + 30 + 1))
   
-  control <- mcmc_control(latest_possible_date = "2025-10-01")
+  control <- chronofix_mcmc_control(latest_possible_date = "2025-10-01")
   expect_equal(calc_date_range(observed_dates, control), 
                c(min_date - 30, date_to_int("2025-10-01") + 1))
   
-  control <- mcmc_control(earliest_possible_date = "2025-02-01",
+  control <- chronofix_mcmc_control(earliest_possible_date = "2025-02-01",
                           latest_possible_date = "2025-10-01")
   expect_equal(calc_date_range(observed_dates, control), 
                c(date_to_int("2025-02-01"), date_to_int("2025-10-01") + 1))

@@ -52,7 +52,7 @@
 #'
 #' # Run simulation
 #' set.seed(1)
-#' sim_result <- simulate_data(
+#' sim_result <- chronofix_simulate_data(
 #'   n_per_group = n_per_group,
 #'   group_names = group_names,
 #'   delay_info = delay_info,
@@ -64,27 +64,27 @@
 #' sim_result$observed_data
 #' sim_result$error_indicators # true error indicators
 #'
-simulate_data <- function(n_per_group,
+chronofix_simulate_data <- function(n_per_group,
                           group_names,
                           delay_info,
                           error_params,
                           date_range) {
   
-  true_data <- simulate_true_data(n_per_group, group_names,
+  true_data <- chronofix_simulate_true_data(n_per_group, group_names,
                                   delay_info, date_range)
   
-  simulate_observation_errors(true_data, error_params, date_range)
+  chronofix_simulate_observation_errors(true_data, error_params, date_range)
   
 }
 
 
 #' Simulate true data
 #' @description Simulate the true, unobserved dates for individuals
-#' @inheritParams simulate_data
+#' @inheritParams chronofix_simulate_data
 #' @importFrom igraph graph_from_data_frame topo_sort degree
 #' @importFrom stats runif
 #' @export
-simulate_true_data <- function(n_per_group, group_names,
+chronofix_simulate_true_data <- function(n_per_group, group_names,
                                delay_info, date_range) {
   
   # Handle single n_per_group for all groups
@@ -184,10 +184,10 @@ simulate_true_data <- function(n_per_group, group_names,
 #' Add observation errors
 #' @description Simulate observed data incorporating observation error from true
 #'    data
-#' @inheritParams simulate_data
+#' @inheritParams chronofix_simulate_data
 #' @param true_data Dataframe containing the true, unobserved dates.
 #' @export
-simulate_observation_errors <- function(true_data, error_params, date_range) {
+chronofix_simulate_observation_errors <- function(true_data, error_params, date_range) {
 
   observed_data <- true_data
   error_indicators <- true_data
