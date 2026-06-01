@@ -17,6 +17,7 @@
 ##' @import openxlsx
 ##' @importFrom dplyr case_when
 ##' @importFrom stats median
+##' @importFrom tools file_ext
 chronofix_linelist <- function(mcmc_output = NULL,
                                observed_data = NULL,
                                error_threshold = 0.5,
@@ -29,8 +30,21 @@ chronofix_linelist <- function(mcmc_output = NULL,
   if (!"group" %in% colnames(observed_data)) {
     stop("No 'group' column found in observed_data")
   }
-  if (!tolower(format) %in% c("xlsx", "csv")) {
+  format_lower <- tolower(format)
+  if (!format_lower %in% c("xlsx", "csv")) {
     stop("The 'format' argument must be either 'xlsx' or 'csv'.")
+  }
+  # default filename based on format if not provided
+  if (is.null(filename)) {
+    filename <- paste0("chronofix_linelist.", format_lower)
+  }
+  # check that filename extension matches the specified format
+  file_extension <- tolower(file_ext(filename))
+  if (file_extension != format_lower) {
+    stop(sprintf(
+      "Extension mismatch: 'filename' has extension '.%s' but 'format' is set to '%s'.",
+      file_extension, format_lower
+    ))
   }
   
   est_dates_flat <- mcmc_output$data$estimated_dates
