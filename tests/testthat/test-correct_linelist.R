@@ -60,32 +60,32 @@ make_mock_data <- function() {
   )
 }
 
-test_that("correct_linelist requires mcmc_output", {
+test_that("chronofix_linelist requires mcmc_output", {
   mock <- make_mock_data()
   
   expect_error(
-    correct_linelist(observed_data = mock$observed),
+    chronofix_linelist(observed_data = mock$observed),
     "'mcmc_output' is missing.",
     fixed = TRUE
   )
 })
 
-test_that("correct_linelist requires observed_data", {
+test_that("chronofix_linelist requires observed_data", {
   mock <- make_mock_data()
   
   expect_error(
-    correct_linelist(mcmc_output = mock$mcmc),
+    chronofix_linelist(mcmc_output = mock$mcmc),
     "'observed_data' is missing.",
     fixed = TRUE
   )
 })
 
-test_that("correct_linelist requires group column in observed_data", {
+test_that("chronofix_linelist requires group column in observed_data", {
   mock <- make_mock_data()
   observed_no_group <- mock$observed[, setdiff(names(mock$observed), "group")]
   
   expect_error(
-    correct_linelist(
+    chronofix_linelist(
       mcmc_output = mock$mcmc,
       observed_data = observed_no_group,
       format = "csv",
@@ -96,11 +96,11 @@ test_that("correct_linelist requires group column in observed_data", {
   )
 })
 
-test_that("correct_linelist rejects unsupported output formats", {
+test_that("chronofix_linelist rejects unsupported output formats", {
   mock <- make_mock_data()
   
   expect_error(
-    correct_linelist(
+    chronofix_linelist(
       mcmc_output = mock$mcmc,
       observed_data = mock$observed,
       format = "pdf"
@@ -110,14 +110,14 @@ test_that("correct_linelist rejects unsupported output formats", {
   )
 })
 
-test_that("correct_linelist checks observed event columns match MCMC event dimension", {
+test_that("chronofix_linelist checks observed event columns match MCMC event dimension", {
   mock <- make_mock_data()
   
   observed_extra_event <- mock$observed
   observed_extra_event$extra_event <- as.Date("2025-02-01")
   
   expect_error(
-    correct_linelist(
+    chronofix_linelist(
       mcmc_output = mock$mcmc,
       observed_data = observed_extra_event,
       format = "csv",
@@ -128,11 +128,11 @@ test_that("correct_linelist checks observed event columns match MCMC event dimen
   )
 })
 
-test_that("correct_linelist hides p_error columns by default", {
+test_that("chronofix_linelist hides p_error columns by default", {
   mock <- make_mock_data()
   
   result <- suppressMessages({
-    correct_linelist(
+    chronofix_linelist(
       mcmc_output = mock$mcmc,
       observed_data = mock$observed,
       format = "csv",
@@ -143,11 +143,11 @@ test_that("correct_linelist hides p_error columns by default", {
   expect_false(any(grepl("_p_error$", names(result))))
 })
 
-test_that("correct_linelist includes p_error columns when requested", {
+test_that("chronofix_linelist includes p_error columns when requested", {
   mock <- make_mock_data()
   
   result <- suppressMessages({
-    correct_linelist(
+    chronofix_linelist(
       mcmc_output = mock$mcmc,
       observed_data = mock$observed,
       format = "csv",
@@ -167,7 +167,7 @@ test_that("correct_linelist includes p_error columns when requested", {
   ))
 })
 
-test_that("correct_linelist distinguishes imputed missing from structural missing", {
+test_that("chronofix_linelist distinguishes imputed missing from structural missing", {
   mock <- make_mock_data()
   
   i <- which(mock$observed$group == "community-alive")[1]
@@ -182,7 +182,7 @@ test_that("correct_linelist distinguishes imputed missing from structural missin
   mock$mcmc$data$estimated_dates <- as.vector(estimated_dates)
   
   result <- suppressMessages({
-    correct_linelist(
+    chronofix_linelist(
       mcmc_output = mock$mcmc,
       observed_data = mock$observed,
       format = "csv",
@@ -195,12 +195,12 @@ test_that("correct_linelist distinguishes imputed missing from structural missin
   expect_true(is.na(result$Report_p_error[i]))
 })
 
-test_that("correct_linelist writes xlsx output", {
+test_that("chronofix_linelist writes xlsx output", {
   mock <- make_mock_data()
   path <- tempfile(fileext = ".xlsx")
   
   result <- suppressMessages({
-    correct_linelist(
+    chronofix_linelist(
       mcmc_output = mock$mcmc,
       observed_data = mock$observed,
       format = "xlsx",
