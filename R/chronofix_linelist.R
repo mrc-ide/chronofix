@@ -110,11 +110,11 @@ chronofix_linelist <- function(mcmc_output = NULL,
     if (is.null(filename)) filename <- "chronofix_linelist.xlsx"
     wb <- openxlsx::createWorkbook()
     
-    openxlsx::addWorksheet(wb, "Corrected Dates")
-    openxlsx::writeData(wb, "Corrected Dates", results_data)
+    openxlsx::addWorksheet(wb, "Reconstructed Dates")
+    openxlsx::writeData(wb, "Reconstructed Dates", results_data)
     
     group_col <- which(colnames(results_data) == "Group")
-    openxlsx::setColWidths(wb, "Corrected Dates", cols = group_col, widths = 22)
+    openxlsx::setColWidths(wb, "Reconstructed Dates", cols = group_col, widths = 22)
     
     col_struct <- "#D3D3D3"
     col_imputed <- "#A7C1E1"
@@ -131,7 +131,7 @@ chronofix_linelist <- function(mcmc_output = NULL,
       
       # Dynamically set width for specific event column
       event_width <- max(14, nchar(event_names[j]))
-      openxlsx::setColWidths(wb, "Corrected Dates", cols = excel_col, widths = event_width)
+      openxlsx::setColWidths(wb, "Reconstructed Dates", cols = excel_col, widths = event_width)
       
       for (i in seq_len(n_individuals)) {
         status <- status_matrix[i, j]
@@ -139,16 +139,16 @@ chronofix_linelist <- function(mcmc_output = NULL,
         
         if (!is.na(status)) {
           if (status == "Structurally Missing") {
-            openxlsx::addStyle(wb, "Corrected Dates", style = style_structural, 
+            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_structural, 
                                rows = excel_row, cols = excel_col)
           } else if (status == "Imputed Missing") {
-            openxlsx::addStyle(wb, "Corrected Dates", style = style_imputed, 
+            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_imputed, 
                                rows = excel_row, cols = excel_col)
           } else if (status == "Error") {
-            openxlsx::addStyle(wb, "Corrected Dates", style = style_error, 
+            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_error, 
                                rows = excel_row, cols = excel_col)
           } else if (status == "Potential Error") {
-            openxlsx::addStyle(wb, "Corrected Dates", style = style_potential, 
+            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_potential, 
                                rows = excel_row, cols = excel_col)
           }
         }
