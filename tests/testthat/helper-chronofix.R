@@ -1,4 +1,4 @@
-toy_model_params <- function(named_groups = TRUE) {
+toy_model_params <- function(named_groups = TRUE, single_group = NULL) {
   
   if (named_groups) {
     group_names <- c("community-alive", "community-dead",
@@ -30,6 +30,15 @@ toy_model_params <- function(named_groups = TRUE) {
   delay_info$mean <- c(10, 15, 7, 20, 7, 12)
   delay_info$cv <- c(0.3, 0.4, 0.2, 0.5, 0.2, 0.3)
   
+  if (!is.null(single_group)) {
+    keep <- unlist(lapply(delay_map$group, function(x) single_group %in% x))
+    delay_map <- delay_map[keep, ]
+    delay_map$group <- single_group
+    delay_info <- delay_info[keep, ]
+    delay_info$group <- single_group
+    group_names <- single_group
+  }
+  
   # Define other parameters
   n_per_group <- rep(10, length(unique(delay_info$group)))
   error_params <- list(prop_missing_data = 0.2, prob_error = 0.05)
@@ -43,8 +52,9 @@ toy_model_params <- function(named_groups = TRUE) {
        date_range = date_range)
 }
 
-toy_model <- function(named_groups = TRUE, control = mcmc_control()) {
-  params <- toy_model_params(named_groups)
+toy_model <- function(named_groups = TRUE, control = mcmc_control(),
+                      single_group = NULL) {
+  params <- toy_model_params(named_groups, single_group)
   
   # Run simulation
   sim_result <- simulate_data(
