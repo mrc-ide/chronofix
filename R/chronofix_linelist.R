@@ -156,11 +156,11 @@ chronofix_linelist <- function(mcmc_output = NULL,
     legend_data <- data.frame(
       Status = c("Correct", "Structurally Missing", "Imputed Missing", "Potential Error", "Error"),
       Description = c(
-        "Observed date likely to be correct.",
+        "Observed date likely to be correct and has not been changed.",
         "Event did not occur for individuals in this group (not applicable).",
-        "Event occurred but date was unrecorded - imputed by model.",
-        sprintf("Posterior error probability > 0 but < %s.", error_threshold),
-        sprintf("Posterior error probability >= %s. Correct date has been estimated.", error_threshold)
+        "Event occurred but date was unrecorded. Most likely date imputed by model.",
+        sprintf("Posterior error probability > 0 but < %s. Observed date has not been changed.", error_threshold),
+        sprintf("Posterior error probability >= %s. Most likely correct date has been estimated.", error_threshold)
       )
     )
     
