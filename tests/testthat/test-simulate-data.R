@@ -193,3 +193,4 @@ test_that("chronofix_simulate_data handles vector and scalar n_per_group correct
   expect_equal(check_n_per_group(sim_result3$error_indicators), n_per_group)
   
 })
+
