@@ -6,6 +6,10 @@
 \usage{
 chronofix_style_mapper(status)
 }
+\arguments{
+\item{status}{character string for the classification of a date
+(e.g., "Error", "Imputed Missing") to be mapped to an Excel style.}
+}
 \description{
 Helper function to map styles
 }

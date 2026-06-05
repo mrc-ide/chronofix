@@ -188,6 +188,12 @@ get_mode <- function(x) {
 }
 
 #' Helper function to get status matrix
+#' @param mode_dates_num numeric matrix of estimated dates (calculated as
+#'  posterior modes) for each individual and event.
+#' @param prob_error numeric matrix of the posterior error probabilities for
+#'  each corresponding date.
+#' @param error_threshold numeric cutoff (default 0.5) probabilities greater
+#'  than or equal to this are classified as "Error".
 chronofix_linelist_status_matrix <- function(mode_dates_num,
                                              prob_error,
                                              error_threshold = 0.5) {
@@ -217,6 +223,8 @@ chronofix_linelist_status_matrix <- function(mode_dates_num,
 }
 
 #' Helper function to map styles
+#' @param status character string for the classification of a date
+#'  (e.g., "Error", "Imputed Missing") to be mapped to an Excel style.
 chronofix_style_mapper <- function(status) {
   if (is.na(status)) return(NA_character_)
   

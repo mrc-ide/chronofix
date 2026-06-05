@@ -10,6 +10,16 @@ chronofix_linelist_status_matrix(
   error_threshold = 0.5
 )
 }
+\arguments{
+\item{mode_dates_num}{numeric matrix of estimated dates (calculated as
+posterior modes) for each individual and event.}
+
+\item{prob_error}{numeric matrix of the posterior error probabilities for
+each corresponding date.}
+
+\item{error_threshold}{numeric cutoff (default 0.5) probabilities greater
+than or equal to this are classified as "Error".}
+}
 \description{
 Helper function to get status matrix
 }
