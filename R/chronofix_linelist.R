@@ -92,17 +92,15 @@ chronofix_linelist <- function(mcmc_output = NULL,
   }
   
   # Export as CSV
-  if (tolower(format) == "csv") {
+  if (format_lower == "csv") {
     message("Note: Saving to CSV removes all coloured formatting")
-    if (is.null(filename)) filename <- "chronofix_linelist.csv"
     write.csv(results_data, filename, row.names = FALSE)
     message("Saved CSV linelist to ", filename)
     return(invisible(results_data))
   }
   
   # Export as XLSX
-  if (tolower(format) == "xlsx") {
-    if (is.null(filename)) filename <- "chronofix_linelist.xlsx"
+  if (format_lower == "xlsx") {
     wb <- openxlsx::createWorkbook()
     
     openxlsx::addWorksheet(wb, "Reconstructed Dates")
