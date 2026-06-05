@@ -73,20 +73,15 @@ chronofix_linelist <- function(mcmc_output = NULL,
   results_data <- data.frame(ID = seq_len(n_individuals))
   results_data$Group <- observed_data$group
   
-  status_matrix <- matrix(NA, nrow = n_individuals, ncol = n_events)
+  status_matrix <- chronofix_linelist_status_matrix(
+    median_dates_num = median_dates_num,
+    prob_error = prob_error,
+    error_threshold = error_threshold
+  )
   
   for (j in seq_len(n_events)) {
-    # numeric median back to date
     new_date <- as.Date(median_dates_num[, j], origin = "1970-01-01")
     p_err <- prob_error[, j]
-
-    status_matrix[, j] <- dplyr::case_when(
-      is.na(new_date) ~ "Structurally Missing",
-      is.na(p_err) ~ "Imputed Missing",
-      p_err >= error_threshold ~ "Error",
-      p_err > 0 & p_err < error_threshold ~ "Potential Error",
-      TRUE ~ "Correct"
-    )
     
     results_data[[event_names[j]]] <- new_date
     results_data[[paste0(event_names[j], "_p_error")]] <- round(p_err, 3)
@@ -186,4 +181,32 @@ chronofix_linelist <- function(mcmc_output = NULL,
     return(invisible(results_data))
   }
   
+}
+
+chronofix_linelist_status_matrix <- function(median_dates_num,
+                                             prob_error,
+                                             error_threshold = 0.5) {
+  n_individuals <- nrow(median_dates_num)
+  n_events <- ncol(median_dates_num)
+  
+  status_matrix <- matrix(
+    NA_character_,
+    nrow = n_individuals,
+    ncol = n_events
+  )
+  
+  for (j in seq_len(n_events)) {
+    new_date <- as.Date(median_dates_num[, j], origin = "1970-01-01")
+    p_err <- prob_error[, j]
+    
+    status_matrix[, j] <- dplyr::case_when(
+      is.na(new_date) ~ "Structurally Missing",
+      is.na(p_err) ~ "Imputed Missing",
+      p_err >= error_threshold ~ "Error",
+      p_err > 0 & p_err < error_threshold ~ "Potential Error",
+      TRUE ~ "Correct"
+    )
+  }
+  
+  status_matrix
 }
