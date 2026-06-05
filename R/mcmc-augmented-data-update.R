@@ -334,8 +334,10 @@ calc_proposal_density <- function(sampling_order, augmented_data,
                                   group, model_info) {
   
   is_date_in_delay <- model_info$is_date_in_delay[, , group]
+  dim(is_date_in_delay) <- dim(model_info$is_date_in_delay)[1:2]
   is_date_in_group <- model_info$is_date_in_group[, group]
   is_date_connected <- model_info$is_date_connected[, , group]
+  dim(is_date_connected) <- dim(model_info$is_date_connected)[1:2]
   
   dates <- which(is_date_in_group)
   is_resampled <- 
