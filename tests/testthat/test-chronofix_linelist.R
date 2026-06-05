@@ -302,3 +302,19 @@ test_that("chronofix_linelist_status_matrix classifies date statuses correctly",
     )
   )
 })
+
+test_that("chronofix_style_mapper returns correct style keys for known statuses", {
+  expect_equal(chronofix_style_mapper("Structurally Missing"), "style_structural")
+  expect_equal(chronofix_style_mapper("Imputed Missing"), "style_imputed")
+  expect_equal(chronofix_style_mapper("Error"), "style_error")
+  expect_equal(chronofix_style_mapper("Potential Error"), "style_potential")
+})
+
+test_that("chronofix_style_mapper returns NA for unstyled statuses", {
+  expect_true(is.na(chronofix_style_mapper("Correct")))
+})
+
+test_that("chronofix_style_mapper handles NA and unexpected inputs safely", {
+  expect_true(is.na(chronofix_style_mapper(NA_character_)))
+  expect_true(is.na(chronofix_style_mapper("Unknown Status")))
+})
