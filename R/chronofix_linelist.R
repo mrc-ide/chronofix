@@ -114,10 +114,12 @@ chronofix_linelist <- function(mcmc_output = NULL,
     col_error <- "#E58782"
     col_potential <- "#FAC898"
 
-    style_structural <- openxlsx::createStyle(fgFill = col_struct)
-    style_imputed <- openxlsx::createStyle(fgFill = col_imputed, numFmt = "dd/mm/yyyy")
-    style_error <- openxlsx::createStyle(fgFill = col_error, numFmt = "dd/mm/yyyy")
-    style_potential <- openxlsx::createStyle(fgFill = col_potential, numFmt = "dd/mm/yyyy")
+    styles_list <- list(
+      style_structural = openxlsx::createStyle(fgFill = col_struct),
+      style_imputed    = openxlsx::createStyle(fgFill = col_imputed, numFmt = "dd/mm/yyyy"),
+      style_error      = openxlsx::createStyle(fgFill = col_error, numFmt = "dd/mm/yyyy"),
+      style_potential  = openxlsx::createStyle(fgFill = col_potential, numFmt = "dd/mm/yyyy")
+    )
     
     for (j in seq_len(n_events)) {
       excel_col <- which(colnames(results_data) == event_names[j])
@@ -130,20 +132,16 @@ chronofix_linelist <- function(mcmc_output = NULL,
         status <- status_matrix[i, j]
         excel_row <- i + 1
         
-        if (!is.na(status)) {
-          if (status == "Structurally Missing") {
-            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_structural, 
-                               rows = excel_row, cols = excel_col)
-          } else if (status == "Imputed Missing") {
-            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_imputed, 
-                               rows = excel_row, cols = excel_col)
-          } else if (status == "Error") {
-            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_error, 
-                               rows = excel_row, cols = excel_col)
-          } else if (status == "Potential Error") {
-            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_potential, 
-                               rows = excel_row, cols = excel_col)
-          }
+        style_key <- chronofix_style_mapper(status)
+        
+        if (!is.na(style_key)) {
+          openxlsx::addStyle(
+            wb, 
+            "Reconstructed Dates", 
+            style = styles_list[[style_key]], 
+            rows = excel_row, 
+            cols = excel_col
+          )
         }
       }
     }
@@ -207,4 +205,16 @@ chronofix_linelist_status_matrix <- function(median_dates_num,
   }
   
   status_matrix
+}
+
+chronofix_style_mapper <- function(status) {
+  if (is.na(status)) return(NA_character_)
+  
+  dplyr::case_when(
+    status == "Structurally Missing" ~ "style_structural",
+    status == "Imputed Missing" ~ "style_imputed",
+    status == "Error" ~ "style_error",
+    status == "Potential Error" ~ "style_potential",
+    TRUE ~ NA_character_
+  )
 }
