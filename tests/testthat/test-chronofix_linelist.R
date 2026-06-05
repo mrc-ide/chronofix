@@ -247,11 +247,11 @@ test_that("chronofix_linelist capitalises event names in the returned dataframe"
 })
 
 test_that("chronofix_linelist_status_matrix treats threshold value as Error", {
-  median_dates_num <- matrix(c(20000, 20000), ncol = 1)
+  mode_dates_num <- matrix(c(20000, 20000), ncol = 1)
   prob_error <- matrix(c(0.5, 0.499), ncol = 1)
   
   status <- chronofix_linelist_status_matrix(
-    median_dates_num = median_dates_num,
+    mode_dates_num = mode_dates_num,
     prob_error = prob_error,
     error_threshold = 0.5
   )
@@ -263,7 +263,7 @@ test_that("chronofix_linelist_status_matrix treats threshold value as Error", {
 })
 
 test_that("chronofix_linelist_status_matrix classifies date statuses correctly", {
-  median_dates_num <- matrix(
+  mode_dates_num <- matrix(
     c(
       NA, # structurally missing
       20000, # imputed missing
@@ -286,7 +286,7 @@ test_that("chronofix_linelist_status_matrix classifies date statuses correctly",
   )
   
   status <- chronofix_linelist_status_matrix(
-    median_dates_num = median_dates_num,
+    mode_dates_num = mode_dates_num,
     prob_error = prob_error,
     error_threshold = 0.5
   )

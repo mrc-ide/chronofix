@@ -55,10 +55,10 @@ chronofix_linelist <- function(mcmc_output = NULL,
   est_dates_numeric <- as.numeric(as.Date(est_dates_flat))
   dim(est_dates_numeric) <- dim(error_ind_array)
   
-  # calculate posterior summaries - mean/median across iterations and chains 
-  # for every individual (dim 1) and event (dim 2)
+  # calculate posterior summaries - mean across iterations/chains for error
+  # and mode across iterations/chains for dates
   prob_error <- apply(error_ind_array, c(1, 2), mean, na.rm = FALSE)
-  median_dates_num <- apply(est_dates_numeric, c(1, 2), stats::median)
+  mode_dates_num <- apply(est_dates_numeric, c(1, 2), get_mode)
   
   n_individuals <- dim(error_ind_array)[1]
   n_events <- dim(error_ind_array)[2]
@@ -74,13 +74,13 @@ chronofix_linelist <- function(mcmc_output = NULL,
   results_data$Group <- observed_data$group
   
   status_matrix <- chronofix_linelist_status_matrix(
-    median_dates_num = median_dates_num,
+    mode_dates_num = mode_dates_num,
     prob_error = prob_error,
     error_threshold = error_threshold
   )
   
   for (j in seq_len(n_events)) {
-    new_date <- as.Date(median_dates_num[, j], origin = "1970-01-01")
+    new_date <- as.Date(mode_dates_num[, j], origin = "1970-01-01")
     p_err <- prob_error[, j]
     
     results_data[[event_names[j]]] <- new_date
@@ -179,11 +179,20 @@ chronofix_linelist <- function(mcmc_output = NULL,
   
 }
 
-chronofix_linelist_status_matrix <- function(median_dates_num,
+#' @importFrom stats na.omit
+get_mode <- function(x) {
+  x <- stats::na.omit(x)
+  if (length(x) == 0) return(NA)
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+#' Helper function to get status matrix
+chronofix_linelist_status_matrix <- function(mode_dates_num,
                                              prob_error,
                                              error_threshold = 0.5) {
-  n_individuals <- nrow(median_dates_num)
-  n_events <- ncol(median_dates_num)
+  n_individuals <- nrow(mode_dates_num)
+  n_events <- ncol(mode_dates_num)
   
   status_matrix <- matrix(
     NA_character_,
@@ -192,7 +201,7 @@ chronofix_linelist_status_matrix <- function(median_dates_num,
   )
   
   for (j in seq_len(n_events)) {
-    new_date <- as.Date(median_dates_num[, j], origin = "1970-01-01")
+    new_date <- as.Date(mode_dates_num[, j], origin = "1970-01-01")
     p_err <- prob_error[, j]
     
     status_matrix[, j] <- dplyr::case_when(
@@ -207,6 +216,7 @@ chronofix_linelist_status_matrix <- function(median_dates_num,
   status_matrix
 }
 
+#' Helper function to map styles
 chronofix_style_mapper <- function(status) {
   if (is.na(status)) return(NA_character_)
   
