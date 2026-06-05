@@ -152,6 +152,24 @@ test_that("chronofix_linelist writes xlsx output", {
   expect_false(any(grepl("_p_error$", names(result))))
 })
 
+test_that("chronofix_linelist creates expected worksheets in xlsx output", {
+  mock <- make_mock_data()
+  path <- tempfile(fileext = ".xlsx")
+  
+  suppressMessages({
+    chronofix_linelist(
+      mcmc_output = mock$mcmc, 
+      observed_data = mock$observed, 
+      format = "xlsx", 
+      filename = path
+    )
+  })
+  
+  sheet_names <- openxlsx::getSheetNames(path)
+  
+  expect_equal(sheet_names, c("Reconstructed Dates", "Legend"))
+})
+
 test_that("chronofix_linelist flags filename and fileext mismatch", {
   mock <- make_mock_data()
   path <- tempfile(fileext = ".xlsx")
@@ -180,4 +198,123 @@ test_that("chronofix_linelist flags filename and fileext mismatch", {
     fixed = TRUE
   )
   
+})
+
+test_that("chronofix_linelist uses default filename when filename is NULL", {
+  mock <- make_mock_data()
+  
+  # CSV default
+  suppressMessages({
+    chronofix_linelist(
+      mcmc_output = mock$mcmc, 
+      observed_data = mock$observed, 
+      format = "csv", 
+      filename = NULL
+    )
+  })
+  expect_true(file.exists("chronofix_linelist.csv"))
+  unlink("chronofix_linelist.csv")
+  
+  # XLSX default
+  suppressMessages({
+    chronofix_linelist(
+      mcmc_output = mock$mcmc, 
+      observed_data = mock$observed, 
+      format = "xlsx", 
+      filename = NULL
+    )
+  })
+  expect_true(file.exists("chronofix_linelist.xlsx"))
+  unlink("chronofix_linelist.xlsx")
+})
+
+test_that("chronofix_linelist capitalises event names in the returned dataframe", {
+  mock <- make_mock_data()
+  
+  result <- suppressMessages({
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      observed_data = mock$observed,
+      format = "csv",
+      filename = tempfile(fileext = ".csv")
+    )
+  })
+  
+  raw_names <- setdiff(colnames(mock$observed), c("id", "group"))
+  expected_names <- paste0(toupper(substr(raw_names, 1, 1)), substring(raw_names, 2))
+  
+  expect_true(all(expected_names %in% colnames(result)))
+})
+
+test_that("chronofix_linelist_status_matrix treats threshold value as Error", {
+  mode_dates_num <- matrix(c(20000, 20000), ncol = 1)
+  prob_error <- matrix(c(0.5, 0.499), ncol = 1)
+  
+  status <- chronofix_linelist_status_matrix(
+    mode_dates_num = mode_dates_num,
+    prob_error = prob_error,
+    error_threshold = 0.5
+  )
+  
+  expect_equal(
+    as.vector(status),
+    c("Error", "Potential Error")
+  )
+})
+
+test_that("chronofix_linelist_status_matrix classifies date statuses correctly", {
+  mode_dates_num <- matrix(
+    c(
+      NA, # structurally missing
+      20000, # imputed missing
+      20000, # error
+      20000, # potential error
+      20000 # correct
+    ),
+    ncol = 1
+  )
+  
+  prob_error <- matrix(
+    c(
+      NA, # structurally missing
+      NA, # imputed missing
+      0.75, # error
+      0.25, # potential error
+      0 # correct
+    ),
+    ncol = 1
+  )
+  
+  status <- chronofix_linelist_status_matrix(
+    mode_dates_num = mode_dates_num,
+    prob_error = prob_error,
+    error_threshold = 0.5
+  )
+  
+  expect_equal(
+    as.vector(status),
+    c(
+      "Structurally Missing",
+      "Imputed Missing",
+      "Error",
+      "Potential Error",
+      "Correct"
+    )
+  )
+})
+
+test_that("chronofix_style_mapper returns correct style keys for known statuses", {
+  expect_equal(chronofix_style_mapper("Structurally Missing"), "style_structural")
+  expect_equal(chronofix_style_mapper("Imputed Missing"), "style_imputed")
+  expect_equal(chronofix_style_mapper("Error"), "style_error")
+  expect_equal(chronofix_style_mapper("Potential Error"), "style_potential")
+})
+
+test_that("chronofix_style_mapper returns NA for unstyled statuses", {
+  expect_true(is.na(chronofix_style_mapper("Correct")))
+})
+
+test_that("chronofix_style_mapper handles NA and unexpected inputs safely", {
+  expect_true(is.na(chronofix_style_mapper(NA_character_)))
+  expect_true(is.na(chronofix_style_mapper("Unknown Status")))
 })

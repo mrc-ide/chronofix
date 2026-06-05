@@ -55,10 +55,10 @@ chronofix_linelist <- function(mcmc_output = NULL,
   est_dates_numeric <- as.numeric(as.Date(est_dates_flat))
   dim(est_dates_numeric) <- dim(error_ind_array)
   
-  # calculate posterior summaries - mean/median across iterations and chains 
-  # for every individual (dim 1) and event (dim 2)
+  # calculate posterior summaries - mean across iterations/chains for error
+  # and mode across iterations/chains for dates
   prob_error <- apply(error_ind_array, c(1, 2), mean, na.rm = FALSE)
-  median_dates_num <- apply(est_dates_numeric, c(1, 2), stats::median)
+  mode_dates_num <- apply(est_dates_numeric, c(1, 2), get_mode)
   
   n_individuals <- dim(error_ind_array)[1]
   n_events <- dim(error_ind_array)[2]
@@ -73,20 +73,15 @@ chronofix_linelist <- function(mcmc_output = NULL,
   results_data <- data.frame(ID = seq_len(n_individuals))
   results_data$Group <- observed_data$group
   
-  status_matrix <- matrix(NA, nrow = n_individuals, ncol = n_events)
+  status_matrix <- chronofix_linelist_status_matrix(
+    mode_dates_num = mode_dates_num,
+    prob_error = prob_error,
+    error_threshold = error_threshold
+  )
   
   for (j in seq_len(n_events)) {
-    # numeric median back to date
-    new_date <- as.Date(median_dates_num[, j], origin = "1970-01-01")
+    new_date <- as.Date(mode_dates_num[, j], origin = "1970-01-01")
     p_err <- prob_error[, j]
-
-    status_matrix[, j] <- dplyr::case_when(
-      is.na(new_date) ~ "Structurally Missing",
-      is.na(p_err) ~ "Imputed Missing",
-      p_err >= error_threshold ~ "Error",
-      p_err > 0 & p_err < error_threshold ~ "Potential Error",
-      TRUE ~ "Correct"
-    )
     
     results_data[[event_names[j]]] <- new_date
     results_data[[paste0(event_names[j], "_p_error")]] <- round(p_err, 3)
@@ -97,17 +92,15 @@ chronofix_linelist <- function(mcmc_output = NULL,
   }
   
   # Export as CSV
-  if (tolower(format) == "csv") {
+  if (format_lower == "csv") {
     message("Note: Saving to CSV removes all coloured formatting")
-    if (is.null(filename)) filename <- "chronofix_linelist.csv"
     write.csv(results_data, filename, row.names = FALSE)
     message("Saved CSV linelist to ", filename)
     return(invisible(results_data))
   }
   
   # Export as XLSX
-  if (tolower(format) == "xlsx") {
-    if (is.null(filename)) filename <- "chronofix_linelist.xlsx"
+  if (format_lower == "xlsx") {
     wb <- openxlsx::createWorkbook()
     
     openxlsx::addWorksheet(wb, "Reconstructed Dates")
@@ -121,10 +114,12 @@ chronofix_linelist <- function(mcmc_output = NULL,
     col_error <- "#E58782"
     col_potential <- "#FAC898"
 
-    style_structural <- openxlsx::createStyle(fgFill = col_struct)
-    style_imputed <- openxlsx::createStyle(fgFill = col_imputed, numFmt = "dd/mm/yyyy")
-    style_error <- openxlsx::createStyle(fgFill = col_error, numFmt = "dd/mm/yyyy")
-    style_potential <- openxlsx::createStyle(fgFill = col_potential, numFmt = "dd/mm/yyyy")
+    styles_list <- list(
+      style_structural = openxlsx::createStyle(fgFill = col_struct),
+      style_imputed    = openxlsx::createStyle(fgFill = col_imputed, numFmt = "dd/mm/yyyy"),
+      style_error      = openxlsx::createStyle(fgFill = col_error, numFmt = "dd/mm/yyyy"),
+      style_potential  = openxlsx::createStyle(fgFill = col_potential, numFmt = "dd/mm/yyyy")
+    )
     
     for (j in seq_len(n_events)) {
       excel_col <- which(colnames(results_data) == event_names[j])
@@ -137,20 +132,16 @@ chronofix_linelist <- function(mcmc_output = NULL,
         status <- status_matrix[i, j]
         excel_row <- i + 1
         
-        if (!is.na(status)) {
-          if (status == "Structurally Missing") {
-            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_structural, 
-                               rows = excel_row, cols = excel_col)
-          } else if (status == "Imputed Missing") {
-            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_imputed, 
-                               rows = excel_row, cols = excel_col)
-          } else if (status == "Error") {
-            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_error, 
-                               rows = excel_row, cols = excel_col)
-          } else if (status == "Potential Error") {
-            openxlsx::addStyle(wb, "Reconstructed Dates", style = style_potential, 
-                               rows = excel_row, cols = excel_col)
-          }
+        style_key <- chronofix_style_mapper(status)
+        
+        if (!is.na(style_key)) {
+          openxlsx::addStyle(
+            wb, 
+            "Reconstructed Dates", 
+            style = styles_list[[style_key]], 
+            rows = excel_row, 
+            cols = excel_col
+          )
         }
       }
     }
@@ -161,11 +152,11 @@ chronofix_linelist <- function(mcmc_output = NULL,
     legend_data <- data.frame(
       Status = c("Correct", "Structurally Missing", "Imputed Missing", "Potential Error", "Error"),
       Description = c(
-        "Observed date likely to be correct.",
+        "Observed date likely to be correct and has not been changed.",
         "Event did not occur for individuals in this group (not applicable).",
-        "Event occurred but date was unrecorded - imputed by model.",
-        sprintf("Posterior error probability > 0 but < %s.", error_threshold),
-        sprintf("Posterior error probability >= %s. Correct date has been estimated.", error_threshold)
+        "Event occurred but date was unrecorded. Most likely date imputed by model.",
+        sprintf("Posterior error probability > 0 but < %s. Observed date has not been changed.", error_threshold),
+        sprintf("Posterior error probability >= %s. Most likely correct date has been estimated.", error_threshold)
       )
     )
     
@@ -186,4 +177,62 @@ chronofix_linelist <- function(mcmc_output = NULL,
     return(invisible(results_data))
   }
   
+}
+
+#' @importFrom stats na.omit
+get_mode <- function(x) {
+  x <- stats::na.omit(x)
+  if (length(x) == 0) return(NA)
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+#' Helper function to get status matrix
+#' @param mode_dates_num numeric matrix of estimated dates (calculated as
+#'  posterior modes) for each individual and event.
+#' @param prob_error numeric matrix of the posterior error probabilities for
+#'  each corresponding date.
+#' @param error_threshold numeric cutoff (default 0.5) probabilities greater
+#'  than or equal to this are classified as "Error".
+chronofix_linelist_status_matrix <- function(mode_dates_num,
+                                             prob_error,
+                                             error_threshold = 0.5) {
+  n_individuals <- nrow(mode_dates_num)
+  n_events <- ncol(mode_dates_num)
+  
+  status_matrix <- matrix(
+    NA_character_,
+    nrow = n_individuals,
+    ncol = n_events
+  )
+  
+  for (j in seq_len(n_events)) {
+    new_date <- as.Date(mode_dates_num[, j], origin = "1970-01-01")
+    p_err <- prob_error[, j]
+    
+    status_matrix[, j] <- dplyr::case_when(
+      is.na(new_date) ~ "Structurally Missing",
+      is.na(p_err) ~ "Imputed Missing",
+      p_err >= error_threshold ~ "Error",
+      p_err > 0 & p_err < error_threshold ~ "Potential Error",
+      TRUE ~ "Correct"
+    )
+  }
+  
+  status_matrix
+}
+
+#' Helper function to map styles
+#' @param status character string for the classification of a date
+#'  (e.g., "Error", "Imputed Missing") to be mapped to an Excel style.
+chronofix_style_mapper <- function(status) {
+  if (is.na(status)) return(NA_character_)
+  
+  dplyr::case_when(
+    status == "Structurally Missing" ~ "style_structural",
+    status == "Imputed Missing" ~ "style_imputed",
+    status == "Error" ~ "style_error",
+    status == "Potential Error" ~ "style_potential",
+    TRUE ~ NA_character_
+  )
 }
