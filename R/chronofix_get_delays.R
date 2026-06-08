@@ -75,8 +75,12 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
     clean_group <- gsub("[-_]", " ", clean_group)
     clean_group <- tools::toTitleCase(clean_group)
     
-    from_name <- tools::toTitleCase(as.character(delay_map$from[i]))
-    to_name <- tools::toTitleCase(as.character(delay_map$to[i]))
+    from_name <- gsub("[-_]", " ", as.character(delay_map$from[i]))
+    to_name <- gsub("[-_]", " ", as.character(delay_map$to[i]))
+    
+    from_name <- tools::toTitleCase(from_name)
+    to_name <- tools::toTitleCase(to_name)
+    
     delay_label <- paste(from_name, "to", to_name)
     
     mean_samps <- pars_flat[mean_name, , drop = TRUE]
