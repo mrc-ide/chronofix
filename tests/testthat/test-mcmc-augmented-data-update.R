@@ -251,7 +251,7 @@ test_that("updating estimated dates skipped correctly", {
   
   date_range <- c(0, 500)
   prob_error <- 0.05
-  control <- mcmc_control(prob_update_estimated_dates = 1)
+  control <- chronofix_mcmc_control(prob_update_estimated_dates = 1)
   
   ## group = 2, i = 2 - no hospitalisation for this group so no update
   group <- 2
@@ -284,7 +284,7 @@ test_that("updating estimated dates skipped correctly", {
   ## Try to update i = 4 for group 4, but with prob_update_estimated_dates = 0
   ## there should be no update, and a single random draw
   i <- 4
-  control <- mcmc_control(prob_update_estimated_dates = 0)
+  control <- chronofix_mcmc_control(prob_update_estimated_dates = 0)
   augmented_data_new <- 
     update_estimated_dates1(i, augmented_data, observed_dates, group,
                             prob_error, model_info, date_range, control, rng)
@@ -308,7 +308,7 @@ test_that("updating error indicators skipped correctly", {
   
   date_range <- c(0, 500)
   prob_error <- 0.05
-  control <- mcmc_control(prob_update_error_indicators = 1)
+  control <- chronofix_mcmc_control(prob_update_error_indicators = 1)
   
   ## group = 2, i = 2 - missing date so no update
   group <- 2
@@ -341,7 +341,7 @@ test_that("updating error indicators skipped correctly", {
   ## Try to update i = 3 for group 4, but with prob_update_error_indicators = 0
   ## there should be no update, and a single random draw
   i <- 3
-  control <- mcmc_control(prob_update_error_indicators = 0)
+  control <- chronofix_mcmc_control(prob_update_error_indicators = 0)
   augmented_data_new <- 
     update_error_indicators1(i, augmented_data, observed_dates, group,
                              prob_error, model_info, date_range, control, rng)
@@ -365,7 +365,7 @@ test_that("swap error indicators skipped correctly", {
   
   date_range <- c(0, 500)
   prob_error <- 0.05
-  control <- mcmc_control(prob_error_swap = 1)
+  control <- chronofix_mcmc_control(prob_error_swap = 1)
   
   ## group = 2, both dates FALSE so no update
   group <- 2
@@ -400,7 +400,7 @@ test_that("swap error indicators skipped correctly", {
   augmented_data <- list(estimated_dates = c(10.3, 20.4, 30.2, 40.1, NA),
                          error_indicators = c(FALSE, TRUE, FALSE, NA, NA))
   expect_true(has_mixed_errors(augmented_data$error_indicators))
-  control <- mcmc_control(prob_error_swap = 0)
+  control <- chronofix_mcmc_control(prob_error_swap = 0)
   augmented_data_new <- 
     swap_error_indicators(augmented_data, observed_dates, group,
                           prob_error, model_info, date_range, control, rng)
@@ -848,6 +848,7 @@ test_that("acceptance probability calculated correctly", {
                      augmented_data_new, augmented_data,
                      observed_dates, group, prob_error, model_info,
                      date_range),
+
     calc_accept(sampling_order, sampling_order_reverse,
                 augmented_data_new, augmented_data, group))
 })

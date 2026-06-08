@@ -13,14 +13,14 @@
 ##' @return Output
 ##'
 ##' @export
-mcmc_run <- function(model,
+chronofix_mcmc_run <- function(model,
                      sampler,
                      initial = NULL,
-                     control = mcmc_control()) {
+                     control = chronofix_mcmc_control()) {
   
   parameters <- model$parameters
   
-  initial <- initial %||% mcmc_initial(model)
+  initial <- initial %||% chronofix_mcmc_initial(model)
   
   runner <- 
     if (control$parallel) monty::monty_runner_callr(control$n_workers) else
@@ -105,7 +105,7 @@ mcmc_run <- function(model,
 ##' @return List of control parameters
 ##'
 ##' @export
-mcmc_control <- function(n_steps = 1000,
+chronofix_mcmc_control <- function(n_steps = 1000,
                          burnin = 0,
                          thinning_factor = 1,
                          n_chains = 1,
@@ -158,7 +158,7 @@ mcmc_control <- function(n_steps = 1000,
 ##' @return Vector of initial parameter values
 ##'
 ##' @export
-mcmc_initial <- function(model,
+chronofix_mcmc_initial <- function(model,
                          initial_delay_mean = 7,
                          initial_delay_cv = 0.2,
                          initial_prob_error = 1) {

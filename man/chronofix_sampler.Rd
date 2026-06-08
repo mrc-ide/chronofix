@@ -7,7 +7,7 @@
 chronofix_sampler(control)
 }
 \arguments{
-\item{control}{Object produced by \code{mcmc_control()}}
+\item{control}{Object produced by \code{chronofix_mcmc_control()}}
 }
 \value{
 A monty sampler configured for the chronofix model.

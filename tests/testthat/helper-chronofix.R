@@ -52,12 +52,12 @@ toy_model_params <- function(named_groups = TRUE, single_group = NULL) {
        date_range = date_range)
 }
 
-toy_model <- function(named_groups = TRUE, control = mcmc_control(),
+toy_model <- function(named_groups = TRUE, control = chronofix_mcmc_control(),
                       single_group = NULL) {
   params <- toy_model_params(named_groups, single_group)
   
   # Run simulation
-  sim_result <- simulate_data(
+  sim_result <- chronofix_simulate_data(
     n_per_group = params$n_per_group,
     group_names = params$group_names,
     delay_info = params$delay_info,
