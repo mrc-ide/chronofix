@@ -13,7 +13,8 @@ chronofix_get_delays(mcmc_output, delay_map)
 }
 \value{
 A data frame containing posterior summaries for the estimated delay
-mean and coefficient of variation (CV) for each group and transition.
+mean and coefficient of variation (CV), including posterior medians and
+95\% credible intervals.
 }
 \description{
 Get Summary Table of Estimated Delays
