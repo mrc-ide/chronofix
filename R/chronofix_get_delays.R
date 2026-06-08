@@ -4,7 +4,8 @@
 #' @param delay_map The delay map used for the model setup.
 #'
 #' @return A data frame containing posterior summaries for the estimated delay
-#'   mean and coefficient of variation (CV) for each group and transition.
+#'   mean and coefficient of variation (CV), including posterior medians and
+#'   95% credible intervals.
 #'
 #' @importFrom stats quantile
 #' @export
@@ -105,11 +106,11 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
       Delay = delay_label,
       Distribution = dist_clean,
       Delay_Median = round(mean_quantiles[2], 3),
-      Delay_Lower_95 = round(mean_quantiles[1], 3),
-      Delay_Upper_95 = round(mean_quantiles[3], 3),
+      Delay_Lower_95_CrI = round(mean_quantiles[1], 3),
+      Delay_Upper_95_CrI = round(mean_quantiles[3], 3),
       CV_Median = round(cv_quantiles[2], 3),
-      CV_Lower_95 = round(cv_quantiles[1], 3),
-      CV_Upper_95 = round(cv_quantiles[3], 3),
+      CV_Lower_95_CrI = round(cv_quantiles[1], 3),
+      CV_Upper_95_CrI = round(cv_quantiles[3], 3),
       stringsAsFactors = FALSE
     )
   }
