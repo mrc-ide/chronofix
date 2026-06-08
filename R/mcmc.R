@@ -35,9 +35,6 @@ chronofix_mcmc_run <- function(model,
   
   ## Unpack augmented data
   samples$data <- unpack_augmented_data(samples$data, model$data_packer)
-  ## Convert estimated dates to dates
-  samples$data$estimated_dates <- 
-    int_to_date(floor(samples$data$estimated_dates))
   
   samples
   
