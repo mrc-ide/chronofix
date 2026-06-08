@@ -5,14 +5,17 @@
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
 <url><loc>/reference/chronofix_hyperparameters.html</loc></url>
+<url><loc>/reference/chronofix_linelist.html</loc></url>
+<url><loc>/reference/chronofix_linelist_status_matrix.html</loc></url>
+<url><loc>/reference/chronofix_mcmc_control.html</loc></url>
+<url><loc>/reference/chronofix_mcmc_initial.html</loc></url>
+<url><loc>/reference/chronofix_mcmc_run.html</loc></url>
 <url><loc>/reference/chronofix_model.html</loc></url>
 <url><loc>/reference/chronofix_sampler.html</loc></url>
+<url><loc>/reference/chronofix_simulate_data.html</loc></url>
+<url><loc>/reference/chronofix_simulate_observation_errors.html</loc></url>
+<url><loc>/reference/chronofix_simulate_true_data.html</loc></url>
+<url><loc>/reference/chronofix_style_mapper.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
-<url><loc>/reference/mcmc_control.html</loc></url>
-<url><loc>/reference/mcmc_initial.html</loc></url>
-<url><loc>/reference/mcmc_run.html</loc></url>
-<url><loc>/reference/simulate_data.html</loc></url>
-<url><loc>/reference/simulate_observation_errors.html</loc></url>
-<url><loc>/reference/simulate_true_data.html</loc></url>
 </urlset>
 
