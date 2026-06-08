@@ -47,18 +47,14 @@ chronofix_linelist <- function(mcmc_output = NULL,
     ))
   }
   
-  est_dates_flat <- mcmc_output$data$estimated_dates
+  est_dates_numeric <- mcmc_output$data$estimated_dates
   error_ind_array <- mcmc_output$data$error_indicators
-  
-  # convert dates back to numeric to apply the dimensions
-  # [individuals, events, iterations, chains]
-  est_dates_numeric <- as.numeric(as.Date(est_dates_flat))
-  dim(est_dates_numeric) <- dim(error_ind_array)
   
   # calculate posterior summaries - mean across iterations/chains for error
   # and mode across iterations/chains for dates
+  # floor applied to convert to corresponding integer for each date
   prob_error <- apply(error_ind_array, c(1, 2), mean, na.rm = FALSE)
-  mode_dates_num <- apply(est_dates_numeric, c(1, 2), get_mode)
+  mode_dates_num <- apply(floor(est_dates_numeric), c(1, 2), get_mode)
   
   n_individuals <- dim(error_ind_array)[1]
   n_events <- dim(error_ind_array)[2]

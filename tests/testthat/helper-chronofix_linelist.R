@@ -39,7 +39,8 @@ make_mock_data <- function() {
     )
     
     for (e in allowed_events) {
-      estimated_dates[i, e, , 1] <- as.character(as.Date("2025-01-01") + e + seq_len(n_iter))
+      estimated_dates[i, e, , 1] <-
+        date_to_int(as.Date("2025-01-01") + e + seq_len(n_iter)) + runif(n_iter)
       error_indicators[i, e, , 1] <- c(FALSE, FALSE, TRUE, TRUE)
     }
   }
@@ -48,7 +49,7 @@ make_mock_data <- function() {
     observed = observed_data,
     mcmc = list(
       data = list(
-        estimated_dates = as.character(as.vector(estimated_dates)),
+        estimated_dates = estimated_dates,
         error_indicators = error_indicators
       )
     )
