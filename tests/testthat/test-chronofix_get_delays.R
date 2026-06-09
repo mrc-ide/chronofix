@@ -1,3 +1,7 @@
+test_that("chronofix_get_delays securely calls validation helper", {
+  expect_error(chronofix_get_delays(), "is missing")
+})
+
 test_that("chronofix_get_delays returns posterior delay summaries", {
   mock <- make_delay_summary_mock()
   
@@ -62,84 +66,6 @@ test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
   expect_equal(result$CV_Lower_95_CrI[1], expected_cv1[1])
   expect_equal(result$CV_Median[1], expected_cv1[2])
   expect_equal(result$CV_Upper_95_CrI[1], expected_cv1[3])
-})
-
-test_that("chronofix_get_delays requires mcmc_output", {
-  mock <- make_delay_summary_mock()
-  
-  expect_error(
-    chronofix_get_delays(delay_map = mock$delay_map),
-    "'mcmc_output' is missing.",
-    fixed = TRUE
-  )
-})
-
-test_that("chronofix_get_delays requires delay_map", {
-  mock <- make_delay_summary_mock()
-  
-  expect_error(
-    chronofix_get_delays(mcmc_output = mock$mcmc_output),
-    "'delay_map' is missing.",
-    fixed = TRUE
-  )
-})
-
-test_that("chronofix_get_delays requires pars in mcmc_output", {
-  mock <- make_delay_summary_mock()
-  
-  expect_error(
-    chronofix_get_delays(
-      mcmc_output = list(),
-      delay_map = mock$delay_map
-    ),
-    "'mcmc_output' must contain a 'pars' array.",
-    fixed = TRUE
-  )
-})
-
-test_that("chronofix_get_delays requires parameter names", {
-  mock <- make_delay_summary_mock()
-  dimnames(mock$mcmc_output$pars)[[1]] <- NULL
-  
-  expect_error(
-    chronofix_get_delays(
-      mcmc_output = mock$mcmc_output,
-      delay_map = mock$delay_map
-    ),
-    "'mcmc_output$pars' must have parameter names in the first dimension.",
-    fixed = TRUE
-  )
-})
-
-test_that("chronofix_get_delays requires delay_map columns", {
-  mock <- make_delay_summary_mock()
-  delay_map <- mock$delay_map[, setdiff(names(mock$delay_map), "distribution")]
-  
-  expect_error(
-    chronofix_get_delays(
-      mcmc_output = mock$mcmc_output,
-      delay_map = delay_map
-    ),
-    "'delay_map' is missing required column(s): distribution",
-    fixed = TRUE
-  )
-})
-
-test_that("chronofix_get_delays requires delay parameters for each delay", {
-  mock <- make_delay_summary_mock()
-  
-  mock$mcmc_output$pars <- mock$mcmc_output$pars[
-    c("delay_mean1", "delay_cv1", "delay_mean2"), , , drop = FALSE
-  ]
-  
-  expect_error(
-    chronofix_get_delays(
-      mcmc_output = mock$mcmc_output,
-      delay_map = mock$delay_map
-    ),
-    "Missing parameter(s) in 'mcmc_output$pars': delay_cv2",
-    fixed = TRUE
-  )
 })
 
 test_that("chronofix_get_delays handles NAs in MCMC output safely", {

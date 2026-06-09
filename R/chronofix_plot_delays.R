@@ -5,7 +5,6 @@
 #' @param n_points Number of points along the x-axis to evaluate (default 200)
 #' 
 #' @import ggplot2
-#' @import cli
 #' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
 #' @importFrom ggtext element_markdown
 #' @export
@@ -13,42 +12,11 @@ chronofix_plot_delays <- function(mcmc_output,
                                   delay_map,
                                   n_points = 200) {
   
-  if (missing(mcmc_output)) {
-    cli::cli_abort(c(
-      "x" = "{.arg mcmc_output} is missing.",
-      "i" = "Please provide the output list from {.fn chronofix_mcmc_run}."
-    ))
-  }
-  if (missing(delay_map)) {
-    cli::cli_abort(c(
-      "x" = "{.arg delay_map} is missing.",
-      "i" = "Please provide the delay map used for the model setup."
-    ))
-  }
-  if (is.null(mcmc_output$pars)) {
-    cli::cli_abort(c(
-      "x" = "{.arg mcmc_output} must contain a {.field pars} array."
-    ))
-  }
+  validate_delay_inputs(mcmc_output, delay_map)
   
   pars_array <- mcmc_output$pars
   n_params <- dim(pars_array)[1]
   param_names <- dimnames(pars_array)[[1]]
-  
-  if (is.null(param_names)) {
-    cli::cli_abort(c(
-      "x" = "Parameter names are missing from the {.code mcmc_output$pars} array.",
-      "i" = "Ensure the array has row names corresponding to your model parameters."
-    ))
-  }
-  
-  required_cols <- c("group", "from", "to", "distribution")
-  missing_cols <- setdiff(required_cols, names(delay_map))
-  if (length(missing_cols) > 0) {
-    cli::cli_abort(c(
-      "x" = "{.arg delay_map} is missing required column{?s}: {.val {missing_cols}}."
-    ))
-  }
   
   pars_flat <- matrix(pars_array, nrow = n_params)
   rownames(pars_flat) <- param_names
@@ -61,13 +29,6 @@ chronofix_plot_delays <- function(mcmc_output,
     mean_name <- paste0("delay_mean", i)
     cv_name <- paste0("delay_cv", i)
     
-    missing_pars <- setdiff(c(mean_name, cv_name), rownames(pars_flat))
-    if (length(missing_pars) > 0) {
-      cli::cli_abort(c(
-        "x" = "Missing parameter{?s} in {.code mcmc_output$pars}: {.val {missing_pars}}."
-      ))
-    }
-    
     raw_dist <- as.character(delay_map$distribution[i])
     if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
       dist_clean <- "Gamma"
@@ -77,17 +38,23 @@ chronofix_plot_delays <- function(mcmc_output,
     
     # clean up group names
     raw_group <- as.character(delay_map$group[[i]])
-    if (grepl("^c\\(", raw_group[1])) {
-      raw_group <- gsub("^c\\(|\\)$", "", raw_group[1]) 
-      raw_group <- gsub("[\"']", "", raw_group)        
+    if (length(raw_group) == 1 && grepl("^c\\(", raw_group)) {
+      raw_group <- gsub("^c\\(|\\)$", "", raw_group)
+      raw_group <- gsub("[\"']", "", raw_group)
+      raw_group <- trimws(strsplit(raw_group, ",")[[1]])
     }
+    
     clean_group <- paste(raw_group, collapse = ", ")
-    clean_group <- tools::toTitleCase(gsub("[-_]", " ", clean_group))
+    clean_group <- gsub("[-_]", " ", clean_group)
+    clean_group <- tools::toTitleCase(clean_group)
     clean_group_wrapped <- paste(strwrap(clean_group, width = 40), collapse = "<br>")
     
     # clean up delays
-    from_name <- tools::toTitleCase(as.character(delay_map$from[i]))
-    to_name <- tools::toTitleCase(as.character(delay_map$to[i]))
+    from_name <- gsub("[-_]", " ", as.character(delay_map$from[i]))
+    to_name <- gsub("[-_]", " ", as.character(delay_map$to[i]))
+    
+    from_name <- tools::toTitleCase(from_name)
+    to_name <- tools::toTitleCase(to_name)
     
     panel_title <- sprintf(
       "<span style='color: #1F77B4;'>Group: %s</span><br><span style='color: #000000;'>Delay: %s to %s</span>",

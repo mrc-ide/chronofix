@@ -11,33 +11,12 @@
 #' @export
 chronofix_get_delays <- function(mcmc_output, delay_map) {
   
-  if (missing(mcmc_output)) {
-    stop("'mcmc_output' is missing.")
-  }
-  if (missing(delay_map)) {
-    stop("'delay_map' is missing.")
-  }
-  if (is.null(mcmc_output$pars)) {
-    stop("'mcmc_output' must contain a 'pars' array.")
-  }
+  validate_delay_inputs(mcmc_output, delay_map)
   
   pars_array <- mcmc_output$pars
+  n_params <- dim(pars_array)[1]
   param_names <- dimnames(pars_array)[[1]]
   
-  if (is.null(param_names)) {
-    stop("'mcmc_output$pars' must have parameter names in the first dimension.")
-  }
-  
-  required_cols <- c("group", "from", "to", "distribution")
-  missing_cols <- setdiff(required_cols, names(delay_map))
-  if (length(missing_cols) > 0) {
-    stop(
-      "'delay_map' is missing required column(s): ",
-      paste(missing_cols, collapse = ", ")
-    )
-  }
-  
-  n_params <- dim(pars_array)[1]
   pars_flat <- matrix(pars_array, nrow = n_params)
   rownames(pars_flat) <- param_names
   
@@ -47,14 +26,6 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
     
     mean_name <- paste0("delay_mean", i)
     cv_name <- paste0("delay_cv", i)
-    
-    missing_pars <- setdiff(c(mean_name, cv_name), rownames(pars_flat))
-    if (length(missing_pars) > 0) {
-      stop(
-        "Missing parameter(s) in 'mcmc_output$pars': ",
-        paste(missing_pars, collapse = ", ")
-      )
-    }
     
     raw_dist <- as.character(delay_map$distribution[i])
     dist_clean <- if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
