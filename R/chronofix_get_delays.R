@@ -34,22 +34,9 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
       dist_clean <- "Log-Normal"
     }
     
-    raw_group <- as.character(delay_map$group[[i]])
-    if (length(raw_group) == 1 && grepl("^c\\(", raw_group)) {
-      raw_group <- gsub("^c\\(|\\)$", "", raw_group)
-      raw_group <- gsub("[\"']", "", raw_group)
-      raw_group <- trimws(strsplit(raw_group, ",")[[1]])
-    }
-    
-    clean_group <- paste(raw_group, collapse = ", ")
-    clean_group <- gsub("[-_]", " ", clean_group)
-    clean_group <- tools::toTitleCase(clean_group)
-    
-    from_name <- gsub("[-_]", " ", as.character(delay_map$from[i]))
-    to_name <- gsub("[-_]", " ", as.character(delay_map$to[i]))
-    
-    from_name <- tools::toTitleCase(from_name)
-    to_name <- tools::toTitleCase(to_name)
+    clean_group <- clean_group_name(delay_map$group[[i]])
+    from_name <- clean_event_name(delay_map$from[i])
+    to_name <- clean_event_name(delay_map$to[i])
     
     delay_label <- paste(from_name, "to", to_name)
     

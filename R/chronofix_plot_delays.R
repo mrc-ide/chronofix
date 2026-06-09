@@ -36,25 +36,11 @@ chronofix_plot_delays <- function(mcmc_output,
       dist_clean <- "Log-Normal"
     }
     
-    # clean up group names
-    raw_group <- as.character(delay_map$group[[i]])
-    if (length(raw_group) == 1 && grepl("^c\\(", raw_group)) {
-      raw_group <- gsub("^c\\(|\\)$", "", raw_group)
-      raw_group <- gsub("[\"']", "", raw_group)
-      raw_group <- trimws(strsplit(raw_group, ",")[[1]])
-    }
-    
-    clean_group <- paste(raw_group, collapse = ", ")
-    clean_group <- gsub("[-_]", " ", clean_group)
-    clean_group <- tools::toTitleCase(clean_group)
+    clean_group <- clean_group_name(delay_map$group[[i]])
     clean_group_wrapped <- paste(strwrap(clean_group, width = 40), collapse = "<br>")
     
-    # clean up delays
-    from_name <- gsub("[-_]", " ", as.character(delay_map$from[i]))
-    to_name <- gsub("[-_]", " ", as.character(delay_map$to[i]))
-    
-    from_name <- tools::toTitleCase(from_name)
-    to_name <- tools::toTitleCase(to_name)
+    from_name <- clean_event_name(delay_map$from[i])
+    to_name <- clean_event_name(delay_map$to[i])
     
     panel_title <- sprintf(
       "<span style='color: #1F77B4;'>Group: %s</span><br><span style='color: #000000;'>Delay: %s to %s</span>",
