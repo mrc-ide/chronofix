@@ -1,3 +1,43 @@
+test_that("chronofix_plot_delays catches missing inputs and bad structures", {
+  
+  mock_delay_map <- data.frame(
+    from = "onset", to = "report", distribution = "gamma", group = "1",
+    stringsAsFactors = FALSE
+  )
+  
+  mock_mcmc_output <- list(
+    pars = array(1, dim = c(2, 10, 1),
+                 dimnames = list(c("delay_mean1", "delay_cv1"), NULL, NULL))
+    )
+  
+  # mcmc_output or delay_map is missing
+  expect_error(chronofix_plot_delays(delay_map = mock_delay_map), 
+               "is missing")
+  expect_error(chronofix_plot_delays(mcmc_output = mock_mcmc_output), 
+               "is missing")
+  
+  # pars array is missing
+  expect_error(chronofix_plot_delays(list(wrong_name = 1), mock_delay_map), 
+               "must contain a.*pars.*array")
+  
+  # missing parameter names
+  bad_pars <- mock_mcmc_output
+  dimnames(bad_pars$pars) <- NULL
+  expect_error(chronofix_plot_delays(bad_pars, mock_delay_map), 
+               "Parameter names are missing")
+  
+  # missing columns in delay_map
+  bad_map <- mock_delay_map[, c("from", "to")] # dropped group and distribution
+  expect_error(chronofix_plot_delays(mock_mcmc_output, bad_map), 
+               "is missing required column")
+  
+  # missing specific delay parameters
+  bad_pars_names <- mock_mcmc_output
+  dimnames(bad_pars_names$pars)[[1]] <- c("wrong_name1", "wrong_name2")
+  expect_error(chronofix_plot_delays(bad_pars_names, mock_delay_map), 
+               "Missing parameter")
+})
+
 test_that("chronofix_plot_delays generates a correct ggplot object", {
   
   mock_delay_map <- data.frame(
