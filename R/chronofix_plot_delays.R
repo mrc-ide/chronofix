@@ -37,7 +37,8 @@ chronofix_plot_delays <- function(mcmc_output,
   
   if (is.null(param_names)) {
     cli::cli_abort(c(
-      "x" = "{.code mcmc_output$pars} must have parameter names in the first dimension."
+      "x" = "Parameter names are missing from the {.code mcmc_output$pars} array.",
+      "i" = "Ensure the array has row names corresponding to your model parameters."
     ))
   }
   
