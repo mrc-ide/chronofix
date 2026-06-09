@@ -28,12 +28,10 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
     cv_name <- paste0("delay_cv", i)
     
     raw_dist <- as.character(delay_map$distribution[i])
-    dist_clean <- if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
-      "Gamma"
-    } else if (grepl("log", raw_dist, ignore.case = TRUE)) {
-      "Log-Normal"
+    if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
+      dist_clean <- "Gamma"
     } else {
-      raw_dist
+      dist_clean <- "Log-Normal"
     }
     
     raw_group <- as.character(delay_map$group[[i]])

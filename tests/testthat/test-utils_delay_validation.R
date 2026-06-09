@@ -34,4 +34,10 @@ test_that("validate_delay_inputs catches all missing inputs and bad structures",
   dimnames(bad_pars_names$pars)[[1]] <- c("wrong_name1", "wrong_name2")
   expect_error(validate_delay_inputs(bad_pars_names, mock_delay_map), 
                "Missing parameter")
+  
+  # unsupported distribution
+  bad_dist_map <- mock_delay_map
+  bad_dist_map$distribution <- "weibull"
+  expect_error(validate_delay_inputs(mock_mcmc_output, bad_dist_map), 
+               "Unsupported distribution")
 })

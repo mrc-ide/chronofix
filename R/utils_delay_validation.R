@@ -54,5 +54,15 @@ validate_delay_inputs <- function(mcmc_output, delay_map) {
     ))
   }
   
+  # Validate supported distributions
+  supported_dists <- grepl("gamma|log", delay_map$distribution, ignore.case = TRUE)
+  if (!all(supported_dists)) {
+    bad_dists <- unique(delay_map$distribution[!supported_dists])
+    cli::cli_abort(c(
+      "x" = "Unsupported distribution{?s} found in {.arg delay_map}: {.val {bad_dists}}.",
+      "i" = "Currently, only {.val gamma} and {.val log-normal} are supported."
+    ))
+  }
+  
   invisible(TRUE)
 }
