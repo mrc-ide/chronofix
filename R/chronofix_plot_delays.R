@@ -5,6 +5,7 @@
 #' @param n_points Number of points along the x-axis to evaluate (default 200)
 #' 
 #' @import ggplot2
+#' @import cli
 #' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
 #' @importFrom ggtext element_markdown
 #' @export
@@ -12,9 +13,41 @@ chronofix_plot_delays <- function(mcmc_output,
                                   delay_map,
                                   n_points = 200) {
   
+  if (missing(mcmc_output)) {
+    cli::cli_abort(c(
+      "x" = "{.arg mcmc_output} is missing.",
+      "i" = "Please provide the output list from {.fn chronofix_mcmc_run}."
+    ))
+  }
+  if (missing(delay_map)) {
+    cli::cli_abort(c(
+      "x" = "{.arg delay_map} is missing.",
+      "i" = "Please provide the delay map used for the model setup."
+    ))
+  }
+  if (is.null(mcmc_output$pars)) {
+    cli::cli_abort(c(
+      "x" = "{.arg mcmc_output} must contain a {.field pars} array."
+    ))
+  }
+  
   pars_array <- mcmc_output$pars
   n_params <- dim(pars_array)[1]
   param_names <- dimnames(pars_array)[[1]]
+  
+  if (is.null(param_names)) {
+    cli::cli_abort(c(
+      "x" = "{.code mcmc_output$pars} must have parameter names in the first dimension."
+    ))
+  }
+  
+  required_cols <- c("group", "from", "to", "distribution")
+  missing_cols <- setdiff(required_cols, names(delay_map))
+  if (length(missing_cols) > 0) {
+    cli::cli_abort(c(
+      "x" = "{.arg delay_map} is missing required column{?s}: {.val {missing_cols}}."
+    ))
+  }
   
   pars_flat <- matrix(pars_array, nrow = n_params)
   rownames(pars_flat) <- param_names
@@ -23,6 +56,16 @@ chronofix_plot_delays <- function(mcmc_output,
   peak_data_list <- list() 
   
   for (i in seq_len(nrow(delay_map))) {
+    
+    mean_name <- paste0("delay_mean", i)
+    cv_name <- paste0("delay_cv", i)
+    
+    missing_pars <- setdiff(c(mean_name, cv_name), rownames(pars_flat))
+    if (length(missing_pars) > 0) {
+      cli::cli_abort(c(
+        "x" = "Missing parameter{?s} in {.code mcmc_output$pars}: {.val {missing_pars}}."
+      ))
+    }
     
     raw_dist <- as.character(delay_map$distribution[i])
     if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
@@ -52,23 +95,23 @@ chronofix_plot_delays <- function(mcmc_output,
       to_name
     )
     
-    mean_samps <- pars_flat[paste0("delay_mean", i), ]
-    cv_samps <- pars_flat[paste0("delay_cv", i), ]
+    mean_samps <- pars_flat[mean_name, , drop = TRUE]
+    cv_samps <- pars_flat[cv_name, , drop = TRUE]
     
     if (dist_clean == "Gamma") {
       shape <- (1 / cv_samps)^2
       scale <- mean_samps / shape
       
-      med_shape <- median(shape)
-      med_scale <- median(scale)
+      med_shape <- median(shape, na.rm = TRUE)
+      med_scale <- median(scale, na.rm = TRUE)
       max_x <- stats::qgamma(0.99, shape = med_shape, scale = med_scale)
       
     } else if (dist_clean == "Log-Normal") {
       sdlog <- sqrt(log(cv_samps^2 + 1))
       meanlog <- log(mean_samps) - (sdlog^2) / 2
       
-      med_sdlog <- median(sdlog)
-      med_meanlog <- median(meanlog)
+      med_sdlog <- median(sdlog, na.rm = TRUE)
+      med_meanlog <- median(meanlog, na.rm = TRUE)
       max_x <- stats::qlnorm(0.99, meanlog = med_meanlog, sdlog = med_sdlog)
     }
     
