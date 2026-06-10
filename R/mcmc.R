@@ -156,13 +156,16 @@ chronofix_mcmc_control <- function(n_steps = 1000,
 ##'
 ##' @export
 chronofix_mcmc_initial <- function(model,
-                         initial_delay_mean = 7,
-                         initial_delay_cv = 0.2,
-                         initial_prob_error = 1) {
+                                   initial_delay_shape = 1,
+                                   initial_delay_rate = 0.2,
+                                   initial_delay_meanlog = 1,
+                                   initial_delay_sdlog = 1) {
   initial <- numeric(length(model$parameters))
   initial[model$parameters == "prob_error"] <- 0.1
-  initial[grepl("delay_mean", model$parameters)] <- initial_delay_mean
-  initial[grepl("delay_cv", model$parameters)] <- initial_delay_cv
+  initial[endsWith(model$parameters, "shape")] <- initial_delay_shape
+  initial[endsWith(model$parameters, "rate")] <- initial_delay_rate
+  initial[endsWith(model$parameters, "meanlog")] <- initial_delay_meanlog
+  initial[endsWith(model$parameters, "sdlog")] <- initial_delay_sdlog
   
   initial
 }
