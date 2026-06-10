@@ -24,19 +24,15 @@ calculate_transitive_steps <- function(delay_map) {
 calculate_delay_boundaries <- function(delay_params, quantile_range) {
   delay_params %>%
     mutate(
-      shape = (1 / cv)^2,
-      scale = mean / shape,
-      sdlog = sqrt(log(cv^2 + 1)),
-      meanlog = log(mean) - sdlog^2 / 2,
       # find the delay values at the specified quantiles
       min_delay = case_when(
         distribution == "gamma" ~ 
-          qgamma(quantile_range[1], shape = shape, scale = scale),
+          qgamma(quantile_range[1], shape = shape, rate = rate),
         distribution == "log-normal" ~ 
           qlnorm(quantile_range[1], meanlog = meanlog, sdlog = sdlog)),
       max_delay = case_when(
         distribution == "gamma" ~ 
-          qgamma(quantile_range[2], shape = shape, scale = scale),
+          qgamma(quantile_range[2], shape = shape, rate = rate),
         distribution == "log-normal" ~ 
           qlnorm(quantile_range[2], meanlog = meanlog, sdlog = sdlog))
     ) %>%
@@ -167,8 +163,8 @@ initialise_augmented_data <- function(observed_dates, pars, groups, model_info,
                           to = model_info$delay_to,
                           distribution = model_info$delay_distribution)
   
-  delay_map$mean <- pars[paste0("delay_mean", seq_len(nrow(delay_map)))]
-  delay_map$cv <- pars[paste0("delay_cv", seq_len(nrow(delay_map)))]
+  delay_pars <- unpack_delay_pars(pars, model_info$delay_distribution)
+  delay_map <- dplyr::bind_cols(delay_map, dplyr::bind_rows(delay_pars))
   init_settings <- list(quantile_range = c(control$lower_quantile,
                                            control$upper_quantile))
   
