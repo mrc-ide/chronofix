@@ -221,9 +221,11 @@ sample_from_delay <- function(i, augmented_data, group, delay_pars, model_info,
 sample_from_delay1 <- function(pars, distribution, rng) {
   
   if (distribution == "gamma") {
-    x <- monty::monty_random_gamma_rate(pars$shape, pars$rate, rng)
+    rate <- pars$shape / pars$mean
+    x <- monty::monty_random_gamma_rate(pars$shape, rate, rng)
   } else if (distribution == "log-normal") {
-    x <- monty::monty_random_log_normal(pars$meanlog, pars$sdlog, rng)
+    x <- monty::monty_random_log_normal(pars$meanlog, 
+                                        1 / sqrt(pars$precisionlog), rng)
   } 
   
   x

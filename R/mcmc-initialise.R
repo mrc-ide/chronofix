@@ -27,14 +27,16 @@ calculate_delay_boundaries <- function(delay_params, quantile_range) {
       # find the delay values at the specified quantiles
       min_delay = case_when(
         distribution == "gamma" ~ 
-          qgamma(quantile_range[1], shape = shape, rate = rate),
+          qgamma(quantile_range[1], shape = shape, rate = shape / mean),
         distribution == "log-normal" ~ 
-          qlnorm(quantile_range[1], meanlog = meanlog, sdlog = sdlog)),
+          qlnorm(quantile_range[1], meanlog = meanlog, 
+                 sdlog = 1 / sqrt(precisionlog))),
       max_delay = case_when(
         distribution == "gamma" ~ 
-          qgamma(quantile_range[2], shape = shape, rate = rate),
+          qgamma(quantile_range[2], shape = shape, rate = shape / mean),
         distribution == "log-normal" ~ 
-          qlnorm(quantile_range[2], meanlog = meanlog, sdlog = sdlog))
+          qlnorm(quantile_range[2], meanlog = meanlog, 
+                 sdlog = 1 / sqrt(precisionlog)))
     ) %>%
     select(from, to, min_delay, max_delay)
 }

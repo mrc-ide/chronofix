@@ -29,12 +29,12 @@ chronofix_model <- function(data, delay_map, hyperparameters, control) {
     if (delay_map$distribution[i] == "gamma") {
       parameters <- c(parameters,
                       paste0("delay", i, "_shape"),
-                      paste0("delay", i, "_rate"))
+                      paste0("delay", i, "_mean"))
       domain <- rbind(domain, c(0, Inf), c(0, Inf))
     } else if (delay_map$distribution[i] == "log-normal") {
       parameters <- c(parameters,
                       paste0("delay", i, "_meanlog"),
-                      paste0("delay", i, "_sdlog"))
+                      paste0("delay", i, "_precisionlog"))
       domain <- rbind(domain, c(-Inf, Inf), c(0, Inf))
     }
   }
@@ -63,6 +63,8 @@ chronofix_model <- function(data, delay_map, hyperparameters, control) {
   
   model$hyperparameters <- hyperparameters
   model$data_packer <- data_packer
+  model$info <- model_info
+  model$groups_data <- groups
   
   model
   
@@ -86,20 +88,20 @@ chronofix_hyperparameters <- function(prob_error_shape1 = 1,
                                       prob_error_shape2 = 1,
                                       gamma_shape_prior_shape = 1,
                                       gamma_shape_prior_rate = 1,
-                                      gamma_rate_prior_shape = 1,
-                                      gamma_rate_prior_rate = 1,
+                                      gamma_mean_prior_shape = 1,
+                                      gamma_mean_prior_rate = 1,
                                       log_normal_meanlog_prior_mean = 0,
-                                      log_normal_meanlog_prior_sd = 1,
+                                      log_normal_meanlog_prior_precision = 1,
                                       log_normal_precisionlog_prior_shape = 1,
                                       log_normal_precisionlog_prior_rate = 1) {
   list(prob_error_shape1 = prob_error_shape1,
        prob_error_shape2 = prob_error_shape2,
        gamma_shape_prior_shape = gamma_shape_prior_shape,
        gamma_shape_prior_rate = gamma_shape_prior_rate,
-       gamma_rate_prior_shape = gamma_rate_prior_shape,
-       gamma_rate_prior_rate = gamma_rate_prior_rate,
+       gamma_mean_prior_shape = gamma_mean_prior_shape,
+       gamma_mean_prior_rate = gamma_mean_prior_rate,
        log_normal_meanlog_prior_mean = log_normal_meanlog_prior_mean,
-       log_normal_meanlog_prior_sd = log_normal_meanlog_prior_sd,
+       log_normal_meanlog_prior_precision = log_normal_meanlog_prior_precision,
        log_normal_precisionlog_prior_shape = log_normal_precisionlog_prior_shape,
        log_normal_precisionlog_prior_rate = log_normal_precisionlog_prior_rate)
 }
@@ -262,19 +264,22 @@ make_prior <- function(parameters, hyperparameters, domain,
             lp_delays[i] <-
               dgamma(pars[[paste0("delay", i, "_shape")]],
                      hyperparameters$gamma_shape_prior_shape,
-                     hyperparameters$gamma_shape_prior_rate) +
-              dgamma(pars[[paste0("delay", i, "_rate")]],
-                     hyperparameters$gamma_rate_prior_shape,
-                     hyperparameters$gamma_rate_prior_rate)
-              
+                     rate = hyperparameters$gamma_shape_prior_rate, 
+                     log = TRUE) +
+              dinvgamma(pars[[paste0("delay", i, "_mean")]],
+                        hyperparameters$gamma_mean_prior_shape,
+                        rate = hyperparameters$gamma_mean_prior_rate,
+                        log = TRUE)
           } else if (delay_distributions[i] == "log-normal") {
             lp_delays[i] <-
               dnorm(pars[[paste0("delay", i, "_meanlog")]],
                      hyperparameters$log_normal_meanlog_prior_mean,
-                     hyperparameters$log_normal_meanlog_prior_sd) +
-              dgamma(1 / pars[[paste0("delay", i, "_sdlog")]]^2,
+                     1 / sqrt(hyperparameters$log_normal_meanlog_prior_precision),
+                    log = TRUE) +
+              dgamma(pars[[paste0("delay", i, "_precisionlog")]],
                      hyperparameters$log_normal_precisionlog_prior_shape,
-                     hyperparameters$log_normal_precisionlog_prior_rate)
+                     rate = hyperparameters$log_normal_precisionlog_prior_rate, 
+                     log = TRUE)
           }
         }
         
@@ -302,7 +307,6 @@ chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
   ll_delays <- 
     chronofix_log_likelihood_delays(augmented_data$estimated_dates,
                                     groups, delay_pars, model_info)
-  
   
   ll_errors + ll_delays
                                                
@@ -381,9 +385,11 @@ chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_pars,
 log_density_delay <- function(values, params, distribution) {
   
   if (distribution == "gamma") {
-    d <- dgamma(values, params$shape, rate = params$rate, log = TRUE)
+    d <- dgamma(values, params$shape, 
+                rate = params$shape / params$mean, log = TRUE)
   } else if (distribution == "log-normal") {
-    d <- dlnorm(values, params$meanlog, params$sdlog, log = TRUE)
+    d <- dlnorm(values, params$meanlog, 
+                1 / sqrt(params$precisionlog), log = TRUE)
   }
   
   d
@@ -491,12 +497,29 @@ unpack_delay_pars <- function(pars, delay_distributions) {
   unpack1 <- function(i) {
     if (delay_distributions[i] == "gamma") {
       list(shape = pars[[paste0("delay", i, "_shape")]],
-           rate = pars[[paste0("delay", i, "_rate")]])
+           mean = pars[[paste0("delay", i, "_mean")]])
     } else if (delay_distributions[i] == "log-normal") {
       list(meanlog = pars[[paste0("delay", i, "_meanlog")]],
-           sdlog = pars[[paste0("delay", i, "_sdlog")]])
+           precisionlog = pars[[paste0("delay", i, "_precisionlog")]])
     }
   }
   
   lapply(seq_along(delay_distributions), unpack1)
+}
+
+
+dinvgamma <- function(x, shape, rate = 1, scale = 1 / rate, log = FALSE) {
+  
+  if (!missing(rate)) {
+    d <- dgamma(1 / x, shape, rate = rate, log = log)
+  } else {
+    d <- dgamma(1 / x, shape, scale = scale, log = log)
+  }
+  
+  if (log) {
+    d <- d - 2 * log(x)
+  } else {
+    d <- d / x^2
+  }
+  d
 }

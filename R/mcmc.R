@@ -103,22 +103,20 @@ chronofix_mcmc_run <- function(model,
 ##'
 ##' @export
 chronofix_mcmc_control <- function(n_steps = 1000,
-                         burnin = 0,
-                         thinning_factor = 1,
-                         n_chains = 1,
-                         parallel = FALSE,
-                         n_workers = 1,
-                         lower_quantile = 0.01,
-                         upper_quantile = 0.99,
-                         earliest_possible_date = NULL,
-                         latest_possible_date = NULL,
-                         date_buffer = 30,
-                         mean_sdlog = 1,
-                         cv_sdlog = 1,
-                         prob_update_estimated_dates = 0.1,
-                         prob_update_error_indicators = 0.1,
-                         prob_error_swap = 1,
-                         cascade_sampling = FALSE) {
+                                   burnin = 0,
+                                   thinning_factor = 1,
+                                   n_chains = 1,
+                                   parallel = FALSE,
+                                   n_workers = 1,
+                                   lower_quantile = 0.01,
+                                   upper_quantile = 0.99,
+                                   earliest_possible_date = NULL,
+                                   latest_possible_date = NULL,
+                                   date_buffer = 30,
+                                   prob_update_estimated_dates = 0.1,
+                                   prob_update_error_indicators = 0.1,
+                                   prob_error_swap = 1,
+                                   cascade_sampling = FALSE) {
   
   list(n_steps = n_steps,
        burnin = burnin,
@@ -131,8 +129,6 @@ chronofix_mcmc_control <- function(n_steps = 1000,
        earliest_possible_date = earliest_possible_date,
        latest_possible_date = latest_possible_date,
        date_buffer = date_buffer,
-       mean_sdlog = mean_sdlog,
-       cv_sdlog = cv_sdlog,
        prob_update_estimated_dates = prob_update_estimated_dates,
        prob_update_error_indicators = prob_update_error_indicators,
        prob_error_swap = prob_error_swap,
@@ -157,15 +153,16 @@ chronofix_mcmc_control <- function(n_steps = 1000,
 ##' @export
 chronofix_mcmc_initial <- function(model,
                                    initial_delay_shape = 1,
-                                   initial_delay_rate = 0.2,
+                                   initial_delay_mean = 5,
                                    initial_delay_meanlog = 1,
-                                   initial_delay_sdlog = 1) {
+                                   initial_delay_precisionlog = 1) {
   initial <- numeric(length(model$parameters))
   initial[model$parameters == "prob_error"] <- 0.1
   initial[endsWith(model$parameters, "shape")] <- initial_delay_shape
-  initial[endsWith(model$parameters, "rate")] <- initial_delay_rate
+  initial[endsWith(model$parameters, "mean")] <- initial_delay_mean
   initial[endsWith(model$parameters, "meanlog")] <- initial_delay_meanlog
-  initial[endsWith(model$parameters, "sdlog")] <- initial_delay_sdlog
+  initial[endsWith(model$parameters, "precisionlog")] <- 
+    initial_delay_precisionlog
   
   initial
 }
