@@ -80,11 +80,12 @@ update_gamma_shape <- function(shape, mean, delay_values,
   shape_new <- 
     monty::monty_random_gamma_rate(gamma_pars$shape, gamma_pars$rate, rng)
   
-  accept_prob <- 
+  log_accept_prob <- 
     calc_gamma_shape_accept_prob(shape_new, shape, mean, gamma_pars,
                                  delay_values, hyperparameters)
   
-  accept <- monty::monty_random_real(rng) < accept_prob
+  accept <- log_accept_prob > 0 || 
+    log_accept_prob > log(monty::monty_random_real(rng))
   if (accept) {
     shape <- shape_new
   }
