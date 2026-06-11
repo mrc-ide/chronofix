@@ -165,8 +165,15 @@ initialise_augmented_data <- function(observed_dates, pars, groups, model_info,
                           to = model_info$delay_to,
                           distribution = model_info$delay_distribution)
   
+  
   delay_pars <- unpack_delay_pars(pars, model_info$delay_distribution)
-  delay_map <- dplyr::bind_cols(delay_map, dplyr::bind_rows(delay_pars))
+  delay_pars <- 
+    dplyr::bind_rows(delay_pars,
+                     dplyr::tibble(shape = numeric(),
+                                   mean = numeric(),
+                                   meanlog = numeric(),
+                                   precisionlog = numeric()))
+  delay_map <- dplyr::bind_cols(delay_map, delay_pars)
   init_settings <- list(quantile_range = c(control$lower_quantile,
                                            control$upper_quantile))
   
