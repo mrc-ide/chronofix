@@ -64,7 +64,7 @@ update_gamma_mean_parameters <- function(shape, delay_values, hyperparameters) {
   sample_shape <- 
     hyperparameters$gamma_mean_prior_shape + length(delay_values) * shape
   sample_rate <- 
-    hyperparameters$gamma_mean_prior_rate + sum(delay_values)
+    hyperparameters$gamma_mean_prior_rate + shape * sum(delay_values)
   
   list(shape = sample_shape,
        rate = sample_rate)
