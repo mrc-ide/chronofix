@@ -1,9 +1,9 @@
 
-test_that("chronofix_simulate_data returns correct structure and dimensions", {
+test_that("simulate_data returns correct structure and dimensions", {
   params <- toy_model_params()
   
   set.seed(1)
-  sim_result <- chronofix_simulate_data(
+  sim_result <- simulate_data(
     n_per_group = params$n_per_group,
     group_names = params$group_names,
     delay_info = params$delay_info,
@@ -31,7 +31,7 @@ test_that("error_params as expected in simulated data", {
   n_per_group <- rep(100, length(params$group_names))
   
   set.seed(1)
-  sim_result <- chronofix_simulate_data(
+  sim_result <- simulate_data(
     n_per_group = n_per_group,
     group_names = params$group_names,
     delay_info = params$delay_info,
@@ -63,11 +63,11 @@ test_that("error_params as expected in simulated data", {
 })
 
 
-test_that("chronofix_simulate_data handles numeric groups correctly", {
+test_that("simulate_data handles numeric groups correctly", {
   params <- toy_model_params(named_groups = FALSE)
   
   set.seed(1)
-  sim_result <- chronofix_simulate_data(
+  sim_result <- simulate_data(
     n_per_group = params$n_per_group,
     group_names = params$group_names,
     delay_info = params$delay_info,
@@ -103,17 +103,17 @@ test_that("chronofix_simulate_data handles numeric groups correctly", {
 })
 
 
-test_that("chronofix_simulate_data handles bad inputs correctly", {
+test_that("simulate_data handles bad inputs correctly", {
   params <- toy_model_params()
   
   ## n_per_group and group_names lengths not matching
-  expect_error(chronofix_simulate_data(n_per_group = c(10, 10),
+  expect_error(simulate_data(n_per_group = c(10, 10),
                              group_names = params$group_names,
                              delay_info = params$delay_info,
                              error_params = params$error_params,
                              date_range = params$date_range),
                "Lengths of 'n_per_group' and 'group_names' do not match")
-  expect_error(chronofix_simulate_data(n_per_group = params$n_per_group,
+  expect_error(simulate_data(n_per_group = params$n_per_group,
                              group_names = params$group_names[1:2],
                              delay_info = params$delay_info,
                              error_params = params$error_params,
@@ -121,19 +121,19 @@ test_that("chronofix_simulate_data handles bad inputs correctly", {
                "Lengths of 'n_per_group' and 'group_names' do not match")
   
   ## group_names do not match names in delay_info
-  expect_error(chronofix_simulate_data(n_per_group = params$n_per_group[1:3],
+  expect_error(simulate_data(n_per_group = params$n_per_group[1:3],
                              group_names = params$group_names[1:3],
                              delay_info = params$delay_info,
                              error_params = params$error_params,
                              date_range = params$date_range),
                "Groups in 'group_names' do not match those in 'delay_info'")
-  expect_error(chronofix_simulate_data(n_per_group = params$n_per_group,
+  expect_error(simulate_data(n_per_group = params$n_per_group,
                              group_names = seq_len(4),
                              delay_info = params$delay_info,
                              error_params = params$error_params,
                              date_range = params$date_range),
                "Groups in 'group_names' do not match those in 'delay_info'")
-  expect_error(chronofix_simulate_data(n_per_group = params$n_per_group,
+  expect_error(simulate_data(n_per_group = params$n_per_group,
                              group_names = params$group_names,
                              delay_info = params$delay_info[-1, ],
                              error_params = params$error_params,
@@ -142,7 +142,7 @@ test_that("chronofix_simulate_data handles bad inputs correctly", {
 })
 
 
-test_that("chronofix_simulate_data handles vector and scalar n_per_group correctly", {
+test_that("simulate_data handles vector and scalar n_per_group correctly", {
   
   params <- toy_model_params()
   
@@ -151,7 +151,7 @@ test_that("chronofix_simulate_data handles vector and scalar n_per_group correct
   }
   
   set.seed(1)
-  sim_result <- chronofix_simulate_data(
+  sim_result <- simulate_data(
     n_per_group = params$n_per_group,
     group_names = params$group_names,
     delay_info = params$delay_info,
@@ -162,7 +162,7 @@ test_that("chronofix_simulate_data handles vector and scalar n_per_group correct
   ## same as above but just scalar input to n_per_group, should be the same
   ## across groups
   set.seed(1)
-  sim_result2 <- chronofix_simulate_data(
+  sim_result2 <- simulate_data(
     n_per_group = params$n_per_group[1],
     group_names = params$group_names,
     delay_info = params$delay_info,
@@ -178,7 +178,7 @@ test_that("chronofix_simulate_data handles vector and scalar n_per_group correct
   
   ## uneven group sizes
   n_per_group <- c(10, 20, 30, 40)
-  sim_result3 <- chronofix_simulate_data(
+  sim_result3 <- simulate_data(
     n_per_group = n_per_group,
     group_names = params$group_names,
     delay_info = params$delay_info,
@@ -193,4 +193,3 @@ test_that("chronofix_simulate_data handles vector and scalar n_per_group correct
   expect_equal(check_n_per_group(sim_result3$error_indicators), n_per_group)
   
 })
-
