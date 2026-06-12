@@ -292,3 +292,18 @@ test_that("convert_to_distribution_params converts correctly", {
   expect_error(convert_to_distribution_params(mean, cv, "normal"),
                'Distribution "normal" is not supported')
 })
+
+
+test_that("dinvgamma calculates correctly", {
+  shape <- 5
+  rate <- 3
+  x <- 10
+  
+  d <- dgamma(1 / x, shape, rate = rate, log = TRUE) - 2 * log(x)
+  
+  expect_equal(dinvgamma(x, shape, rate = rate, log = TRUE), d)
+  expect_equal(dinvgamma(x, shape, rate = rate, log = FALSE), exp(d))
+  expect_equal(dinvgamma(x, shape, scale = 1 / rate, log = TRUE), d)
+  expect_equal(dinvgamma(x, shape, scale = 1 / rate, log = FALSE), exp(d))
+  
+})
