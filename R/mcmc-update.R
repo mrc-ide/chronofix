@@ -113,14 +113,12 @@ update_gamma_shape_parameters <- function(mean, delay_values, hyperparameters) {
     a <- A / B
     A <- a0 - n * a + n * a^2 * trigamma(a)
     B <- b0 + (A - a0) / a - n * log(a) + n * digamma(a) + T
-    if (abs(a / (A / B) - 1) < eps) {
+    if (abs(a / (A / B) - 1) < eps || i == M) {
       return(list(shape = A,
                   rate = B))
     }
   }
   
-  list(shape = A,
-       rate = B)
 }
 
 
