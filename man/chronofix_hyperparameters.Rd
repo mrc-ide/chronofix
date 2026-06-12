@@ -7,8 +7,14 @@
 chronofix_hyperparameters(
   prob_error_shape1 = 1,
   prob_error_shape2 = 1,
-  delay_mean_scale = 10,
-  delay_cv_scale = 10
+  gamma_shape_prior_shape = 1,
+  gamma_shape_prior_rate = 1,
+  gamma_mean_prior_shape = 1,
+  gamma_mean_prior_rate = 1,
+  log_normal_meanlog_prior_mean = 0,
+  log_normal_meanlog_prior_precision = 1,
+  log_normal_precisionlog_prior_shape = 1,
+  log_normal_precisionlog_prior_rate = 1
 )
 }
 \arguments{
@@ -18,11 +24,21 @@ distribution for the probability of error}
 \item{prob_error_shape2}{The second shape parameter of the beta prior
 distribution for the probability of error}
 
-\item{delay_mean_scale}{The scale parameter (mean) of the exponential prior
-distribution for the means of the delays}
+\item{gamma_shape_prior_shape}{description}
 
-\item{delay_cv_scale}{The scale parameter (mean) of the exponential prior
-distribution for the coefficients of variations of the delays}
+\item{gamma_shape_prior_rate}{description}
+
+\item{gamma_mean_prior_shape}{description}
+
+\item{gamma_mean_prior_rate}{description}
+
+\item{log_normal_meanlog_prior_mean}{description}
+
+\item{log_normal_meanlog_prior_precision}{description}
+
+\item{log_normal_precisionlog_prior_shape}{description}
+
+\item{log_normal_precisionlog_prior_rate}{description}
 }
 \value{
 List of hyperparameters

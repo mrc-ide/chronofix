@@ -81,6 +81,22 @@ chronofix_model <- function(data, delay_map, hyperparameters, control) {
 ##' @param prob_error_shape2 The second shape parameter of the beta prior
 ##'   distribution for the probability of error
 ##'
+##' @param gamma_shape_prior_shape description
+##'
+##' @param gamma_shape_prior_rate description
+##'
+##' @param gamma_mean_prior_shape description
+##'
+##' @param gamma_mean_prior_rate description
+##'
+##' @param log_normal_meanlog_prior_mean description
+##'
+##' @param log_normal_meanlog_prior_precision description
+##'
+##' @param log_normal_precisionlog_prior_shape description
+##'
+##' @param log_normal_precisionlog_prior_rate description
+##'
 ##' @return List of hyperparameters
 ##'
 ##' @export
@@ -243,7 +259,7 @@ make_chronofix_density <- function(parameters, groups, model_info, date_range,
 }
 
 
-#' @importFrom stats dbeta dexp
+#' @importFrom stats dbeta dexp dgamma dnorm
 make_prior <- function(parameters, hyperparameters, domain,
                        delay_distributions) {
   monty::monty_model(
@@ -508,6 +524,7 @@ unpack_delay_pars <- function(pars, delay_distributions) {
 }
 
 
+#' @importFrom stats dgamma
 dinvgamma <- function(x, shape, rate = 1, scale = 1 / rate, log = FALSE) {
   
   if (!missing(rate)) {

@@ -6,18 +6,23 @@
 \usage{
 chronofix_mcmc_initial(
   model,
-  initial_delay_mean = 7,
-  initial_delay_cv = 0.2,
-  initial_prob_error = 1
+  initial_delay_shape = 1,
+  initial_delay_mean = 5,
+  initial_delay_meanlog = 1,
+  initial_delay_precisionlog = 1,
+  initial_prob_error = 0.1
 )
 }
 \arguments{
 \item{model}{Model}
 
-\item{initial_delay_mean}{The initial value for the delay means}
+\item{initial_delay_shape}{description}
 
-\item{initial_delay_cv}{The initial value for the delay coefficients of
-variation}
+\item{initial_delay_mean}{description}
+
+\item{initial_delay_meanlog}{description}
+
+\item{initial_delay_precisionlog}{description}
 
 \item{initial_prob_error}{The initial value for the probability of error}
 }

@@ -80,11 +80,6 @@ chronofix_mcmc_run <- function(model,
 ##'   possible date will be taken as `date_buffer` days after the latest date in
 ##'   the data.
 ##' 
-##' @param mean_sdlog The sdlog proposal parameter for the delay means
-##' 
-##' @param cv_sdlog The sdlog proposal parameter for the delay coefficients of
-##'   variation
-##'   
 ##' @param prob_update_estimated_dates The probability of proposing an update
 ##'   to each estimated date at each iteration in the MCMC
 ##'
@@ -141,11 +136,14 @@ chronofix_mcmc_control <- function(n_steps = 1000,
 ##'
 ##' @param model Model
 ##' 
-##' @param initial_delay_mean The initial value for the delay means
+##' @param initial_delay_shape description
 ##' 
-##' @param initial_delay_cv The initial value for the delay coefficients of
-##'   variation
-##'   
+##' @param initial_delay_mean description
+##'
+##' @param initial_delay_meanlog description
+##'
+##' @param initial_delay_precisionlog description
+##'
 ##' @param initial_prob_error The initial value for the probability of error  
 ##' 
 ##' @return Vector of initial parameter values
@@ -155,9 +153,10 @@ chronofix_mcmc_initial <- function(model,
                                    initial_delay_shape = 1,
                                    initial_delay_mean = 5,
                                    initial_delay_meanlog = 1,
-                                   initial_delay_precisionlog = 1) {
+                                   initial_delay_precisionlog = 1,
+                                   initial_prob_error = 0.1) {
   initial <- numeric(length(model$parameters))
-  initial[model$parameters == "prob_error"] <- 0.1
+  initial[model$parameters == "prob_error"] <- initial_prob_error
   initial[endsWith(model$parameters, "shape")] <- initial_delay_shape
   initial[endsWith(model$parameters, "mean")] <- initial_delay_mean
   initial[endsWith(model$parameters, "meanlog")] <- initial_delay_meanlog
