@@ -59,3 +59,106 @@ test_that("update_prob_error updates correctly", {
   new_state_chain <- update_prob_error(state_chain, model, rng)
   expect_equal(new_state_chain$pars[i], 0)
 })
+
+
+test_that("update gamma mean works correctly", {
+  
+  toy <- toy_model()
+  
+  model <- toy$model
+  
+  estimated_dates <- toy$data$true_data
+  estimated_dates$id <- NULL
+  estimated_dates$group <- NULL
+  
+  delay_values <- estimated_dates$report - estimated_dates$onset
+  
+  prior_shape <- 2
+  prior_rate <- 0.5
+  
+  hyperparameters <- 
+    chronofix_hyperparameters(gamma_mean_prior_shape = prior_shape,
+                              gamma_mean_prior_rate = prior_rate)
+  
+  shape <- 3
+  
+  sample_pars <- 
+    update_gamma_mean_parameters(shape, delay_values, hyperparameters)
+  
+  cmp_shape <- shape * length(delay_values) + prior_shape
+  expect_equal(sample_pars$shape, cmp_shape)
+  cmp_rate <- shape * sum(delay_values) + prior_rate
+  expect_equal(sample_pars$rate, cmp_rate)
+  
+  
+  rng <- monty::monty_rng_create(seed = 1)
+  rng1 <- monty::monty_rng_create(seed = 1)
+  
+  mean <- update_gamma_mean(shape, delay_values, hyperparameters, rng)
+  cmp_mean <- 1 / monty::monty_random_gamma_rate(sample_pars$shape, 
+                                                 sample_pars$rate, rng1)
+  expect_equal(mean, cmp_mean)
+})
+
+
+test_that("update gamma shape works correctly", {
+  
+  set.seed(1)
+  
+  toy <- toy_model()
+  
+  model <- toy$model
+  
+  estimated_dates <- toy$data$true_data
+  estimated_dates$id <- NULL
+  estimated_dates$group <- NULL
+  
+  delay_values <- estimated_dates$report - estimated_dates$onset
+  
+  prior_shape <- 2
+  prior_rate <- 0.5
+  
+  hyperparameters <- 
+    chronofix_hyperparameters(gamma_shape_prior_shape = prior_shape,
+                              gamma_shape_prior_rate = prior_rate)
+  
+  mean <- 10
+  
+  sample_pars <- 
+    update_gamma_shape_parameters(mean, delay_values, hyperparameters)
+  
+  expect_equal(sample_pars$shape, 22.57924)
+  expect_equal(sample_pars$rate, 1.9647787)
+  
+  rng <- monty::monty_rng_create(seed = 1)
+  rng1 <- monty::monty_rng_create(seed = 1)
+  
+  shape <- 3
+  
+  shape_new <- update_gamma_shape(shape, mean, delay_values,
+                                  hyperparameters, rng)
+  
+  cmp_shape_new <- 
+    monty::monty_random_gamma_rate(sample_pars$shape, sample_pars$rate, rng1)
+  accept_prob <-
+    calc_gamma_shape_accept_prob(cmp_shape_new, shape, mean, sample_pars,
+                                 delay_values, hyperparameters)
+  expect_gt(accept_prob, 0)
+  expect_equal(shape_new, cmp_shape_new)
+  
+  log_like_ratio <- 
+    sum(log_density_delay(delay_values, list(shape = shape_new, mean = mean), 
+                          "gamma")) -
+    sum(log_density_delay(delay_values, list(shape = shape, mean = mean), 
+                          "gamma"))
+  log_prior_ratio <- 
+    dgamma(shape_new, prior_shape, rate = prior_rate, log = TRUE) -
+    dgamma(shape, prior_shape, rate = prior_rate, log = TRUE)
+  
+  log_prop_ratio <- 
+    dgamma(shape_new, sample_pars$shape, rate = sample_pars$rate, log = TRUE) -
+    dgamma(shape, sample_pars$shape, rate = sample_pars$rate, log = TRUE)
+  
+  cmp_accept_prob <- log_like_ratio + log_prior_ratio - log_prop_ratio
+  expect_equal(accept_prob, cmp_accept_prob)
+})
