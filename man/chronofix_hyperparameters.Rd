@@ -10,7 +10,7 @@ chronofix_hyperparameters(
   gamma_shape_prior_shape = 1,
   gamma_shape_prior_rate = 1,
   gamma_mean_prior_shape = 1,
-  gamma_mean_prior_rate = 1,
+  gamma_mean_prior_scale = 1,
   log_normal_meanlog_prior_mean = 0,
   log_normal_meanlog_prior_precision = 1,
   log_normal_precisionlog_prior_shape = 1,
@@ -30,7 +30,7 @@ distribution for the probability of error}
 
 \item{gamma_mean_prior_shape}{description}
 
-\item{gamma_mean_prior_rate}{description}
+\item{gamma_mean_prior_scale}{description}
 
 \item{log_normal_meanlog_prior_mean}{description}
 
