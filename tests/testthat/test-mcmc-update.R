@@ -162,3 +162,55 @@ test_that("update gamma shape works correctly", {
   cmp_accept_prob <- log_like_ratio + log_prior_ratio - log_prop_ratio
   expect_equal(accept_prob, cmp_accept_prob)
 })
+
+
+test_that("update gamma pars works correctly", {
+  control <- chronofix_mcmc_control()
+  
+  toy <- toy_model(control = control)
+
+  model <- toy$model
+  
+  estimated_dates <- toy$data$true_data
+  estimated_dates$id <- NULL
+  estimated_dates$group <- NULL
+  
+  error_indicators <- toy$data$error_indicators
+  error_indicators$id <- NULL
+  error_indicators$group <- NULL
+  
+  augmented_data <- list(estimated_dates = as.matrix(estimated_dates),
+                         error_indicators = as.matrix(error_indicators))
+  
+  pars <- chronofix_mcmc_initial(model)
+  attr(pars, "data") <- model$data_packer$pack(augmented_data)
+  state_chain <- list(pars = pars)
+  
+  rng <- monty::monty_rng_create(seed = 1)
+  rng1 <- monty::monty_rng_create(seed = 1)
+  
+  i <- 2
+  
+  state_chain_new <- update_pars_delay1(i, state_chain, control, model, rng)
+  
+  delay_from <- model$info$delay_from[i]
+  delay_to <- model$info$delay_to[i]
+  is_delay_in_group <- model$info$is_delay_in_group[i, ]
+  
+  k <- model$groups_data %in% which(is_delay_in_group)
+  
+  delay_values <- augmented_data$estimated_dates[k, delay_to] - 
+    augmented_data$estimated_dates[k, delay_from]
+  
+  j_mean <- model$parameters == paste0("delay", i, "_mean")
+  j_shape <- model$parameters == paste0("delay", i, "_shape")
+  
+  mean <- pars[j_mean]
+  shape <- pars[j_shape]
+  mean <- update_gamma_mean(shape, delay_values, model$hyperparameters, rng1)
+  shape <- 
+    update_gamma_shape(shape, mean, delay_values, model$hyperparameters, rng1)
+  
+  expect_equal(state_chain_new$pars[j_mean], mean)
+  expect_equal(state_chain_new$pars[j_shape], shape)
+})
