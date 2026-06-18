@@ -214,3 +214,144 @@ test_that("update gamma pars works correctly", {
   expect_equal(state_chain_new$pars[j_mean], mean)
   expect_equal(state_chain_new$pars[j_shape], shape)
 })
+
+
+test_that("update log-normal meanlog works correctly", {
+  
+  toy <- toy_model()
+  
+  model <- toy$model
+  
+  estimated_dates <- toy$data$true_data
+  estimated_dates$id <- NULL
+  estimated_dates$group <- NULL
+  
+  delay_values <- estimated_dates$report - estimated_dates$onset
+  
+  prior_mean <- 1.5
+  prior_precision <- 0.5 
+  
+  hyperparameters <- 
+    chronofix_hyperparameters(
+      log_normal_meanlog_prior_mean =  prior_mean,
+      log_normal_meanlog_prior_precision = prior_precision)
+  
+  precisionlog <- 0.8
+  
+  sample_pars <- 
+    update_log_normal_meanlog_parameters(
+      precisionlog, delay_values, hyperparameters)
+  
+  cmp_mean <- 
+    (precisionlog * sum(log(delay_values)) + prior_mean * prior_precision) / 
+    (precisionlog * length(delay_values) + prior_precision)
+  expect_equal(sample_pars$mean, cmp_mean)
+  cmp_sd <- 1 / sqrt(precisionlog * length(delay_values) + prior_precision)
+  expect_equal(sample_pars$sd, cmp_sd)
+  
+  
+  rng <- monty::monty_rng_create(seed = 1)
+  rng1 <- monty::monty_rng_create(seed = 1)
+  
+  meanlog <- 
+    update_log_normal_meanlog(precisionlog, delay_values, hyperparameters, rng)
+  cmp_meanlog <- 
+    monty::monty_random_normal(sample_pars$mean, sample_pars$sd, rng1)
+  expect_equal(meanlog, cmp_meanlog)
+})
+
+
+test_that("update log-normal precisionlog works correctly", {
+  
+  toy <- toy_model()
+  
+  model <- toy$model
+  
+  estimated_dates <- toy$data$true_data
+  estimated_dates$id <- NULL
+  estimated_dates$group <- NULL
+  
+  delay_values <- estimated_dates$report - estimated_dates$onset
+  
+  prior_shape <- 2
+  prior_rate <- 0.5
+  
+  hyperparameters <- 
+    chronofix_hyperparameters(
+      log_normal_precisionlog_prior_shape =  prior_shape,
+      log_normal_precisionlog_prior_rate = prior_rate)
+  
+  meanlog <- 1.5
+  
+  sample_pars <- 
+    update_log_normal_precisionlog_parameters(
+      meanlog, delay_values, hyperparameters)
+  
+  cmp_shape <- prior_shape + length(delay_values) / 2
+  expect_equal(sample_pars$shape, cmp_shape)
+  cmp_rate <- prior_rate + sum((log(delay_values) - meanlog)^2) / 2
+  expect_equal(sample_pars$rate, cmp_rate)
+  
+  
+  rng <- monty::monty_rng_create(seed = 1)
+  rng1 <- monty::monty_rng_create(seed = 1)
+  
+  precisionlog <- update_log_normal_precisionlog(
+    meanlog, delay_values, hyperparameters, rng)
+  cmp_precisionlog <- 
+    monty::monty_random_gamma_rate(sample_pars$shape, sample_pars$rate, rng1)
+  expect_equal(precisionlog, cmp_precisionlog)
+})
+
+
+test_that("update log-normal pars works correctly", {
+  control <- chronofix_mcmc_control()
+  
+  toy <- toy_model(control = control)
+  
+  model <- toy$model
+  
+  estimated_dates <- toy$data$true_data
+  estimated_dates$id <- NULL
+  estimated_dates$group <- NULL
+  
+  error_indicators <- toy$data$error_indicators
+  error_indicators$id <- NULL
+  error_indicators$group <- NULL
+  
+  augmented_data <- list(estimated_dates = as.matrix(estimated_dates),
+                         error_indicators = as.matrix(error_indicators))
+  
+  pars <- chronofix_mcmc_initial(model)
+  attr(pars, "data") <- model$data_packer$pack(augmented_data)
+  state_chain <- list(pars = pars)
+  
+  rng <- monty::monty_rng_create(seed = 1)
+  rng1 <- monty::monty_rng_create(seed = 1)
+  
+  i <- 5
+  
+  state_chain_new <- update_pars_delay1(i, state_chain, control, model, rng)
+  
+  delay_from <- model$info$delay_from[i]
+  delay_to <- model$info$delay_to[i]
+  is_delay_in_group <- model$info$is_delay_in_group[i, ]
+  
+  k <- model$groups_data %in% which(is_delay_in_group)
+  
+  delay_values <- augmented_data$estimated_dates[k, delay_to] - 
+    augmented_data$estimated_dates[k, delay_from]
+  
+  j_meanlog <- model$parameters == paste0("delay", i, "_meanlog")
+  j_precisionlog <- model$parameters == paste0("delay", i, "_precisionlog")
+  
+  meanlog <- pars[j_meanlog]
+  precisionlog <- pars[j_precisionlog]
+  meanlog <- update_log_normal_meanlog(
+    precisionlog, delay_values, model$hyperparameters, rng1)
+  precisionlog <- update_log_normal_precisionlog(
+    meanlog, delay_values, model$hyperparameters, rng1)
+  
+  expect_equal(state_chain_new$pars[j_meanlog], meanlog)
+  expect_equal(state_chain_new$pars[j_precisionlog], precisionlog)
+})
