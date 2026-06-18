@@ -87,7 +87,7 @@ chronofix_model <- function(data, delay_map, hyperparameters, control) {
 ##'
 ##' @param gamma_mean_prior_shape description
 ##'
-##' @param gamma_mean_prior_rate description
+##' @param gamma_mean_prior_scale description
 ##'
 ##' @param log_normal_meanlog_prior_mean description
 ##'
@@ -105,7 +105,7 @@ chronofix_hyperparameters <- function(prob_error_shape1 = 1,
                                       gamma_shape_prior_shape = 1,
                                       gamma_shape_prior_rate = 1,
                                       gamma_mean_prior_shape = 1,
-                                      gamma_mean_prior_rate = 1,
+                                      gamma_mean_prior_scale = 1,
                                       log_normal_meanlog_prior_mean = 0,
                                       log_normal_meanlog_prior_precision = 1,
                                       log_normal_precisionlog_prior_shape = 1,
@@ -115,7 +115,7 @@ chronofix_hyperparameters <- function(prob_error_shape1 = 1,
        gamma_shape_prior_shape = gamma_shape_prior_shape,
        gamma_shape_prior_rate = gamma_shape_prior_rate,
        gamma_mean_prior_shape = gamma_mean_prior_shape,
-       gamma_mean_prior_rate = gamma_mean_prior_rate,
+       gamma_mean_prior_scale = gamma_mean_prior_scale,
        log_normal_meanlog_prior_mean = log_normal_meanlog_prior_mean,
        log_normal_meanlog_prior_precision = log_normal_meanlog_prior_precision,
        log_normal_precisionlog_prior_shape = log_normal_precisionlog_prior_shape,
@@ -284,7 +284,7 @@ make_prior <- function(parameters, hyperparameters, domain,
                      log = TRUE) +
               dinvgamma(pars[[paste0("delay", i, "_mean")]],
                         hyperparameters$gamma_mean_prior_shape,
-                        rate = hyperparameters$gamma_mean_prior_rate,
+                        hyperparameters$gamma_mean_prior_scale,
                         log = TRUE)
           } else if (delay_distributions[i] == "log-normal") {
             lp_delays[i] <-
@@ -524,19 +524,12 @@ unpack_delay_pars <- function(pars, delay_distributions) {
 }
 
 
-#' @importFrom stats dgamma
-dinvgamma <- function(x, shape, rate = 1, scale = 1 / rate, log = FALSE) {
+dinvgamma <- function(x, shape, scale, log = FALSE) {
   
-  if (!missing(rate)) {
-    d <- dgamma(1 / x, shape, rate = rate, log = log)
-  } else {
-    d <- dgamma(1 / x, shape, scale = scale, log = log)
-  }
+  d <- shape * log(scale) - lgamma(shape) - (shape + 1) * log(x) - scale / x
   
-  if (log) {
-    d <- d - 2 * log(x)
-  } else {
-    d <- d / x^2
+  if (!log) {
+    d <- exp(d)
   }
   d
 }

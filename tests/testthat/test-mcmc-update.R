@@ -74,11 +74,11 @@ test_that("update gamma mean works correctly", {
   delay_values <- estimated_dates$report - estimated_dates$onset
   
   prior_shape <- 2
-  prior_rate <- 0.5
+  prior_scale <- 0.5
   
   hyperparameters <- 
     chronofix_hyperparameters(gamma_mean_prior_shape = prior_shape,
-                              gamma_mean_prior_rate = prior_rate)
+                              gamma_mean_prior_scale = prior_scale)
   
   shape <- 3
   
@@ -87,8 +87,8 @@ test_that("update gamma mean works correctly", {
   
   cmp_shape <- shape * length(delay_values) + prior_shape
   expect_equal(sample_pars$shape, cmp_shape)
-  cmp_rate <- shape * sum(delay_values) + prior_rate
-  expect_equal(sample_pars$rate, cmp_rate)
+  cmp_scale <- shape * sum(delay_values) + prior_scale
+  expect_equal(sample_pars$scale, cmp_scale)
   
   
   rng <- monty::monty_rng_create(seed = 1)
@@ -96,7 +96,7 @@ test_that("update gamma mean works correctly", {
   
   mean <- update_gamma_mean(shape, delay_values, hyperparameters, rng)
   cmp_mean <- 1 / monty::monty_random_gamma_rate(sample_pars$shape, 
-                                                 sample_pars$rate, rng1)
+                                                 sample_pars$scale, rng1)
   expect_equal(mean, cmp_mean)
 })
 
