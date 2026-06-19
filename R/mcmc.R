@@ -136,13 +136,17 @@ chronofix_mcmc_control <- function(n_steps = 1000,
 ##'
 ##' @param model Model
 ##' 
-##' @param initial_delay_shape description
+##' @param initial_delay_shape The initial value for the shape parameter of
+##'   gamma-distributed delays
 ##' 
-##' @param initial_delay_mean description
+##' @param initial_delay_mean The initial value for the mean of
+##'   gamma-distributed delays
 ##'
-##' @param initial_delay_meanlog description
+##' @param initial_delay_meanlog The initial value for the mean on the log-scale
+##'   of log-normal-distributed delays
 ##'
-##' @param initial_delay_precisionlog description
+##' @param initial_delay_precisionlog The initial value for the precision on the
+##'  log-scale of log-normal-distributed delays
 ##'
 ##' @param initial_prob_error The initial value for the probability of error  
 ##' 

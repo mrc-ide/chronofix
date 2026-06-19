@@ -16,13 +16,17 @@ chronofix_mcmc_initial(
 \arguments{
 \item{model}{Model}
 
-\item{initial_delay_shape}{description}
+\item{initial_delay_shape}{The initial value for the shape parameter of
+gamma-distributed delays}
 
-\item{initial_delay_mean}{description}
+\item{initial_delay_mean}{The initial value for the mean of
+gamma-distributed delays}
 
-\item{initial_delay_meanlog}{description}
+\item{initial_delay_meanlog}{The initial value for the mean on the log-scale
+of log-normal-distributed delays}
 
-\item{initial_delay_precisionlog}{description}
+\item{initial_delay_precisionlog}{The initial value for the precision on the
+log-scale of log-normal-distributed delays}
 
 \item{initial_prob_error}{The initial value for the probability of error}
 }
