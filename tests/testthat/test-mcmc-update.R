@@ -183,15 +183,13 @@ test_that("update gamma pars works correctly", {
                          error_indicators = as.matrix(error_indicators))
   
   pars <- chronofix_mcmc_initial(model)
-  attr(pars, "data") <- model$data_packer$pack(augmented_data)
-  state_chain <- list(pars = pars)
   
   rng <- monty::monty_rng_create(seed = 1)
   rng1 <- monty::monty_rng_create(seed = 1)
   
   i <- 2
   
-  state_chain_new <- update_pars_delay1(i, state_chain, control, model, rng)
+  pars_new <- update_pars_delay1(i, pars, augmented_data, control, model, rng)
   
   delay_from <- model$info$delay_from[i]
   delay_to <- model$info$delay_to[i]
@@ -211,8 +209,8 @@ test_that("update gamma pars works correctly", {
   shape <- 
     update_gamma_shape(shape, mean, delay_values, model$hyperparameters, rng1)
   
-  expect_equal(state_chain_new$pars[j_mean], mean)
-  expect_equal(state_chain_new$pars[j_shape], shape)
+  expect_equal(pars_new[j_mean], mean)
+  expect_equal(pars_new[j_shape], shape)
 })
 
 
@@ -323,15 +321,13 @@ test_that("update log-normal pars works correctly", {
                          error_indicators = as.matrix(error_indicators))
   
   pars <- chronofix_mcmc_initial(model)
-  attr(pars, "data") <- model$data_packer$pack(augmented_data)
-  state_chain <- list(pars = pars)
   
   rng <- monty::monty_rng_create(seed = 1)
   rng1 <- monty::monty_rng_create(seed = 1)
   
   i <- 5
   
-  state_chain_new <- update_pars_delay1(i, state_chain, control, model, rng)
+  pars_new <- update_pars_delay1(i, pars, augmented_data, control, model, rng)
   
   delay_from <- model$info$delay_from[i]
   delay_to <- model$info$delay_to[i]
@@ -352,6 +348,6 @@ test_that("update log-normal pars works correctly", {
   precisionlog <- update_log_normal_precisionlog(
     meanlog, delay_values, model$hyperparameters, rng1)
   
-  expect_equal(state_chain_new$pars[j_meanlog], meanlog)
-  expect_equal(state_chain_new$pars[j_precisionlog], precisionlog)
+  expect_equal(pars_new[j_meanlog], meanlog)
+  expect_equal(pars_new[j_precisionlog], precisionlog)
 })

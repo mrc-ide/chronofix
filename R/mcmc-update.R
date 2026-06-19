@@ -1,16 +1,17 @@
 update_pars_delay <- function(state_chain, control, model, rng) {
   
+  augmented_data <- model$data_packer$unpack(attr(state_chain$pars, "data"))
+  
   for (i in seq_along(model$info$delay_distribution)) {
-    state_chain <- update_pars_delay1(i, state_chain, control, model, rng)
+    state_chain$pars <- update_pars_delay1(i, state_chain$pars, augmented_data,
+                                           control, model, rng)
   }
   
   state_chain
 }
 
 
-update_pars_delay1 <- function(i, state_chain, control, model, rng) {
-  
-  augmented_data <- model$data_packer$unpack(attr(state_chain$pars, "data"))
+update_pars_delay1 <- function(i, pars, augmented_data, control, model, rng) {
   
   delay_from <- model$info$delay_from[i]
   delay_to <- model$info$delay_to[i]
@@ -25,28 +26,28 @@ update_pars_delay1 <- function(i, state_chain, control, model, rng) {
     j_mean <- model$parameters == paste0("delay", i, "_mean")
     j_shape <- model$parameters == paste0("delay", i, "_shape")
     
-    shape <- state_chain$pars[j_shape]
+    shape <- pars[j_shape]
     mean <- update_gamma_mean(shape, delay_values, model$hyperparameters, rng)
     shape <-
       update_gamma_shape(shape, mean, delay_values, model$hyperparameters, rng)
     
-    state_chain$pars[j_mean] <- mean
-    state_chain$pars[j_shape] <- shape
+    pars[j_mean] <- mean
+    pars[j_shape] <- shape
   } else if (model$info$delay_distribution[i] == "log-normal") {
     j_meanlog <- model$parameters == paste0("delay", i, "_meanlog")
     j_precisionlog <- model$parameters == paste0("delay", i, "_precisionlog")
     
-    precisionlog <- state_chain$pars[j_precisionlog]
+    precisionlog <- pars[j_precisionlog]
     meanlog <- update_log_normal_meanlog(precisionlog, delay_values,
                                          model$hyperparameters, rng)
     precisionlog <- update_log_normal_precisionlog(meanlog, delay_values, 
                                                    model$hyperparameters, rng)
     
-    state_chain$pars[j_meanlog] <- meanlog
-    state_chain$pars[j_precisionlog] <- precisionlog
+    pars[j_meanlog] <- meanlog
+    pars[j_precisionlog] <- precisionlog
   }
   
-  state_chain
+  pars
 }
 
 
