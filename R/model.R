@@ -81,21 +81,33 @@ chronofix_model <- function(data, delay_map, hyperparameters, control) {
 ##' @param prob_error_shape2 The second shape parameter of the beta prior
 ##'   distribution for the probability of error
 ##'
-##' @param gamma_shape_prior_shape description
+##' @param gamma_shape_prior_shape The shape parameter of the gamma prior
+##'   distribution for the shape parameter of a Gamma-distributed delay
 ##'
-##' @param gamma_shape_prior_rate description
+##' @param gamma_shape_prior_rate The rate parameter of the gamma prior
+##'   distribution for the shape parameter of a gamma-distributed delay
 ##'
-##' @param gamma_mean_prior_shape description
+##' @param gamma_mean_prior_shape The shape parameter of the inverse-gamma
+##'   prior distribution for the mean of a Gamma-distributed delay
 ##'
-##' @param gamma_mean_prior_scale description
+##' @param gamma_mean_prior_scale The scale parameter of the inverse-gamma
+##'   prior distribution for the mean of a Gamma-distributed delay
 ##'
-##' @param log_normal_meanlog_prior_mean description
+##' @param log_normal_meanlog_prior_mean The mean of the normal prior 
+##'   distribution for the mean on the log-scale of a log-normal-distributed
+##'   delay
 ##'
-##' @param log_normal_meanlog_prior_precision description
+##' @param log_normal_meanlog_prior_precision The precision of the normal prior
+##'   distribution for the mean on the log-scale of a log-normal-distributed
+##'   delay
 ##'
-##' @param log_normal_precisionlog_prior_shape description
+##' @param log_normal_precisionlog_prior_shape The shape parameter of the gamma
+##'   prior distribution for the precision on the log-scale of a
+##'   log-normal-distributed delay
 ##'
-##' @param log_normal_precisionlog_prior_rate description
+##' @param log_normal_precisionlog_prior_rate The rate parameter of the gamma
+##'   prior distribution for the precision on the log-scale of a
+##'   log-normal-distributed delay
 ##'
 ##' @return List of hyperparameters
 ##'

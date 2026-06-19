@@ -24,21 +24,33 @@ distribution for the probability of error}
 \item{prob_error_shape2}{The second shape parameter of the beta prior
 distribution for the probability of error}
 
-\item{gamma_shape_prior_shape}{description}
+\item{gamma_shape_prior_shape}{The shape parameter of the gamma prior
+distribution for the shape parameter of a Gamma-distributed delay}
 
-\item{gamma_shape_prior_rate}{description}
+\item{gamma_shape_prior_rate}{The rate parameter of the gamma prior
+distribution for the shape parameter of a gamma-distributed delay}
 
-\item{gamma_mean_prior_shape}{description}
+\item{gamma_mean_prior_shape}{The shape parameter of the inverse-gamma
+prior distribution for the mean of a Gamma-distributed delay}
 
-\item{gamma_mean_prior_scale}{description}
+\item{gamma_mean_prior_scale}{The scale parameter of the inverse-gamma
+prior distribution for the mean of a Gamma-distributed delay}
 
-\item{log_normal_meanlog_prior_mean}{description}
+\item{log_normal_meanlog_prior_mean}{The mean of the normal prior
+distribution for the mean on the log-scale of a log-normal-distributed
+delay}
 
-\item{log_normal_meanlog_prior_precision}{description}
+\item{log_normal_meanlog_prior_precision}{The precision of the normal prior
+distribution for the mean on the log-scale of a log-normal-distributed
+delay}
 
-\item{log_normal_precisionlog_prior_shape}{description}
+\item{log_normal_precisionlog_prior_shape}{The shape parameter of the gamma
+prior distribution for the precision on the log-scale of a
+log-normal-distributed delay}
 
-\item{log_normal_precisionlog_prior_rate}{description}
+\item{log_normal_precisionlog_prior_rate}{The rate parameter of the gamma
+prior distribution for the precision on the log-scale of a
+log-normal-distributed delay}
 }
 \value{
 List of hyperparameters
