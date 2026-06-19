@@ -166,9 +166,9 @@ update_log_normal_meanlog_parameters <- function(precisionlog, delay_values,
   
   sample_mean <- 
     (precision0 * mean0 + precisionlog * sum(log(delay_values))) /
-    (n * precisionlog + precision0)
+    (precision0 + n * precisionlog)
   
-  sample_sd <- 1 / sqrt(n * precisionlog + precision0)
+  sample_sd <- 1 / sqrt(precision0 + n * precisionlog)
   
   list(mean = sample_mean,
        sd = sample_sd)
