@@ -12,6 +12,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Imports:
+    abind,
     cli,
     dplyr,
     generics,
@@ -22,6 +23,6 @@ Imports:
     stats,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Remotes: mrc-ide/monty@mrc-6769
+Remotes: mrc-ide/monty@mrc-6769-2
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.3

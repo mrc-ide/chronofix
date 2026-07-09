@@ -1,5 +1,6 @@
 update_augmented_data <- function(augmented_data, observed_dates, pars, groups,
-                                  model_info, date_range, control, rng) {
+                                  model_info, date_range, control, state_sampler,
+                                  rng) {
   
   n_delays <- length(model_info$delay_from)
   model_info$delay_mean <- unname(pars[paste0("delay_mean", seq_len(n_delays))])
@@ -10,7 +11,8 @@ update_augmented_data <- function(augmented_data, observed_dates, pars, groups,
     augmented_data_i <- lapply(augmented_data, function(x) x[i, ])
     augmented_data_i <- 
       update_augmented_data1(augmented_data_i, observed_dates[i, ], groups[i],
-                             prob_error, model_info, date_range, control, rng)
+                             prob_error, model_info, date_range, control, 
+                             state_sampler, i, rng)
     augmented_data$estimated_dates[i, ] <- augmented_data_i$estimated_dates
     augmented_data$error_indicators[i, ] <- augmented_data_i$error_indicators
   }
@@ -22,19 +24,22 @@ update_augmented_data <- function(augmented_data, observed_dates, pars, groups,
 # Updating the augmented data for one individual
 update_augmented_data1 <- function(augmented_data, observed_dates, group,
                                    prob_error, model_info, date_range,
-                                   control, rng) {
+                                   control, state_sampler, id, rng) {
 
   augmented_data <- update_estimated_dates(augmented_data, observed_dates,
                                            group, prob_error, model_info,
-                                           date_range, control, rng)
+                                           date_range, control, state_sampler,
+                                           id, rng)
   
   augmented_data <- update_error_indicators(augmented_data, observed_dates,
                                             group, prob_error, model_info,
-                                            date_range, control, rng)
+                                            date_range, control, state_sampler,
+                                            id, rng)
   
   augmented_data <- swap_error_indicators(augmented_data, observed_dates,
                                           group, prob_error, model_info,
-                                          date_range, control, rng)
+                                          date_range, control, state_sampler,
+                                          id, rng)
 
   augmented_data
 }
@@ -43,12 +48,13 @@ update_augmented_data1 <- function(augmented_data, observed_dates, group,
 # Updating all the relevant estimated dates for one individual
 update_estimated_dates <- function(augmented_data, observed_dates, group,
                                    prob_error, model_info, date_range,
-                                   control, rng) {
+                                   control, state_sampler, id, rng) {
 
   for (i in seq_along(observed_dates)) {
     augmented_data <- 
       update_estimated_dates1(i, augmented_data, observed_dates, group,
-                              prob_error, model_info, date_range, control, rng)
+                              prob_error, model_info, date_range, control, 
+                              state_sampler, id, rng)
   }
   
   augmented_data
@@ -58,7 +64,7 @@ update_estimated_dates <- function(augmented_data, observed_dates, group,
 # Updating one of the estimated dates for an individual
 update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
                                     prob_error, model_info, date_range, 
-                                    control, rng) {
+                                    control, state_sampler, id, rng) {
   
   ## we check if date i is in the given group
   ## if FALSE, no update
@@ -81,9 +87,14 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
                      augmented_data_new, augmented_data, observed_dates,
                      group, prob_error, model_info, date_range)
 
+  state_sampler$update_estimated_dates$attempts[id, i] <- 
+    state_sampler$update_estimated_dates$attempts[id, i] + 1
+  
   accept <- log(monty::monty_random_real(rng)) < accept_prob
   if (accept) {
     augmented_data <- augmented_data_new
+    state_sampler$update_estimated_dates$accepts[id, i] <- 
+      state_sampler$update_estimated_dates$accepts[id, i] + 1
   }
   
   augmented_data
@@ -94,12 +105,13 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
 # for one individual
 update_error_indicators <- function(augmented_data, observed_dates, group,
                                     prob_error, model_info, date_range,
-                                    control, rng) {
+                                    control, state_sampler, id, rng) {
   
   for (i in seq_along(observed_dates)) {
     augmented_data <- 
       update_error_indicators1(i, augmented_data, observed_dates, group,
-                               prob_error, model_info, date_range, control, rng)
+                               prob_error, model_info, date_range, control, 
+                               state_sampler, id, rng)
   }
   
   augmented_data
@@ -110,7 +122,7 @@ update_error_indicators <- function(augmented_data, observed_dates, group,
 # individual
 update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
                                      prob_error, model_info, date_range,
-                                     control, rng) {
+                                     control, state_sampler, id, rng) {
   
   ## we check if error indicator is non-NA (so date is non-missing)
   ## if FALSE, no update
@@ -146,9 +158,14 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
                      augmented_data_new, augmented_data, observed_dates,
                      group, prob_error, model_info, date_range)
 
+  state_sampler$update_error_indicators$attempts[id, i] <- 
+    state_sampler$update_error_indicators$attempts[id, i] + 1
+  
   accept <- log(monty::monty_random_real(rng)) < accept_prob
   if (accept) {
     augmented_data <- augmented_data_new
+    state_sampler$update_error_indicators$accepts[id, i] <- 
+      state_sampler$update_error_indicators$accepts[id, i] + 1
   }
   
   augmented_data
@@ -409,7 +426,7 @@ has_mixed_errors <- function(error_indicators) {
 # Swap error indicators for one eligible individual
 swap_error_indicators <- function(augmented_data, observed_dates, group,
                                   prob_error, model_info, date_range,
-                                  control, rng) {
+                                  control, state_sampler, id, rng) {
 
   ## we check if individual has mixed errors (at least one error and non-error)
   ## if FALSE, no update
@@ -442,9 +459,14 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
                      augmented_data_new, augmented_data, observed_dates,
                      group, prob_error, model_info, date_range)
   
+  state_sampler$swap_error_indicators$attempts[id] <- 
+    state_sampler$swap_error_indicators$attempts[id] + 1
+  
   accept <- log(monty::monty_random_real(rng)) < accept_prob
   if (accept) {
     augmented_data <- augmented_data_new
+    state_sampler$swap_error_indicators$accepts[id] <- 
+      state_sampler$swap_error_indicators$accepts[id] + 1
   }
 
   augmented_data
