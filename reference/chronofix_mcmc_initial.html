@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">chronofix</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.4</span>
       </span>
     </div>
 
@@ -46,9 +46,11 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">chronofix_mcmc_initial</span><span class="op">(</span></span>
 <span>  <span class="va">model</span>,</span>
-<span>  initial_delay_mean <span class="op">=</span> <span class="fl">7</span>,</span>
-<span>  initial_delay_cv <span class="op">=</span> <span class="fl">0.2</span>,</span>
-<span>  initial_prob_error <span class="op">=</span> <span class="fl">1</span></span>
+<span>  initial_delay_shape <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  initial_delay_mean <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  initial_delay_meanlog <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  initial_delay_precisionlog <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  initial_prob_error <span class="op">=</span> <span class="fl">0.1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -60,13 +62,24 @@
 <dd><p>Model</p></dd>
 
 
+<dt id="arg-initial-delay-shape">initial_delay_shape<a class="anchor" aria-label="anchor" href="#arg-initial-delay-shape"></a></dt>
+<dd><p>The initial value for the shape parameter of
+gamma-distributed delays</p></dd>
+
+
 <dt id="arg-initial-delay-mean">initial_delay_mean<a class="anchor" aria-label="anchor" href="#arg-initial-delay-mean"></a></dt>
-<dd><p>The initial value for the delay means</p></dd>
+<dd><p>The initial value for the mean of
+gamma-distributed delays</p></dd>
 
 
-<dt id="arg-initial-delay-cv">initial_delay_cv<a class="anchor" aria-label="anchor" href="#arg-initial-delay-cv"></a></dt>
-<dd><p>The initial value for the delay coefficients of
-variation</p></dd>
+<dt id="arg-initial-delay-meanlog">initial_delay_meanlog<a class="anchor" aria-label="anchor" href="#arg-initial-delay-meanlog"></a></dt>
+<dd><p>The initial value for the mean on the log-scale
+of log-normal-distributed delays</p></dd>
+
+
+<dt id="arg-initial-delay-precisionlog">initial_delay_precisionlog<a class="anchor" aria-label="anchor" href="#arg-initial-delay-precisionlog"></a></dt>
+<dd><p>The initial value for the precision on the
+log-scale of log-normal-distributed delays</p></dd>
 
 
 <dt id="arg-initial-prob-error">initial_prob_error<a class="anchor" aria-label="anchor" href="#arg-initial-prob-error"></a></dt>
@@ -90,7 +103,7 @@ variation</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer></div>

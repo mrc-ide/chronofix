@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">chronofix</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.4</span>
       </span>
     </div>
 
@@ -47,8 +47,14 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">chronofix_hyperparameters</span><span class="op">(</span></span>
 <span>  prob_error_shape1 <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  prob_error_shape2 <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  delay_mean_scale <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  delay_cv_scale <span class="op">=</span> <span class="fl">10</span></span>
+<span>  gamma_shape_prior_shape <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  gamma_shape_prior_rate <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  gamma_mean_prior_shape <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  gamma_mean_prior_scale <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  log_normal_meanlog_prior_mean <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  log_normal_meanlog_prior_precision <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  log_normal_precisionlog_prior_shape <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  log_normal_precisionlog_prior_rate <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -66,14 +72,48 @@ distribution for the probability of error</p></dd>
 distribution for the probability of error</p></dd>
 
 
-<dt id="arg-delay-mean-scale">delay_mean_scale<a class="anchor" aria-label="anchor" href="#arg-delay-mean-scale"></a></dt>
-<dd><p>The scale parameter (mean) of the exponential prior
-distribution for the means of the delays</p></dd>
+<dt id="arg-gamma-shape-prior-shape">gamma_shape_prior_shape<a class="anchor" aria-label="anchor" href="#arg-gamma-shape-prior-shape"></a></dt>
+<dd><p>The shape parameter of the gamma prior
+distribution for the shape parameter of a Gamma-distributed delay</p></dd>
 
 
-<dt id="arg-delay-cv-scale">delay_cv_scale<a class="anchor" aria-label="anchor" href="#arg-delay-cv-scale"></a></dt>
-<dd><p>The scale parameter (mean) of the exponential prior
-distribution for the coefficients of variations of the delays</p></dd>
+<dt id="arg-gamma-shape-prior-rate">gamma_shape_prior_rate<a class="anchor" aria-label="anchor" href="#arg-gamma-shape-prior-rate"></a></dt>
+<dd><p>The rate parameter of the gamma prior
+distribution for the shape parameter of a gamma-distributed delay</p></dd>
+
+
+<dt id="arg-gamma-mean-prior-shape">gamma_mean_prior_shape<a class="anchor" aria-label="anchor" href="#arg-gamma-mean-prior-shape"></a></dt>
+<dd><p>The shape parameter of the inverse-gamma
+prior distribution for the mean of a Gamma-distributed delay</p></dd>
+
+
+<dt id="arg-gamma-mean-prior-scale">gamma_mean_prior_scale<a class="anchor" aria-label="anchor" href="#arg-gamma-mean-prior-scale"></a></dt>
+<dd><p>The scale parameter of the inverse-gamma
+prior distribution for the mean of a Gamma-distributed delay</p></dd>
+
+
+<dt id="arg-log-normal-meanlog-prior-mean">log_normal_meanlog_prior_mean<a class="anchor" aria-label="anchor" href="#arg-log-normal-meanlog-prior-mean"></a></dt>
+<dd><p>The mean of the normal prior
+distribution for the mean on the log-scale of a log-normal-distributed
+delay</p></dd>
+
+
+<dt id="arg-log-normal-meanlog-prior-precision">log_normal_meanlog_prior_precision<a class="anchor" aria-label="anchor" href="#arg-log-normal-meanlog-prior-precision"></a></dt>
+<dd><p>The precision of the normal prior
+distribution for the mean on the log-scale of a log-normal-distributed
+delay</p></dd>
+
+
+<dt id="arg-log-normal-precisionlog-prior-shape">log_normal_precisionlog_prior_shape<a class="anchor" aria-label="anchor" href="#arg-log-normal-precisionlog-prior-shape"></a></dt>
+<dd><p>The shape parameter of the gamma
+prior distribution for the precision on the log-scale of a
+log-normal-distributed delay</p></dd>
+
+
+<dt id="arg-log-normal-precisionlog-prior-rate">log_normal_precisionlog_prior_rate<a class="anchor" aria-label="anchor" href="#arg-log-normal-precisionlog-prior-rate"></a></dt>
+<dd><p>The rate parameter of the gamma
+prior distribution for the precision on the log-scale of a
+log-normal-distributed delay</p></dd>
 
 </dl></div>
     <div id="value">
@@ -93,7 +133,7 @@ distribution for the coefficients of variations of the delays</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer></div>
