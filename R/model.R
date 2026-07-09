@@ -23,13 +23,23 @@ chronofix_model <- function(data, delay_map, hyperparameters, control) {
   
   date_range <- calc_date_range(observed_dates, control)
   
-  n_delays <- nrow(delay_map)
-  delay_ids <- seq_len(n_delays)
-  parameters <- c("prob_error",
-                  paste0("delay_mean", delay_ids),
-                  paste0("delay_cv", delay_ids))
+  parameters <- "prob_error"
+  domain <- c(0, 1)
+  for (i in seq_len(nrow(delay_map))) {
+    if (delay_map$distribution[i] == "gamma") {
+      parameters <- c(parameters,
+                      paste0("delay", i, "_shape"),
+                      paste0("delay", i, "_mean"))
+      domain <- rbind(domain, c(0, Inf), c(0, Inf))
+    } else if (delay_map$distribution[i] == "log-normal") {
+      parameters <- c(parameters,
+                      paste0("delay", i, "_meanlog"),
+                      paste0("delay", i, "_precisionlog"))
+      domain <- rbind(domain, c(-Inf, Inf), c(0, Inf))
+    }
+  }
   
-  domain <- cbind(rep(0, 1 + 2 * n_delays), c(1, rep(Inf, 2 * n_delays)))
+  row.names(domain) <- parameters
   
   data_packer <- make_augmented_data_packer(observed_dates)
   
@@ -46,12 +56,15 @@ chronofix_model <- function(data, delay_map, hyperparameters, control) {
          density = density,
          augmented_data_update = augmented_data_update))
   
-  prior <- make_prior(parameters, hyperparameters, domain)
+  prior <- make_prior(parameters, hyperparameters, domain, 
+                      delay_map$distribution)
   
   model <- likelihood + prior
   
   model$hyperparameters <- hyperparameters
   model$data_packer <- data_packer
+  model$info <- model_info
+  model$groups_data <- groups
   
   model
   
@@ -68,23 +81,57 @@ chronofix_model <- function(data, delay_map, hyperparameters, control) {
 ##' @param prob_error_shape2 The second shape parameter of the beta prior
 ##'   distribution for the probability of error
 ##'
-##' @param delay_mean_scale The scale parameter (mean) of the exponential prior
-##'   distribution for the means of the delays
+##' @param gamma_shape_prior_shape The shape parameter of the gamma prior
+##'   distribution for the shape parameter of a Gamma-distributed delay
 ##'
-##' @param delay_cv_scale The scale parameter (mean) of the exponential prior
-##'   distribution for the coefficients of variations of the delays
+##' @param gamma_shape_prior_rate The rate parameter of the gamma prior
+##'   distribution for the shape parameter of a gamma-distributed delay
+##'
+##' @param gamma_mean_prior_shape The shape parameter of the inverse-gamma
+##'   prior distribution for the mean of a Gamma-distributed delay
+##'
+##' @param gamma_mean_prior_scale The scale parameter of the inverse-gamma
+##'   prior distribution for the mean of a Gamma-distributed delay
+##'
+##' @param log_normal_meanlog_prior_mean The mean of the normal prior 
+##'   distribution for the mean on the log-scale of a log-normal-distributed
+##'   delay
+##'
+##' @param log_normal_meanlog_prior_precision The precision of the normal prior
+##'   distribution for the mean on the log-scale of a log-normal-distributed
+##'   delay
+##'
+##' @param log_normal_precisionlog_prior_shape The shape parameter of the gamma
+##'   prior distribution for the precision on the log-scale of a
+##'   log-normal-distributed delay
+##'
+##' @param log_normal_precisionlog_prior_rate The rate parameter of the gamma
+##'   prior distribution for the precision on the log-scale of a
+##'   log-normal-distributed delay
 ##'
 ##' @return List of hyperparameters
 ##'
 ##' @export
 chronofix_hyperparameters <- function(prob_error_shape1 = 1,
                                       prob_error_shape2 = 1,
-                                      delay_mean_scale = 10,
-                                      delay_cv_scale = 10) {
+                                      gamma_shape_prior_shape = 1,
+                                      gamma_shape_prior_rate = 1,
+                                      gamma_mean_prior_shape = 1,
+                                      gamma_mean_prior_scale = 1,
+                                      log_normal_meanlog_prior_mean = 0,
+                                      log_normal_meanlog_prior_precision = 1,
+                                      log_normal_precisionlog_prior_shape = 1,
+                                      log_normal_precisionlog_prior_rate = 1) {
   list(prob_error_shape1 = prob_error_shape1,
        prob_error_shape2 = prob_error_shape2,
-       delay_mean_scale = delay_mean_scale,
-       delay_cv_scale = delay_cv_scale)
+       gamma_shape_prior_shape = gamma_shape_prior_shape,
+       gamma_shape_prior_rate = gamma_shape_prior_rate,
+       gamma_mean_prior_shape = gamma_mean_prior_shape,
+       gamma_mean_prior_scale = gamma_mean_prior_scale,
+       log_normal_meanlog_prior_mean = log_normal_meanlog_prior_mean,
+       log_normal_meanlog_prior_precision = log_normal_meanlog_prior_precision,
+       log_normal_precisionlog_prior_shape = log_normal_precisionlog_prior_shape,
+       log_normal_precisionlog_prior_rate = log_normal_precisionlog_prior_rate)
 }
 
 
@@ -224,8 +271,9 @@ make_chronofix_density <- function(parameters, groups, model_info, date_range,
 }
 
 
-#' @importFrom stats dbeta dexp
-make_prior <- function(parameters, hyperparameters, domain) {
+#' @importFrom stats dbeta dexp dgamma dnorm
+make_prior <- function(parameters, hyperparameters, domain,
+                       delay_distributions) {
   monty::monty_model(
     list(
       parameters = parameters,
@@ -236,15 +284,34 @@ make_prior <- function(parameters, hyperparameters, domain) {
           dbeta(pars[["prob_error"]], hyperparameters$prob_error_shape1, 
                 hyperparameters$prob_error_shape2, log = TRUE)
         
-        lp_delay_means <-
-          dexp(pars[grepl("^delay_mean", names(pars))], 
-               1 / hyperparameters$delay_mean_scale, log = TRUE)
+        n_delays <- length(delay_distributions)
+        lp_delays <- rep(0, n_delays)
         
-        lp_delay_cvs <-
-          dexp(pars[grepl("^delay_cv", names(pars))], 
-               1 / hyperparameters$delay_cv_scale, log = TRUE)
+        for (i in seq_len(n_delays)) {
+          if (delay_distributions[i] == "gamma") {
+            lp_delays[i] <-
+              dgamma(pars[[paste0("delay", i, "_shape")]],
+                     hyperparameters$gamma_shape_prior_shape,
+                     rate = hyperparameters$gamma_shape_prior_rate, 
+                     log = TRUE) +
+              dinvgamma(pars[[paste0("delay", i, "_mean")]],
+                        hyperparameters$gamma_mean_prior_shape,
+                        hyperparameters$gamma_mean_prior_scale,
+                        log = TRUE)
+          } else if (delay_distributions[i] == "log-normal") {
+            lp_delays[i] <-
+              dnorm(pars[[paste0("delay", i, "_meanlog")]],
+                     hyperparameters$log_normal_meanlog_prior_mean,
+                     1 / sqrt(hyperparameters$log_normal_meanlog_prior_precision),
+                    log = TRUE) +
+              dgamma(pars[[paste0("delay", i, "_precisionlog")]],
+                     hyperparameters$log_normal_precisionlog_prior_shape,
+                     rate = hyperparameters$log_normal_precisionlog_prior_rate, 
+                     log = TRUE)
+          }
+        }
         
-        lp_prob_error + sum(lp_delay_means) + sum(lp_delay_cvs)
+        lp_prob_error + sum(lp_delays)
         
       },
       domain = domain
@@ -254,6 +321,7 @@ make_prior <- function(parameters, hyperparameters, domain) {
 
 chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
                                      data_packer) {
+  
   augmented_data <- unpack_augmented_data(attr(pars, "data"), data_packer)
   
   ll_errors <- chronofix_log_likelihood_errors(pars[["prob_error"]],
@@ -262,13 +330,11 @@ chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
   
   delays <- seq_along(model_info$delay_from)
   
+  delay_pars <- unpack_delay_pars(pars, model_info$delay_distribution)
+  
   ll_delays <- 
     chronofix_log_likelihood_delays(augmented_data$estimated_dates,
-                                    groups,
-                                    pars[paste0("delay_mean", delays)],
-                                    pars[paste0("delay_cv", delays)],
-                                    model_info)
-  
+                                    groups, delay_pars, model_info)
   
   ll_errors + ll_delays
                                                
@@ -288,16 +354,15 @@ chronofix_log_likelihood_errors <- function(prob_error, error_indicators,
 }
 
 
-chronofix_log_likelihood_delays <- function(estimated_dates, groups, delay_means,
-                                            delay_cvs, model_info) {
+chronofix_log_likelihood_delays <- function(estimated_dates, groups, delay_pars,
+                                            model_info) {
   
-  ll_delays <- array(0, c(length(groups), length(delay_means)))
+  ll_delays <- array(0, c(length(groups), length(delay_pars)))
   for (i in unique(groups)) {
     group_i <- groups == i
     ll_delays[group_i, ] <- 
       chronofix_log_likelihood_delays1(estimated_dates[group_i, , drop = FALSE],
-                                       delay_means,
-                                       delay_cvs,
+                                       delay_pars,
                                        model_info$delay_from,
                                        model_info$delay_to,
                                        model_info$delay_distribution,
@@ -309,10 +374,11 @@ chronofix_log_likelihood_delays <- function(estimated_dates, groups, delay_means
 }
 
 
-chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_means,
-                                             delay_cvs, delay_from, delay_to,
+chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_pars,
+                                             delay_from, delay_to,
                                              delay_distribution,
                                              is_delay_in_group) {
+  
   is_vec <- is.vector(estimated_dates)
   if (is_vec) {
     estimated_dates <- array(estimated_dates, c(1, length(estimated_dates)))
@@ -320,8 +386,7 @@ chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_means,
   
   group_size <- nrow(estimated_dates)
   
-  group_means <- delay_means[is_delay_in_group]
-  group_cvs <- delay_cvs[is_delay_in_group]
+  group_delay_pars <- delay_pars[is_delay_in_group]
   group_distributions <- delay_distribution[is_delay_in_group]
   
   delay_values <- estimated_dates[, delay_to[is_delay_in_group], drop = FALSE] -
@@ -329,10 +394,10 @@ chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_means,
   
   ll <- array(0, c(group_size, length(is_delay_in_group)))
   ll[, is_delay_in_group] <- 
-    vapply(seq_along(group_means),
+    vapply(seq_along(group_delay_pars),
            function(i) {
-             log_density_delay(delay_values[, i], group_means[[i]], 
-                               group_cvs[[i]], group_distributions[[i]])
+             log_density_delay(delay_values[, i], group_delay_pars[[i]],
+                               group_distributions[[i]])
            },
            numeric(group_size))
   
@@ -345,14 +410,14 @@ chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_means,
 
 
 #' @importFrom stats dgamma dlnorm
-log_density_delay <- function(values, mean, cv, distribution) {
-  
-  params <- convert_to_distribution_params(mean, cv, distribution)
+log_density_delay <- function(values, params, distribution) {
   
   if (distribution == "gamma") {
-    d <- dgamma(values, params$shape, rate = params$rate, log = TRUE)
+    d <- dgamma(values, params$shape, 
+                rate = params$shape / params$mean, log = TRUE)
   } else if (distribution == "log-normal") {
-    d <- dlnorm(values, params$meanlog, params$sdlog, log = TRUE)
+    d <- dlnorm(values, params$meanlog, 
+                1 / sqrt(params$precisionlog), log = TRUE)
   }
   
   d
@@ -453,4 +518,30 @@ unpack_augmented_data <- function(augmented_data, data_packer) {
           seq_along(dim(augmented_data$error_indicators)),
           as.logical)
   augmented_data
+}
+
+
+unpack_delay_pars <- function(pars, delay_distributions) {
+  unpack1 <- function(i) {
+    if (delay_distributions[i] == "gamma") {
+      list(shape = pars[[paste0("delay", i, "_shape")]],
+           mean = pars[[paste0("delay", i, "_mean")]])
+    } else if (delay_distributions[i] == "log-normal") {
+      list(meanlog = pars[[paste0("delay", i, "_meanlog")]],
+           precisionlog = pars[[paste0("delay", i, "_precisionlog")]])
+    }
+  }
+  
+  lapply(seq_along(delay_distributions), unpack1)
+}
+
+
+dinvgamma <- function(x, shape, scale, log = FALSE) {
+  
+  d <- shape * log(scale) - lgamma(shape) - (shape + 1) * log(x) - scale / x
+  
+  if (!log) {
+    d <- exp(d)
+  }
+  d
 }
