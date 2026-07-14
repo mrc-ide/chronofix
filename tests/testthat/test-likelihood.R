@@ -26,18 +26,20 @@ test_that("error log-likelihood calculated correctly", {
 
 
 test_that("log density delay calculated correctly", {
-  mean <- 3
-  cv <- 2
-  
   ## gamma distribution
-  params <- convert_to_distribution_params(mean, cv, "gamma")
-  expect_equal(log_density_delay(8, mean, cv, "gamma"),
-               dgamma(8, params$shape, rate = params$rate, log = TRUE))
+  pars <- list(mean = 3,
+               shape = 2)
+  rate <- pars$shape / pars$mean
+
+  expect_equal(log_density_delay(8, pars, "gamma"),
+               dgamma(8, pars$shape, rate = rate, log = TRUE))
   
-  ## gamma distribution
-  params <- convert_to_distribution_params(mean, cv, "log-normal")
-  expect_equal(log_density_delay(8, mean, cv, "log-normal"),
-               dlnorm(8, params$meanlog, params$sdlog, log = TRUE))
+  ## log-normal distribution
+  pars <- list(meanlog = log(3),
+               precisionlog = 1 / 2)
+  sdlog <- 1 / sqrt(pars$precisionlog)
+  expect_equal(log_density_delay(8, pars, "log-normal"),
+               dlnorm(8, pars$meanlog, sdlog, log = TRUE))
 })
 
 
@@ -61,30 +63,34 @@ test_that("individual delay log-likelihood calculated correctly", {
   delay_distribution <- model_info$delay_distribution
   is_delay_in_group <- model_info$is_delay_in_group
   
-  delay_means <- c(8, 5, 3.2, 6.4, 13, 10.7)
-  delay_cvs <- c(0.2, 0.8, 0.1, 0.4, 0.5, 0.3)
+  delay_pars <- list(list(mean = 8, shape = 4),
+                     list(mean = 5, shape = 3),
+                     list(mean = 3.2, shape = 1.5),
+                     list(mean = 6.4, shape = 2.7),
+                     list(meanlog = 2.5, precisionlog = 0.3),
+                     list(meanlog = 1.8, precisionlog = 0.8))
   
   calc_ll_expected <- function(d, group) {
     k <- is_delay_in_group[, group]
-    ll_expected <- rep(0, length(delay_means))
+    ll_expected <- rep(0, length(delay_pars))
     delay_values <- d[delay_to] - d[delay_from]
-    ll_expected[k] <- mapply(log_density_delay, delay_values[k], delay_means[k],
-                             delay_cvs[k], delay_distribution[k])
+    ll_expected[k] <- mapply(log_density_delay, delay_values[k],
+                             delay_pars[k], delay_distribution[k])
     ll_expected
   }
   
   ## group 1, onset & report
   estimated_dates <- c(3.5, NA, 6.5, NA, NA)
-  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
-                                         delay_cvs, delay_from, delay_to,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_pars, 
+                                         delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 1])
   expect_equal(ll, calc_ll_expected(estimated_dates, 1))
   
   ## group 1, onset & report, negative delay
   estimated_dates <- c(3.5, NA, 2.5, NA, NA)
-  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
-                                         delay_cvs, delay_from, delay_to,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_pars,
+                                         delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 1])
   expect_equal(sum(ll), -Inf)
@@ -92,16 +98,16 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 2, onset, report & death
   estimated_dates <- c(3.5, NA, 6.5, 7, NA)
-  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
-                                         delay_cvs, delay_from, delay_to,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_pars,
+                                         delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 2])
   expect_equal(ll, calc_ll_expected(estimated_dates, 2))
   
   ## group 2, onset, report & death, negative delay
   estimated_dates <- c(3.5, NA, 6.5, 1, NA)
-  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
-                                         delay_cvs, delay_from, delay_to,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_pars,
+                                         delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 2])
   expect_equal(sum(ll), -Inf)
@@ -109,16 +115,16 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 3, onset, report, hospitalisation & discharge
   estimated_dates <- c(3.5, 8.4, 6.5, NA, 12.1)
-  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
-                                         delay_cvs, delay_from, delay_to,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_pars,
+                                         delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 3])
   expect_equal(ll, calc_ll_expected(estimated_dates, 3))
   
   ## group 3, onset, report, hospitalisation & discharge, negative delay
   estimated_dates <- c(3.5, 8.4, 6.5, NA, 7.3)
-  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
-                                         delay_cvs, delay_from, delay_to,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_pars,
+                                         delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 3])
   expect_equal(sum(ll), -Inf)
@@ -126,16 +132,16 @@ test_that("individual delay log-likelihood calculated correctly", {
   
   ## group 4, onset, report, hospitalisation & death
   estimated_dates <- c(3.5, 8.4, 6.5, 12.1, NA)
-  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
-                                         delay_cvs, delay_from, delay_to,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_pars,
+                                         delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 4])
   expect_equal(ll, calc_ll_expected(estimated_dates, 4))
   
   ## group 3, onset, report, hospitalisation & discharge, negative delay
   estimated_dates <- c(3.5, 8.4, 6.5, 7.3, NA)
-  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_means,
-                                         delay_cvs, delay_from, delay_to,
+  ll <- chronofix_log_likelihood_delays1(estimated_dates, delay_pars,
+                                         delay_from, delay_to,
                                          delay_distribution,
                                          is_delay_in_group[, 4])
   expect_equal(sum(ll), -Inf)
@@ -156,10 +162,19 @@ test_that("log-likelihood aggregates correctly", {
   model_prior <- model_split[[which(!has_augmented_data)]]
   
   prob_error <- 0.08
-  delay_means <- c(8, 5, 3.2, 6.4, 13, 10.7)
-  delay_cvs <- c(0.2, 0.8, 0.1, 0.4, 0.5, 0.3)
+  delay_pars <- list(list(mean = 8, shape = 4),
+                     list(mean = 5, shape = 3),
+                     list(mean = 3.2, shape = 1.5),
+                     list(mean = 6.4, shape = 2.7),
+                     list(meanlog = 2.5, precisionlog = 0.3),
+                     list(meanlog = 1.8, precisionlog = 0.8))
   
-  pars <- c(prob_error, delay_means, delay_cvs)
+  delay_pars_flat <- unlist(delay_pars)
+  names(delay_pars_flat) <- 
+    paste0("delay", rep(seq_len(6), each = 2), "_", names(delay_pars_flat))
+  
+  pars <- c(prob_error = prob_error, delay_pars_flat)
+  pars <- unname(pars[model$parameters])
   
   ## use true data and error indicators from simulated data as
   ## estimated dates and error indicators in augmented data respectively
@@ -190,12 +205,12 @@ test_that("log-likelihood aggregates correctly", {
   calc_ll_delay1 <- function(i) {
     group <- which(model_info$groups == data$true_data$group[i])
     chronofix_log_likelihood_delays1(
-      estimated_dates[i, ], delay_means, delay_cvs, model_info$delay_from,
+      estimated_dates[i, ], delay_pars, model_info$delay_from,
       model_info$delay_to, model_info$delay_distribution,
       model_info$is_delay_in_group[, group])
   }
   ll_delays <- vapply(seq_len(nrow(estimated_dates)), 
-                      calc_ll_delay1, numeric(length(delay_means)))
+                      calc_ll_delay1, numeric(length(delay_pars)))
   
   ## sum over delay and error log-likelihoods, check it equals aggregated
   expect_equal(ll_aggregated, sum(ll_errors) + sum(ll_delays))

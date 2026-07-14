@@ -44,6 +44,8 @@ chronofix_sampler_step <- function(state_chain, state_sampler, control,
   
   state_chain <- update_prob_error(state_chain, model, rng)
   
+  state_chain$density <- model$density(state_chain$pars)
+  
   state_chain 
 }
 

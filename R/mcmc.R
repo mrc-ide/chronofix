@@ -80,11 +80,6 @@ chronofix_mcmc_run <- function(model,
 ##'   possible date will be taken as `date_buffer` days after the latest date in
 ##'   the data.
 ##' 
-##' @param mean_sdlog The sdlog proposal parameter for the delay means
-##' 
-##' @param cv_sdlog The sdlog proposal parameter for the delay coefficients of
-##'   variation
-##'   
 ##' @param prob_update_estimated_dates The probability of proposing an update
 ##'   to each estimated date at each iteration in the MCMC
 ##'
@@ -103,22 +98,20 @@ chronofix_mcmc_run <- function(model,
 ##'
 ##' @export
 chronofix_mcmc_control <- function(n_steps = 1000,
-                         burnin = 0,
-                         thinning_factor = 1,
-                         n_chains = 1,
-                         parallel = FALSE,
-                         n_workers = 1,
-                         lower_quantile = 0.01,
-                         upper_quantile = 0.99,
-                         earliest_possible_date = NULL,
-                         latest_possible_date = NULL,
-                         date_buffer = 30,
-                         mean_sdlog = 1,
-                         cv_sdlog = 1,
-                         prob_update_estimated_dates = 0.1,
-                         prob_update_error_indicators = 0.1,
-                         prob_error_swap = 1,
-                         cascade_sampling = FALSE) {
+                                   burnin = 0,
+                                   thinning_factor = 1,
+                                   n_chains = 1,
+                                   parallel = FALSE,
+                                   n_workers = 1,
+                                   lower_quantile = 0.01,
+                                   upper_quantile = 0.99,
+                                   earliest_possible_date = NULL,
+                                   latest_possible_date = NULL,
+                                   date_buffer = 30,
+                                   prob_update_estimated_dates = 0.1,
+                                   prob_update_error_indicators = 0.1,
+                                   prob_error_swap = 1,
+                                   cascade_sampling = FALSE) {
   
   list(n_steps = n_steps,
        burnin = burnin,
@@ -131,8 +124,6 @@ chronofix_mcmc_control <- function(n_steps = 1000,
        earliest_possible_date = earliest_possible_date,
        latest_possible_date = latest_possible_date,
        date_buffer = date_buffer,
-       mean_sdlog = mean_sdlog,
-       cv_sdlog = cv_sdlog,
        prob_update_estimated_dates = prob_update_estimated_dates,
        prob_update_error_indicators = prob_update_error_indicators,
        prob_error_swap = prob_error_swap,
@@ -145,24 +136,36 @@ chronofix_mcmc_control <- function(n_steps = 1000,
 ##'
 ##' @param model Model
 ##' 
-##' @param initial_delay_mean The initial value for the delay means
+##' @param initial_delay_shape The initial value for the shape parameter of
+##'   gamma-distributed delays
 ##' 
-##' @param initial_delay_cv The initial value for the delay coefficients of
-##'   variation
-##'   
+##' @param initial_delay_mean The initial value for the mean of
+##'   gamma-distributed delays
+##'
+##' @param initial_delay_meanlog The initial value for the mean on the log-scale
+##'   of log-normal-distributed delays
+##'
+##' @param initial_delay_precisionlog The initial value for the precision on the
+##'  log-scale of log-normal-distributed delays
+##'
 ##' @param initial_prob_error The initial value for the probability of error  
 ##' 
 ##' @return Vector of initial parameter values
 ##'
 ##' @export
 chronofix_mcmc_initial <- function(model,
-                         initial_delay_mean = 7,
-                         initial_delay_cv = 0.2,
-                         initial_prob_error = 1) {
+                                   initial_delay_shape = 1,
+                                   initial_delay_mean = 5,
+                                   initial_delay_meanlog = 1,
+                                   initial_delay_precisionlog = 1,
+                                   initial_prob_error = 0.1) {
   initial <- numeric(length(model$parameters))
-  initial[model$parameters == "prob_error"] <- 0.1
-  initial[grepl("delay_mean", model$parameters)] <- initial_delay_mean
-  initial[grepl("delay_cv", model$parameters)] <- initial_delay_cv
+  initial[model$parameters == "prob_error"] <- initial_prob_error
+  initial[endsWith(model$parameters, "shape")] <- initial_delay_shape
+  initial[endsWith(model$parameters, "mean")] <- initial_delay_mean
+  initial[endsWith(model$parameters, "meanlog")] <- initial_delay_meanlog
+  initial[endsWith(model$parameters, "precisionlog")] <- 
+    initial_delay_precisionlog
   
   initial
 }
