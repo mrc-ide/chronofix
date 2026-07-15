@@ -449,7 +449,7 @@ convert_to_distribution_params <- function(mean, cv, distribution) {
 make_augmented_data_update <- function(observed_dates, parameters, groups,
                                        model_info, date_range, control,
                                        density_fn, data_packer) {
-  augmented_data_update <- function(pars, rng) {
+  augmented_data_update <- function(pars, state_sampler, rng) {
     augmented_data <- attr(pars, "data")
     
     names(pars) <- parameters
@@ -467,7 +467,8 @@ make_augmented_data_update <- function(observed_dates, parameters, groups,
       augmented_data <- unpack_augmented_data(augmented_data, data_packer)
       augmented_data <- update_augmented_data(augmented_data, observed_dates,
                                               pars, groups, model_info,
-                                              date_range, control, rng)
+                                              date_range, control, 
+                                              state_sampler, rng)
       augmented_data <- data_packer$pack(augmented_data)
       attr(pars, "data") <- augmented_data
       density <- density_fn(pars)
