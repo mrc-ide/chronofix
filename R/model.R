@@ -245,6 +245,34 @@ make_model_info <- function(delay_map, dates) {
   }
   event_order <- lapply(seq_along(g), calc_event_order)
   
+  calc_shortest_paths <- function(group) {
+    # identify relevant delays and event dates for a group
+    dates_from <- delay_from[is_delay_in_group[, group]]
+    dates_to <- delay_to[is_delay_in_group[, group]]
+    
+    relevant_dates <- unique(c(dates_from, dates_to))
+    delay_df <- data.frame(from = dates_from, to = dates_to)
+    
+    event_graph <- igraph::graph_from_data_frame(delay_df,
+                                                 directed = FALSE,
+                                                 vertices = relevant_dates)
+    
+    paths <- rep(list(NULL), length(dates))
+    for (i in relevant_dates) {
+      paths_i <- rep(list(NULL), length(dates))
+      for (j in relevant_dates[relevant_dates != i]) {
+        paths_i[[j]] <-
+          suppressWarnings(
+            as.integer(igraph::shortest_paths(event_graph, 
+                                              as.character(i), 
+                                              as.character(j))$vpath[[1]]))
+      }
+      paths[[i]] <- paths_i
+    }
+    paths
+  }
+  shortest_paths <- lapply(seq_along(g), calc_shortest_paths)
+  
   list(delay_from = delay_from,
        delay_to = delay_to,
        delay_distribution = delay_distribution,
@@ -253,6 +281,7 @@ make_model_info <- function(delay_map, dates) {
        is_date_in_group = is_date_in_group,
        is_date_connected = is_date_connected,
        event_order = event_order,
+       shortest_paths = shortest_paths,
        groups = g)  
 }
 

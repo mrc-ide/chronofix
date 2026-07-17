@@ -129,11 +129,13 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
     sampling_order <- 
       calc_cascade_sampling_order(i, model_info$event_order[[group]],
                                   augmented_data_new$error_indicators,
-                                  model_info$is_date_connected[, , group])
+                                  model_info$is_date_connected[, , group],
+                                  model_info$shortest_paths[[group]])
     sampling_order_reverse <- 
       calc_cascade_sampling_order(i, model_info$event_order[[group]],
                                   augmented_data$error_indicators,
-                                  model_info$is_date_connected[, , group])
+                                  model_info$is_date_connected[, , group],
+                                  model_info$shortest_paths[[group]])
   } else {
     sampling_order <- i
     sampling_order_reverse <- i
@@ -492,23 +494,43 @@ calc_batch_sampling_order <- function(to_resample, error_indicators,
 
 
 calc_cascade_sampling_order <- function(i, event_order,
-                                        error_indicators, is_date_connected) {
+                                        error_indicators, is_date_connected,
+                                        shortest_paths) {
   
-  ## If date i is missing or erroneous, check if there is a connected date
-  ## that is correct to anchor against
-  if (!isFALSE(error_indicators[i])) {
-    has_anchor <- any(is_date_connected[event_order, i] & 
-                        vlapply(error_indicators[event_order], isFALSE))
-    if (!has_anchor) {
-      return(i)
+  ## Check if there are any correct dates, if not then we do not cascade
+  is_possible_anchor <- vlapply(error_indicators[event_order], isFALSE)
+  if (!any(is_possible_anchor)) {
+    return(i)
+  }
+  
+  if (is_possible_anchor[event_order == i]) {
+    ## Date i is correct so use itself as an anchor
+    sampling_order <- i
+  } else {
+    has_anchor <- any(is_date_connected[i, event_order] & is_possible_anchor)
+    if (has_anchor) {
+      ## Date is connected to an anchor
+      sampling_order <- i
+    } else {
+      possible_anchors <- event_order[is_possible_anchor]
+      shortest_path_lengths <- 
+        vnapply(shortest_paths[[i]][possible_anchors], length)
+      if (all(shortest_path_lengths == 0)) {
+        ## No path to an anchor
+        return(i)
+      } else {
+        possible_anchors <- possible_anchors[shortest_path_lengths > 0]
+        shortest_path_lengths <- 
+          shortest_path_lengths[shortest_path_lengths > 0]
+        anchor <- possible_anchors[which.min(shortest_path_lengths)]
+        sampling_order <- rev(shortest_paths[[i]][[anchor]])[-1L]
+      }
     }
   }
   
-  sampling_order <- i
-  
   ## cascade_candidates are dates not already in sampling_order that are
   ## missing or erroneous
-  cascade_candidates <- event_order[event_order != i]
+  cascade_candidates <- event_order[!(event_order %in% sampling_order)]
   is_cascade_candidate <- 
     !vlapply(error_indicators[cascade_candidates], isFALSE)
   cascade_candidates <- cascade_candidates[is_cascade_candidate]
