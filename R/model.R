@@ -261,11 +261,11 @@ make_model_info <- function(delay_map, dates) {
     for (i in relevant_dates) {
       paths_i <- rep(list(NULL), length(dates))
       for (j in relevant_dates[relevant_dates != i]) {
-        paths_i[[j]] <-
-          suppressWarnings(
-            as.integer(igraph::shortest_paths(event_graph, 
-                                              as.character(i), 
-                                              as.character(j))$vpath[[1]]))
+        p <- suppressWarnings(
+          igraph::shortest_paths(event_graph, 
+                                 as.character(i), 
+                                 as.character(j))$vpath[[1]])
+        paths_i[[j]] <- relevant_dates[as.integer(p)]
       }
       paths[[i]] <- paths_i
     }
