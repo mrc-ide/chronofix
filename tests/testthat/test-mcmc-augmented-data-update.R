@@ -53,26 +53,27 @@ test_that("cascade resampling order calculated correctly", {
   
   event_order <- model_info$event_order[[2]]
   is_date_connected <- model_info$is_date_connected[, , 2]
+  shortest_paths <- model_info$shortest_paths[[2]]
   
   ## anchor = 3
   ## all correct, no cascade
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(FALSE, NA, FALSE, FALSE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     3)
   
   ## anchor = 3
   ## 3 (correct) only connected to a correct date, no cascade
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(FALSE, NA, FALSE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     3)
   
   ## anchor = 3
   ## 3 (correct) --> 1 (erroneous) --> 4 (missing)
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(TRUE, NA, FALSE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(3, 1, 4))
   
   ## same as above but 1 is missing instead (makes no difference)
@@ -80,30 +81,36 @@ test_that("cascade resampling order calculated correctly", {
   ## 3 (correct) --> 1 (missing) --> 4 (missing)
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(NA, NA, FALSE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(3, 1, 4))
   
   ## anchor = 3
   ## 3 (correct) --> 1 (erroneous)
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(TRUE, NA, FALSE, FALSE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(3, 1))
   
   ## anchor = 3
-  ## 3 (erroneous) cannot cascade as not connected to a correct date
+  ## 3 (erroneous) cannot cascade as no correct dates
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(NA, NA, TRUE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     3)
   
-  ## same as above but 1 is correct (makes no difference)
   ## anchor = 3
-  ## 3 (erroneous) cannot cascade
+  ## 3 (erroneous) cannot cascade - only connected to 1 which is correct
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(FALSE, NA, TRUE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     3)
+  
+  ## anchor = 4 (nearest correct date to 3)
+  ## 1(missing) --> 3 (erroneous)
+  expect_equal(
+    calc_cascade_sampling_order(3, event_order, c(NA, NA, TRUE, FALSE, NA),
+                                is_date_connected, shortest_paths),
+    c(1, 3))
   
   
   ## anchor = 1
@@ -111,28 +118,28 @@ test_that("cascade resampling order calculated correctly", {
   ## event order determines order in which we do those
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(FALSE, NA, TRUE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(1, 3, 4))
   
   ## anchor = 1
   ## 1 (correct) --> 3 (erroneous)
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(FALSE, NA, TRUE, FALSE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(1, 3))
   
   ## anchor = 1
   ## 1 (erroneous), no cascade as all connected dates corret
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, FALSE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     1)
   
   ## anchor = 1
   ## 1 (erroneous) cannot cascade as not connected to correct date
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, TRUE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     1)
   
   ## anchor = 1
@@ -140,7 +147,7 @@ test_that("cascade resampling order calculated correctly", {
   ## can cascade as 1 is connected to correct date 3
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(1, 4))
   
   
@@ -149,20 +156,21 @@ test_that("cascade resampling order calculated correctly", {
   
   event_order <- model_info$event_order[[4]]
   is_date_connected <- model_info$is_date_connected[, , 4]
+  shortest_paths <- model_info$shortest_paths[[4]]
   
   ## anchor = 1
   ## all correct, no cascade
   expect_equal(
     calc_cascade_sampling_order(1, event_order, 
                                 c(FALSE, FALSE, FALSE, FALSE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     1)
   
   ## anchor = 1
   ## 1 (correct) only connected to correct dates, no cascade
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(FALSE, FALSE, FALSE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     1)
   
   ## anchor = 1
@@ -170,7 +178,7 @@ test_that("cascade resampling order calculated correctly", {
   ## then 2 --> 4 (missing)
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(FALSE, TRUE, NA, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(1, 2, 3, 4))
   
   ## anchor = 1
@@ -178,7 +186,7 @@ test_that("cascade resampling order calculated correctly", {
   ## no cascade to 3 (correct) 
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(FALSE, TRUE, FALSE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(1, 2, 4))
   
   ## anchor = 1
@@ -186,22 +194,22 @@ test_that("cascade resampling order calculated correctly", {
   ## no cascade to 2 (correct) 
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(FALSE, FALSE, TRUE, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(1, 3))
   
-  ## anchor = 1
-  ## cannot cascade as 1 (erroneous) not connected to a correct date
+  ## anchor = 4 (nearest correct date to 1)
+  ## 2 (missing) --> 1 (erroneous) --> 3 (erroneous)
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, TRUE, FALSE, NA),
-                                is_date_connected),
-    1)
+                                is_date_connected, shortest_paths),
+    c(2, 1, 3))
   
   ## anchor = 1
   ## 1 (erroneous) --> 2 (erroneous) --> 4 (missing)
   ## can cascade as 1 (erroneous) connected to correct date 3
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, TRUE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(1, 2, 4))
   
   ## anchor = 1
@@ -209,7 +217,7 @@ test_that("cascade resampling order calculated correctly", {
   ## can cascade as 1 (erroneous) connected to correct date 2
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, FALSE, NA, TRUE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(1, 3))
   
   ## anchor = 2
@@ -218,7 +226,7 @@ test_that("cascade resampling order calculated correctly", {
   ## can cascade as 1 (erroneous) connected to correct date 2
   expect_equal(
     calc_cascade_sampling_order(2, event_order, c(TRUE, FALSE, NA, NA, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(2, 1, 4, 3))
   
   
@@ -227,7 +235,7 @@ test_that("cascade resampling order calculated correctly", {
   ## can cascade as 2 (erroneous) connected to correct date 4
   expect_equal(
     calc_cascade_sampling_order(2, event_order, c(TRUE, TRUE, NA, FALSE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(2, 1, 3))
   
   ## anchor = 2
@@ -235,7 +243,7 @@ test_that("cascade resampling order calculated correctly", {
   ## can cascade as 2 (erroneous) connected to correct date 1
   expect_equal(
     calc_cascade_sampling_order(2, event_order, c(FALSE, TRUE, NA, TRUE, NA),
-                                is_date_connected),
+                                is_date_connected, shortest_paths),
     c(2, 4))
   
 })
