@@ -78,7 +78,8 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
     sampling_order <- 
       calc_cascade_sampling_order(i, model_info$event_order[[group]],
                                   augmented_data$error_indicators,
-                                  model_info$is_date_connected[, , group])
+                                  model_info$is_date_connected[, , group],
+                                  model_info$shortest_paths[[group]])
   } else {
     sampling_order <- i
   }
