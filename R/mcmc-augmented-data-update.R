@@ -187,15 +187,6 @@ sample_from_delay <- function(i, augmented_data, group, delay_pars, model_info,
   valid_delays <- which_delays[is_available_date]
   other_date_idx <- other_date_idx[is_available_date]
   
-  if (length(valid_delays) > 1) {
-    is_correct <- 
-      vlapply(augmented_data$error_indicators[other_date_idx], isFALSE)
-    if (any(is_correct)) {
-      valid_delays <- valid_delays[is_correct]
-      other_date_idx <- other_date_idx[is_correct]
-    } 
-  }
-  
   ## If it is involved in several delays, randomly select one
   delay_idx <- if (length(valid_delays) == 1) 1 else 
     ceiling(length(valid_delays) * monty::monty_random_real(rng))
@@ -370,13 +361,7 @@ calc_proposal_density <- function(sampling_order, augmented_data,
     if (!isFALSE(augmented_data$error_indicators[i])) {
       ## which dates were available for sampling
       connected_dates <- available_dates[is_date_connected[i, available_dates]]
-      if (length(connected_dates) > 1) {
-        is_correct <- 
-          vlapply(augmented_data$error_indicators[connected_dates], isFALSE)
-        if (sum(is_correct) > 0) {
-          connected_dates <- connected_dates[is_correct]
-        }
-      }
+      
       is_delay_available <- 
         colSums(is_date_in_delay[connected_dates, , drop = FALSE]) > 0
       ## which delays could be sampled from
