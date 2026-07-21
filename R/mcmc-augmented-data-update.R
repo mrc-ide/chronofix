@@ -71,10 +71,7 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
     return(augmented_data)
   }
   
-  cascade <- control$cascade_sampling &&
-    !isFALSE(augmented_data$error_indicators[i])
-  
-  if (cascade) {
+  if (control$cascade_sampling) {
     sampling_order <- 
       calc_cascade_sampling_order(i, model_info$event_order[[group]],
                                   augmented_data$error_indicators,
