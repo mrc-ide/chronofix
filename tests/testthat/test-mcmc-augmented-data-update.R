@@ -246,6 +246,26 @@ test_that("cascade resampling order calculated correctly", {
                                 is_date_connected, shortest_paths),
     c(2, 4))
   
+  
+  
+  ## special case where there are no paths between some dates
+  delay_map <- data.frame(
+    from = c("onset", "hospitalisation"),
+    to = c("report", "death"),
+    group = c(1, 1),
+    distribution = c("gamma", "gamma")
+  )
+  model_info <- 
+    make_model_info(delay_map, c("onset", "hospitalisation", "report", "death"))
+  
+  event_order <- model_info$event_order[[1]]
+  is_date_connected <- model_info$is_date_connected[, , 1]
+  shortest_paths <- model_info$shortest_paths[[1]]
+  ## 3 is only possible anchor but no path to it
+  expect_equal(
+    calc_cascade_sampling_order(2, event_order, c(NA, TRUE, FALSE, NA),
+                                is_date_connected, shortest_paths),
+    2)
 })
 
 
