@@ -55,21 +55,21 @@ test_that("cascade resampling order calculated correctly", {
   is_date_connected <- model_info$is_date_connected[, , 2]
   shortest_paths <- model_info$shortest_paths[[2]]
   
-  ## anchor = 3
+  ## i = 3
   ## all correct, no cascade
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(FALSE, NA, FALSE, FALSE, NA),
                                 is_date_connected, shortest_paths),
     3)
   
-  ## anchor = 3
+  ## i = 3
   ## 3 (correct) only connected to a correct date, no cascade
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(FALSE, NA, FALSE, NA, NA),
                                 is_date_connected, shortest_paths),
     3)
   
-  ## anchor = 3
+  ## i = 3
   ## 3 (correct) --> 1 (erroneous) --> 4 (missing)
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(TRUE, NA, FALSE, NA, NA),
@@ -77,43 +77,45 @@ test_that("cascade resampling order calculated correctly", {
     c(3, 1, 4))
   
   ## same as above but 1 is missing instead (makes no difference)
-  ## anchor = 3
+  ## i = 3
   ## 3 (correct) --> 1 (missing) --> 4 (missing)
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(NA, NA, FALSE, NA, NA),
                                 is_date_connected, shortest_paths),
     c(3, 1, 4))
   
-  ## anchor = 3
+  ## i = 3
   ## 3 (correct) --> 1 (erroneous)
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(TRUE, NA, FALSE, FALSE, NA),
                                 is_date_connected, shortest_paths),
     c(3, 1))
   
-  ## anchor = 3
-  ## 3 (erroneous) cannot cascade as no correct dates
+  ## i = 3
+  ## no correct dates so cascade from 3
+  ## 3 (erroneous) --> 1 (missing) --> 4 (missing)
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(NA, NA, TRUE, NA, NA),
                                 is_date_connected, shortest_paths),
-    3)
+    c(3, 1, 4))
   
-  ## anchor = 3
+  ## i = 3
   ## 3 (erroneous) cannot cascade - only connected to 1 which is correct
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(FALSE, NA, TRUE, NA, NA),
                                 is_date_connected, shortest_paths),
     3)
   
+  ## i = 3
   ## anchor = 4 (nearest correct date to 3)
-  ## 1(missing) --> 3 (erroneous)
+  ## 1 (missing) --> 3 (erroneous)
   expect_equal(
     calc_cascade_sampling_order(3, event_order, c(NA, NA, TRUE, FALSE, NA),
                                 is_date_connected, shortest_paths),
     c(1, 3))
   
   
-  ## anchor = 1
+  ## i = 1
   ## 1 (correct) --> 3 (erroneous) and 1 --> 4 (missing)
   ## event order determines order in which we do those
   expect_equal(
@@ -121,30 +123,31 @@ test_that("cascade resampling order calculated correctly", {
                                 is_date_connected, shortest_paths),
     c(1, 3, 4))
   
-  ## anchor = 1
+  ## i = 1
   ## 1 (correct) --> 3 (erroneous)
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(FALSE, NA, TRUE, FALSE, NA),
                                 is_date_connected, shortest_paths),
     c(1, 3))
   
-  ## anchor = 1
-  ## 1 (erroneous), no cascade as all connected dates corret
+  ## i = 1
+  ## 1 (erroneous), no cascade as all connected dates correct
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, FALSE, NA),
                                 is_date_connected, shortest_paths),
     1)
   
-  ## anchor = 1
-  ## 1 (erroneous) cannot cascade as not connected to correct date
+  ## i = 1
+  ## cascade from 1 as no correct dates
+  ## 1 (erroneous) --> 3 (erroneous) --> 4 (missing)
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, TRUE, NA, NA),
                                 is_date_connected, shortest_paths),
-    1)
+    c(1, 3, 4))
   
-  ## anchor = 1
+  ## i = 1
+  ## anchor = 3 (correct date connected to 1)
   ## 1 (erroneous) --> 4 (erroneous)
-  ## can cascade as 1 is connected to correct date 3
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, NA, NA),
                                 is_date_connected, shortest_paths),
@@ -158,7 +161,7 @@ test_that("cascade resampling order calculated correctly", {
   is_date_connected <- model_info$is_date_connected[, , 4]
   shortest_paths <- model_info$shortest_paths[[4]]
   
-  ## anchor = 1
+  ## i = 1
   ## all correct, no cascade
   expect_equal(
     calc_cascade_sampling_order(1, event_order, 
@@ -166,14 +169,14 @@ test_that("cascade resampling order calculated correctly", {
                                 is_date_connected, shortest_paths),
     1)
   
-  ## anchor = 1
+  ## i = 1
   ## 1 (correct) only connected to correct dates, no cascade
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(FALSE, FALSE, FALSE, NA, NA),
                                 is_date_connected, shortest_paths),
     1)
   
-  ## anchor = 1
+  ## i = 1
   ## 1 (correct) --> 2 (erroneous) and 1 --> 3 (missing)
   ## then 2 --> 4 (missing)
   expect_equal(
@@ -181,7 +184,7 @@ test_that("cascade resampling order calculated correctly", {
                                 is_date_connected, shortest_paths),
     c(1, 2, 3, 4))
   
-  ## anchor = 1
+  ## i = 1
   ## 1 (correct) --> 2 (erroneous) --> 4 (missing)
   ## no cascade to 3 (correct) 
   expect_equal(
@@ -197,6 +200,7 @@ test_that("cascade resampling order calculated correctly", {
                                 is_date_connected, shortest_paths),
     c(1, 3))
   
+  ## i = 1
   ## anchor = 4 (nearest correct date to 1)
   ## 2 (missing) --> 1 (erroneous) --> 3 (erroneous)
   expect_equal(
@@ -204,43 +208,43 @@ test_that("cascade resampling order calculated correctly", {
                                 is_date_connected, shortest_paths),
     c(2, 1, 3))
   
-  ## anchor = 1
+  ## i = 1
+  ## anchor = 3 (correct date connected to 1)
   ## 1 (erroneous) --> 2 (erroneous) --> 4 (missing)
-  ## can cascade as 1 (erroneous) connected to correct date 3
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, NA, FALSE, TRUE, NA),
                                 is_date_connected, shortest_paths),
     c(1, 2, 4))
   
-  ## anchor = 1
+  ## i = 1
+  ## anchor = 2 (correct date connected to 1)
   ## 1 (erroneous) --> 3 (missing)
-  ## can cascade as 1 (erroneous) connected to correct date 2
   expect_equal(
     calc_cascade_sampling_order(1, event_order, c(TRUE, FALSE, NA, TRUE, NA),
                                 is_date_connected, shortest_paths),
     c(1, 3))
   
-  ## anchor = 2
+  
+  ## i = 2
   ## 2 (correct) --> 1 (erroneous) and 2 (correct) --> 4 (missing)
   ## then 1 (erroneous) --> 3 (missing)
-  ## can cascade as 1 (erroneous) connected to correct date 2
   expect_equal(
     calc_cascade_sampling_order(2, event_order, c(TRUE, FALSE, NA, NA, NA),
                                 is_date_connected, shortest_paths),
     c(2, 1, 4, 3))
   
   
-  ## anchor = 2
+  ## i = 2
+  ## anchor = 4 (correct date connected to 4)
   ## 2 (erroneous) --> 1 (erroneous) --> 3 (missing)
-  ## can cascade as 2 (erroneous) connected to correct date 4
   expect_equal(
     calc_cascade_sampling_order(2, event_order, c(TRUE, TRUE, NA, FALSE, NA),
                                 is_date_connected, shortest_paths),
     c(2, 1, 3))
   
-  ## anchor = 2
+  ## i = 2
+  ## anchor = 1 (correct date connected to 2)
   ## 2 (erroneous) --> 4 (erroneous)
-  ## can cascade as 2 (erroneous) connected to correct date 1
   expect_equal(
     calc_cascade_sampling_order(2, event_order, c(FALSE, TRUE, NA, TRUE, NA),
                                 is_date_connected, shortest_paths),
@@ -265,7 +269,7 @@ test_that("cascade resampling order calculated correctly", {
   expect_equal(
     calc_cascade_sampling_order(2, event_order, c(NA, TRUE, FALSE, NA),
                                 is_date_connected, shortest_paths),
-    2)
+    c(2, 4))
 })
 
 
@@ -474,6 +478,7 @@ test_that("estimated dates proposed correctly", {
   delay_map <- toy_model()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
+  date_range <- toy_model()$date_range
   
   delay_pars <- list(list(mean = 8, shape = 4),
                      list(mean = 5, shape = 3),
@@ -493,7 +498,7 @@ test_that("estimated dates proposed correctly", {
                          error_indicators = c(NA, NA, FALSE, TRUE, NA))
   augmented_data_new <- 
     propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            delay_pars, model_info, rng)
+                            delay_pars, model_info, date_range, rng)
   expect_equal(augmented_data$error_indicators,
                augmented_data_new$error_indicators)
   expect_equal(augmented_data$estimated_dates[-to_update],
@@ -511,14 +516,14 @@ test_that("estimated dates proposed correctly", {
                          error_indicators = c(NA, NA, FALSE, TRUE, NA))
   augmented_data_new <- 
     propose_estimated_dates(to_update, augmented_data, observed_dates, group,
-                            delay_pars, model_info, rng)
+                            delay_pars, model_info, date_range, rng)
   expect_equal(augmented_data$error_indicators,
                augmented_data_new$error_indicators)
   expect_equal(augmented_data$estimated_dates[-to_update],
                augmented_data_new$estimated_dates[-to_update])
   expect_equal(augmented_data_new$estimated_dates[to_update],
-               sample_from_delay(to_update, augmented_data_new,
-                                 group, delay_pars, model_info, rng1))
+               sample_from_delay(to_update, augmented_data_new, group,
+                                 delay_pars, model_info, date_range, rng1))
   
   
   ## group 2, propose all dates, swapping errors
@@ -533,7 +538,7 @@ test_that("estimated dates proposed correctly", {
                               model_info$is_date_connected[, , group])
   augmented_data_new <- 
     propose_estimated_dates(sampling_order, augmented_data, observed_dates,
-                            group, delay_pars, model_info, rng)
+                            group, delay_pars, model_info, date_range, rng)
   expect_equal(augmented_data_new$error_indicators, 
                augmented_data$error_indicators)
   cmp <- list(estimated_dates = rep(NA, 5),
@@ -542,9 +547,9 @@ test_that("estimated dates proposed correctly", {
   cmp$estimated_dates[4] <- observed_dates[4] + monty::monty_random_real(rng1)
   ## will then sample date 1 (connected to date 4) and then date 3
   cmp$estimated_dates[1] <- 
-    sample_from_delay(1, cmp, group, delay_pars, model_info, rng1)
+    sample_from_delay(1, cmp, group, delay_pars, model_info, date_range, rng1)
   cmp$estimated_dates[3] <- 
-    sample_from_delay(3, cmp, group, delay_pars, model_info, rng1)
+    sample_from_delay(3, cmp, group, delay_pars, model_info, date_range, rng1)
   expect_equal(augmented_data_new$estimated_dates, cmp$estimated_dates)
   
 })
@@ -555,6 +560,7 @@ test_that("proposal density calculated correctly", {
   delay_map <- toy_model()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
+  date_range <- toy_model()$date_range
   
   delay_pars <- list(list(mean = 8, shape = 4),
                      list(mean = 5, shape = 3),
@@ -582,7 +588,7 @@ test_that("proposal density calculated correctly", {
               shape = delay_pars[[2]]$shape, 
               rate = delay_pars[[2]]$shape / delay_pars[[2]]$mean, log = TRUE)
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
   
   ## group 2, updated missing onset date 
   ## based on delay 1 (gamma), onset (date 1) to report (date 3)
@@ -596,7 +602,7 @@ test_that("proposal density calculated correctly", {
            rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
              c(delay_pars[[1]]$mean, delay_pars[[2]]$mean)))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
   
   ## group 2, updated all dates
   ## report (date 3) is correct so has no impact for proposing this
@@ -604,7 +610,7 @@ test_that("proposal density calculated correctly", {
   ##               onset (date 1) to report (date 3)
   ## then death is proposed based on delay 2 (gamma),
   ##               onset (date 1) to death (date 4)
-  sampling_order <-
+  updated <-
     calc_batch_sampling_order(model_info$event_order[[group]],
                               augmented_data$error_indicators,
                               model_info$is_date_connected[, , group])
@@ -614,7 +620,8 @@ test_that("proposal density calculated correctly", {
                   rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
                     c(delay_pars[[1]]$mean, delay_pars[[2]]$mean), log = TRUE))
   expect_equal(calc_proposal_density(
-    sampling_order, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
+    
   
   ## group 2, updated missing onset date 
   ## based on delay 1 (gamma), onset (date 1) to report (date 3)
@@ -630,7 +637,7 @@ test_that("proposal density calculated correctly", {
            rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
              c(delay_pars[[1]]$mean, delay_pars[[2]]$mean)))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
   
   ## group 2, updated missing onset date 
   ## based on delay 1 (gamma), onset (date 1) to report (date 3)
@@ -646,7 +653,31 @@ test_that("proposal density calculated correctly", {
            rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
              c(delay_pars[[1]]$mean, delay_pars[[2]]$mean)))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
+  
+  
+  ## group 2, updated all dates via cascade
+  ## no correct dates
+  ## start with report (date 3), no delay available so date proposed at random
+  ## then onset is proposed based on delay 1 (gamma), 
+  ##               onset (date 1) to report (date 3)
+  ## then death is proposed based on delay 2 (gamma),
+  ##               onset (date 1) to death (date 4)
+  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
+                         error_indicators = c(NA, NA, TRUE, TRUE, NA))
+  updated <-
+    calc_cascade_sampling_order(3, model_info$event_order[[group]],
+                                augmented_data$error_indicators,
+                                model_info$is_date_connected[, , group],
+                                model_info$shortest_paths[[group]])
+  d <- -log(date_range[2] - date_range[1]) +
+    sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
+                    augmented_data$estimated_dates[1],
+                  shape = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape), 
+                  rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
+                    c(delay_pars[[1]]$mean, delay_pars[[2]]$mean), log = TRUE))
+  expect_equal(calc_proposal_density(
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
   
   
   # group 4, 3 dates
@@ -658,13 +689,13 @@ test_that("proposal density calculated correctly", {
   ## proposal log-density should be zero
   updated <- 1
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), 0)
+    updated, augmented_data, group, delay_pars, model_info, date_range), 0)
   
   ## group 4, updated correct report date
   ## proposal log-density should be zero
   updated <- 3
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), 0)
+    updated, augmented_data, group, delay_pars, model_info, date_range), 0)
   
   ## group 4, updated error hospitalisation date 
   ## based on delay 5 (log-normal), onset (date 1) to hospitalisation (date 2)
@@ -678,7 +709,7 @@ test_that("proposal density calculated correctly", {
            sdlog = 1 / sqrt(c(delay_pars[[5]]$precisionlog, 
                               delay_pars[[6]]$precisionlog))))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
   
   ## group 4, updated missing death date 
   ## based on delay 6 (log-normal), hospitalisation (date 2) to death (date 4)
@@ -688,7 +719,7 @@ test_that("proposal density calculated correctly", {
               meanlog = delay_pars[[6]]$meanlog, 
               sdlog = 1 / sqrt(delay_pars[[6]]$precisionlog), log = TRUE)
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
   
   ## group 4, updated all dates
   ## onset (date 1) and report (date 3) correct so no impact for proposing
@@ -704,7 +735,7 @@ test_that("proposal density calculated correctly", {
                                      delay_pars[[6]]$precisionlog)),
                   log = TRUE))
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
   
   
   ## group 4, updated error hospitalisation date 
@@ -721,7 +752,7 @@ test_that("proposal density calculated correctly", {
            sdlog = 1 / sqrt(c(delay_pars[[5]]$precisionlog, 
                               delay_pars[[6]]$precisionlog))))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
   
   
   ## group 4, updated error hospitalisation date 
@@ -738,7 +769,7 @@ test_that("proposal density calculated correctly", {
            sdlog = 1 / sqrt(c(delay_pars[[5]]$precisionlog, 
                               delay_pars[[6]]$precisionlog))))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, augmented_data, group, delay_pars, model_info), d)
+    updated, augmented_data, group, delay_pars, model_info, date_range), d)
 })
 
 
