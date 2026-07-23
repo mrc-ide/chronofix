@@ -73,6 +73,7 @@ toy_model <- function(named_groups = TRUE, control = chronofix_mcmc_control(),
   
   list(model = model,
        delay_map = params$delay_map,
-       data = sim_result)
+       data = sim_result,
+       date_range = params$date_range)
   
 }
