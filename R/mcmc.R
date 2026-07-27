@@ -33,6 +33,11 @@ chronofix_mcmc_run <- function(model,
                                  thinning_factor = control$thinning_factor,
                                  save_full_chains = TRUE)
   
+  samples_df <- posterior::as_draws_df(samples)
+  samples$diagnostics <- posterior::summarise_draws(samples_df)
+  
+  samples <- monty::monty_flatten_chains(samples)
+  
   ## Unpack augmented data
   samples$data <- unpack_augmented_data(samples$data, model$data_packer)
   
