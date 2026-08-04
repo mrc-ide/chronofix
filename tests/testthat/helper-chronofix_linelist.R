@@ -3,8 +3,7 @@ make_mock_data <- function() {
   groups <- c("community-alive", "hospitalised-alive", "community-dead")
   n_ind <- n_per_group * length(groups)
   n_evt <- 5
-  n_iter <- 4
-  n_chains <- 1
+  n_samp <- 4
   
   observed_data <- data.frame(
     id = seq_len(n_ind),
@@ -25,10 +24,10 @@ make_mock_data <- function() {
   
   estimated_dates <- array(
     as.Date(NA_character_),
-    dim = c(n_ind, n_evt, n_iter, n_chains)
+    dim = c(n_ind, n_evt, n_samp)
   )
   
-  error_indicators <- array(NA, dim = c(n_ind, n_evt, n_iter, n_chains))
+  error_indicators <- array(NA, dim = c(n_ind, n_evt, n_samp))
   
   for (i in seq_len(n_ind)) {
     allowed_events <- switch(
@@ -39,9 +38,9 @@ make_mock_data <- function() {
     )
     
     for (e in allowed_events) {
-      estimated_dates[i, e, , 1] <-
-        date_to_int(as.Date("2025-01-01") + e + seq_len(n_iter)) + runif(n_iter)
-      error_indicators[i, e, , 1] <- c(FALSE, FALSE, TRUE, TRUE)
+      estimated_dates[i, e, ] <- 
+        date_to_int(as.Date("2025-01-01") + e + seq_len(n_samp)) + runif(n_samp)
+      error_indicators[i, e, ] <- c(FALSE, FALSE, TRUE, TRUE)
     }
   }
   
