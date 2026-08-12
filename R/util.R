@@ -34,7 +34,6 @@ vlapply <- function(...) {
   vapply(..., FUN.VALUE = TRUE)
 }
 
-<<<<<<< HEAD
 #' Clean group names from delay map
 #' @param raw_group The group element from a delay_map row
 #' @noRd
