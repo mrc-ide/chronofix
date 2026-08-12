@@ -42,6 +42,16 @@ validate_delay_inputs <- function(mcmc_output, delay_map) {
     ))
   }
   
+  # Validate supported distributions
+  supported_dists <- grepl("gamma|log", delay_map$distribution, ignore.case = TRUE)
+  if (!all(supported_dists)) {
+    bad_dists <- unique(delay_map$distribution[!supported_dists])
+    cli::cli_abort(c(
+      "x" = "Unsupported distribution{?s} found in {.arg delay_map}: {.val {bad_dists}}.",
+      "i" = "Currently, only {.val gamma} and {.val log-normal} are supported."
+    ))
+  }
+  
   # check for all required delay parameters
   required_pars <- character()
   for (i in seq_len(nrow(delay_map))) {
@@ -57,16 +67,6 @@ validate_delay_inputs <- function(mcmc_output, delay_map) {
   if (length(missing_pars) > 0) {
     cli::cli_abort(c(
       "x" = "Missing parameter{?s} in {.code mcmc_output$pars}: {.val {missing_pars}}."
-    ))
-  }
-  
-  # Validate supported distributions
-  supported_dists <- grepl("gamma|log", delay_map$distribution, ignore.case = TRUE)
-  if (!all(supported_dists)) {
-    bad_dists <- unique(delay_map$distribution[!supported_dists])
-    cli::cli_abort(c(
-      "x" = "Unsupported distribution{?s} found in {.arg delay_map}: {.val {bad_dists}}.",
-      "i" = "Currently, only {.val gamma} and {.val log-normal} are supported."
     ))
   }
   
