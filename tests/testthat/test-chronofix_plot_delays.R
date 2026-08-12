@@ -17,10 +17,15 @@ test_that("chronofix_plot_delays generates a correct ggplot object", {
   
   set.seed(1)
   mock_pars <- array(
-    data = runif(400, min = 0.5, max = 10), 
+    data = NA, 
     dim = c(4, 50, 2),
     dimnames = list(param_names, NULL, NULL)
   )
+  
+  mock_pars["delay_mean1", , ] <- runif(100, min = 3, max = 8)
+  mock_pars["delay_shape1", , ] <- runif(100, min = 2, max = 5)
+  mock_pars["delay_meanlog2", , ] <- runif(100, min = 1, max = 2)
+  mock_pars["delay_precisionlog2", , ] <- runif(100, min = 2, max = 5)
   
   mock_mcmc_output <- list(pars = mock_pars)
   
