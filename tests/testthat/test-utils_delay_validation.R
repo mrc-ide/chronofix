@@ -7,8 +7,8 @@ test_that("validate_delay_inputs catches all missing inputs and bad structures",
   
   mock_mcmc_output <- list(
     pars = array(1, dim = c(2, 10, 1),
-                 dimnames = list(c("delay_mean1", "delay_cv1"), NULL, NULL))
-    )
+                 dimnames = list(c("delay_mean1", "delay_shape1"), NULL, NULL))
+  )
   
   # missing mcmc_output or delay_map
   expect_error(validate_delay_inputs(delay_map = mock_delay_map), "is missing")
