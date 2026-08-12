@@ -43,9 +43,15 @@ validate_delay_inputs <- function(mcmc_output, delay_map) {
   }
   
   # check for all required delay parameters
-  n_delays <- nrow(delay_map)
-  required_pars <- c(paste0("delay_mean", seq_len(n_delays)), 
-                     paste0("delay_cv", seq_len(n_delays)))
+  required_pars <- character()
+  for (i in seq_len(nrow(delay_map))) {
+    dist <- tolower(as.character(delay_map$distribution[i]))
+    if (grepl("gamma", dist)) {
+      required_pars <- c(required_pars, paste0("delay_mean", i), paste0("delay_shape", i))
+    } else {
+      required_pars <- c(required_pars, paste0("delay_meanlog", i), paste0("delay_precisionlog", i))
+    }
+  }
   
   missing_pars <- setdiff(required_pars, param_names)
   if (length(missing_pars) > 0) {
