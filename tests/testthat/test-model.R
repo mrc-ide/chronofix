@@ -17,7 +17,8 @@ test_that("model info is setup correctly", {
   expect_equal(names(model_info),
                c("delay_from", "delay_to", "delay_distribution",
                  "is_delay_in_group", "is_date_in_delay", "is_date_in_group",
-                 "is_date_connected", "event_order", "groups"))
+                 "is_date_connected", "event_order", "shortest_paths", 
+                 "groups"))
   
   delay_from <- c(1, 1, 1, 2, 1, 2)
   delay_to <- c(3, 4, 2, 5, 2, 4)
@@ -86,6 +87,31 @@ test_that("model info is setup correctly", {
                     c(1, 2, 3, 5),
                     c(1, 2, 3, 4)))
   
+  shortest_paths <- rep(list(rep(list(NULL), 5)), 4)
+  # group 1, onset/report
+  shortest_paths[[1]][[1]] <- list(NULL, NULL, c(1, 3), NULL, NULL)
+  shortest_paths[[1]][[3]] <- list(c(3, 1), NULL, NULL, NULL, NULL)
+  # group 2, onset/death/report
+  shortest_paths[[2]][[1]] <- list(NULL, NULL, c(1, 3), c(1, 4), NULL)
+  shortest_paths[[2]][[3]] <- list(c(3, 1), NULL, NULL, c(3, 1, 4), NULL)
+  shortest_paths[[2]][[4]] <- list(c(4, 1), NULL, c(4, 1, 3), NULL, NULL)
+  # group 3, onset/hospitalisation/discharge/report
+  shortest_paths[[3]][[1]] <- list(NULL, c(1, 2), c(1, 3), NULL, c(1, 2, 5))
+  shortest_paths[[3]][[2]] <- list(c(2, 1), NULL, c(2, 1, 3), NULL, c(2, 5))
+  shortest_paths[[3]][[3]] <- 
+    list(c(3, 1), c(3, 1, 2), NULL, NULL, c(3, 1, 2, 5))
+  shortest_paths[[3]][[5]] <- 
+    list(c(5, 2, 1), c(5, 2), c(5, 2, 1, 3), NULL, NULL)
+  # group 4, onset/hospitalisation/death/report
+  shortest_paths[[4]][[1]] <- list(NULL, c(1, 2), c(1, 3), c(1, 2, 4), NULL)
+  shortest_paths[[4]][[2]] <- list(c(2, 1), NULL, c(2, 1, 3), c(2, 4), NULL)
+  shortest_paths[[4]][[3]] <- 
+    list(c(3, 1), c(3, 1, 2), NULL, c(3, 1, 2, 4), NULL)
+  shortest_paths[[4]][[4]] <- 
+    list(c(4, 2, 1), c(4, 2), c(4, 2, 1, 3), NULL, NULL)
+  expect_equal(model_info$shortest_paths,
+               shortest_paths)
+  
   
   ## now setup with named groups
   groups <- c("community_alive", "community_dead", "hospitalised_alive",
@@ -137,6 +163,7 @@ test_that("model info is setup correctly", {
   expect_equal(model_info3$is_date_connected[, , g],
                model_info$is_date_connected)
   expect_equal(model_info3$event_order[g], model_info$event_order)
+  expect_equal(model_info3$shortest_paths[g], model_info$shortest_paths)
 })
 
 
@@ -291,4 +318,16 @@ test_that("convert_to_distribution_params converts correctly", {
   ## unsupported distribution
   expect_error(convert_to_distribution_params(mean, cv, "normal"),
                'Distribution "normal" is not supported')
+})
+
+
+test_that("dinvgamma calculates correctly", {
+  shape <- 5
+  scale <- 3
+  x <- 10
+  
+  d <- dgamma(1 / x, shape, rate = scale, log = TRUE) - 2 * log(x)
+  
+  expect_equal(dinvgamma(x, shape, scale, log = TRUE), d)
+  expect_equal(dinvgamma(x, shape, scale, log = FALSE), exp(d))
 })

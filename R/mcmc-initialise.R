@@ -24,21 +24,19 @@ calculate_transitive_steps <- function(delay_map) {
 calculate_delay_boundaries <- function(delay_params, quantile_range) {
   delay_params %>%
     mutate(
-      shape = (1 / cv)^2,
-      scale = mean / shape,
-      sdlog = sqrt(log(cv^2 + 1)),
-      meanlog = log(mean) - sdlog^2 / 2,
       # find the delay values at the specified quantiles
       min_delay = case_when(
         distribution == "gamma" ~ 
-          qgamma(quantile_range[1], shape = shape, scale = scale),
+          qgamma(quantile_range[1], shape = shape, rate = shape / mean),
         distribution == "log-normal" ~ 
-          qlnorm(quantile_range[1], meanlog = meanlog, sdlog = sdlog)),
+          qlnorm(quantile_range[1], meanlog = meanlog, 
+                 sdlog = 1 / sqrt(precisionlog))),
       max_delay = case_when(
         distribution == "gamma" ~ 
-          qgamma(quantile_range[2], shape = shape, scale = scale),
+          qgamma(quantile_range[2], shape = shape, rate = shape / mean),
         distribution == "log-normal" ~ 
-          qlnorm(quantile_range[2], meanlog = meanlog, sdlog = sdlog))
+          qlnorm(quantile_range[2], meanlog = meanlog, 
+                 sdlog = 1 / sqrt(precisionlog)))
     ) %>%
     select(from, to, min_delay, max_delay)
 }
@@ -66,8 +64,8 @@ initialise_row <- function(individual_data, group, group_delay_map,
     from_event <- valid_paths$from[i]
     to_event <- valid_paths$to[i]
 
-    date1 <- individual_data[from_event]
-    date2 <- individual_data[to_event]
+    date1 <- individual_data[as.integer(from_event)]
+    date2 <- individual_data[as.integer(to_event)]
 
     if (!is.na(date1) && !is.na(date2)) {
       # For the current path, find the direct (1-step) delays that compose it
@@ -77,8 +75,8 @@ initialise_row <- function(individual_data, group, group_delay_map,
 
       if (length(path_nodes_list) > 0) {
         path_nodes <- names(path_nodes_list[[1]])
-        direct_rules_on_path <- data.frame(from = head(path_nodes, -1),
-                                           to = tail(path_nodes, -1))
+        direct_rules_on_path <- data.frame(from = as.integer(head(path_nodes, -1)),
+                                           to = as.integer(tail(path_nodes, -1)))
 
         # Sum the min/max boundaries of these direct delays to get the total allowed range
         boundaries <- inner_join(direct_rules_on_path,
@@ -101,16 +99,17 @@ initialise_row <- function(individual_data, group, group_delay_map,
   if (length(incompatible_events) > 0) {
     problem_counts <- table(unlist(incompatible_events))
     max_problems <- max(problem_counts)
-    candidates_for_removal <- names(problem_counts[problem_counts == max_problems])
+    candidates_for_removal <- 
+      as.integer(names(problem_counts[problem_counts == max_problems]))
 
     date_to_remove <- if (length(candidates_for_removal) == 1) {
       candidates_for_removal
     } else {
       # remove the most outlying
-      date_values <- unlist(individual_data[1, candidates_for_removal])
+      date_values <- unlist(individual_data[candidates_for_removal])
       median_val <- median(date_values, na.rm = TRUE)
       outlier_idx <- which.max(abs(date_values - median_val))
-      candidates_for_removal[outlier_idx]
+      date_to_remove <- candidates_for_removal[outlier_idx]
     }
 
     individual_data[[date_to_remove]] <- as.Date(NA)
@@ -167,8 +166,15 @@ initialise_augmented_data <- function(observed_dates, pars, groups, model_info,
                           to = model_info$delay_to,
                           distribution = model_info$delay_distribution)
   
-  delay_map$mean <- pars[paste0("delay_mean", seq_len(nrow(delay_map)))]
-  delay_map$cv <- pars[paste0("delay_cv", seq_len(nrow(delay_map)))]
+  
+  delay_pars <- unpack_delay_pars(pars, model_info$delay_distribution)
+  delay_pars <- 
+    dplyr::bind_rows(delay_pars,
+                     dplyr::tibble(shape = numeric(),
+                                   mean = numeric(),
+                                   meanlog = numeric(),
+                                   precisionlog = numeric()))
+  delay_map <- dplyr::bind_cols(delay_map, delay_pars)
   init_settings <- list(quantile_range = c(control$lower_quantile,
                                            control$upper_quantile))
   

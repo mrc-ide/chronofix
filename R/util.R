@@ -34,6 +34,7 @@ vlapply <- function(...) {
   vapply(..., FUN.VALUE = TRUE)
 }
 
+<<<<<<< HEAD
 #' Clean group names from delay map
 #' @param raw_group The group element from a delay_map row
 #' @noRd
@@ -58,4 +59,8 @@ clean_group_name <- function(raw_group) {
 clean_event_name <- function(raw_event) {
   clean_name <- gsub("[-_]", " ", as.character(raw_event))
   tools::toTitleCase(clean_name)
+}
+
+vnapply <- function(...) {
+  vapply(..., FUN.VALUE = 1)
 }

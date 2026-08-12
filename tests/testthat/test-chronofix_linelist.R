@@ -113,9 +113,9 @@ test_that("chronofix_linelist distinguishes imputed missing from structural miss
   i <- which(mock$observed$group == "community-alive")[1]
   report_event <- 3
   
-  mock$mcmc$data$estimated_dates[i, report_event, , 1] <- 
+  mock$mcmc$data$estimated_dates[i, report_event, ] <- 
     date_to_int("2025-01-12") + runif(1)
-  mock$mcmc$data$error_indicators[i, report_event, , 1] <- NA
+  mock$mcmc$data$error_indicators[i, report_event, ] <- NA
   
   result <- suppressMessages({
     chronofix_linelist(
