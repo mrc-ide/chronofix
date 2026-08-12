@@ -24,9 +24,6 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
   
   for (i in seq_len(nrow(delay_map))) {
     
-    mean_name <- paste0("delay_mean", i)
-    cv_name <- paste0("delay_cv", i)
-    
     raw_dist <- as.character(delay_map$distribution[i])
     if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
       dist_clean <- "Gamma"
@@ -40,8 +37,17 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
     
     delay_label <- paste(from_name, "to", to_name)
     
-    mean_samps <- pars_flat[mean_name, , drop = TRUE]
-    cv_samps <- pars_flat[cv_name, , drop = TRUE]
+    if (dist_clean == "Gamma") {
+      mean_samps <- pars_flat[paste0("delay_mean", i), , drop = TRUE]
+      shape_samps <- pars_flat[paste0("delay_shape", i), , drop = TRUE]
+      cv_samps <- 1 / sqrt(shape_samps)
+      
+    } else if (dist_clean == "Log-Normal") {
+      meanlog_samps <- pars_flat[paste0("delay_meanlog", i), , drop = TRUE]
+      prec_samps <- pars_flat[paste0("delay_precisionlog", i), , drop = TRUE]
+      mean_samps <- exp(meanlog_samps + (1 / prec_samps) / 2)
+      cv_samps <- sqrt(exp(1 / prec_samps) - 1)
+    }
     
     mean_quantiles <- stats::quantile(
       mean_samps,
