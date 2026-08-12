@@ -26,9 +26,6 @@ chronofix_plot_delays <- function(mcmc_output,
   
   for (i in seq_len(nrow(delay_map))) {
     
-    mean_name <- paste0("delay_mean", i)
-    cv_name <- paste0("delay_cv", i)
-    
     raw_dist <- as.character(delay_map$distribution[i])
     if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
       dist_clean <- "Gamma"
@@ -49,34 +46,39 @@ chronofix_plot_delays <- function(mcmc_output,
       to_name
     )
     
-    mean_samps <- pars_flat[mean_name, , drop = TRUE]
-    cv_samps <- pars_flat[cv_name, , drop = TRUE]
-    
     if (dist_clean == "Gamma") {
-      shape <- (1 / cv_samps)^2
-      scale <- mean_samps / shape
+      mean_samps <- pars_flat[paste0("delay_mean", i), , drop = TRUE]
+      shape_samps <- pars_flat[paste0("delay_shape", i), , drop = TRUE]
+      scale_samps <- mean_samps / shape_samps
       
-      med_shape <- median(shape, na.rm = TRUE)
-      med_scale <- median(scale, na.rm = TRUE)
+      med_shape <- median(shape_samps, na.rm = TRUE)
+      med_scale <- median(scale_samps, na.rm = TRUE)
       max_x <- stats::qgamma(0.99, shape = med_shape, scale = med_scale)
+      n_samps <- length(mean_samps)
       
     } else if (dist_clean == "Log-Normal") {
-      sdlog <- sqrt(log(cv_samps^2 + 1))
-      meanlog <- log(mean_samps) - (sdlog^2) / 2
+      meanlog_samps <- pars_flat[paste0("delay_meanlog", i), , drop = TRUE]
+      prec_samps <- pars_flat[paste0("delay_precisionlog", i), , drop = TRUE]
+      sdlog_samps <- sqrt(1 / prec_samps)
       
-      med_sdlog <- median(sdlog, na.rm = TRUE)
-      med_meanlog <- median(meanlog, na.rm = TRUE)
+      med_meanlog <- median(meanlog_samps, na.rm = TRUE)
+      med_sdlog <- median(sdlog_samps, na.rm = TRUE)
       max_x <- stats::qlnorm(0.99, meanlog = med_meanlog, sdlog = med_sdlog)
+      n_samps <- length(meanlog_samps)
     }
     
     x_seq <- seq(0.01, max_x, length.out = n_points)
-    dens_matrix <- matrix(NA, nrow = n_points, ncol = length(mean_samps))
+    dens_matrix <- matrix(NA, nrow = n_points, ncol = n_samps)
     
     for (k in seq_along(x_seq)) {
       if (dist_clean == "Gamma") {
-        dens_matrix[k, ] <- stats::dgamma(x_seq[k], shape = shape, scale = scale)
+        dens_matrix[k, ] <- stats::dgamma(x_seq[k],
+                                          shape = shape_samps,
+                                          scale = scale_samps)
       } else if (dist_clean == "Log-Normal") {
-        dens_matrix[k, ] <- stats::dlnorm(x_seq[k], meanlog = meanlog, sdlog = sdlog)
+        dens_matrix[k, ] <- stats::dlnorm(x_seq[k],
+                                          meanlog = meanlog_samps,
+                                          sdlog = sdlog_samps)
       }
     }
     
