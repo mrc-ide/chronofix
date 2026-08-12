@@ -31,7 +31,8 @@ chronofix_mcmc_run <- function(model,
                                  n_chains = control$n_chains, runner = runner,
                                  burnin = control$burnin, 
                                  thinning_factor = control$thinning_factor,
-                                 save_full_chains = TRUE)
+                                 save_full_chains = TRUE,
+                                 flatten_chains = TRUE)
   
   ## Unpack augmented data
   samples$data <- unpack_augmented_data(samples$data, model$data_packer)
