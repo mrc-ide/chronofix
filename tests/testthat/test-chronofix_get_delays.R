@@ -34,8 +34,13 @@ test_that("chronofix_get_delays returns posterior delay summaries", {
   
   expect_equal(result$Distribution, c("Gamma", "Log-Normal"))
   
-  expect_equal(result$Delay_Median, c(3, 30))
-  expect_equal(result$CV_Median, c(0.3, 3))
+  # calculated expected from mock data
+  expected_gamma_cv <- round(1 / sqrt(6), 3) # median of 1/sqrt(c(2, 4, 6, 8, 10))
+  expected_ln_mean <- round(exp(3 + (1 / 3) / 2), 3)
+  expected_ln_cv <- round(sqrt(exp(1 / 3) - 1), 3)
+  
+  expect_equal(result$Delay_Median, c(3, expected_ln_mean))
+  expect_equal(result$CV_Median, c(expected_gamma_cv, expected_ln_cv))
 })
 
 test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
@@ -53,7 +58,7 @@ test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
     3
   )
   expected_cv1 <- round(
-    stats::quantile(c(0.1, 0.2, 0.3, 0.4, 0.5),
+    stats::quantile(1 / sqrt(c(2, 4, 6, 8, 10)),
                     probs = c(0.025, 0.5, 0.975),
                     names = FALSE),
     3
