@@ -379,7 +379,7 @@ chronofix_log_likelihood_errors <- function(prob_error, error_indicators,
   ## for each error the date is then drawn at random from the range of dates
   ## excluding the observed date
   n_errors * log(prob_error) + n_non_errors * log(1 - prob_error) -
-    n_errors * log(diff(date_range) - 1)
+    n_errors * log(date_range[2L] - date_range[1L] - 1)
 }
 
 
