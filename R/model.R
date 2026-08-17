@@ -193,46 +193,42 @@ make_model_info <- function(delay_map, dates) {
   delay_to <- match(delay_map$to, dates)
   delay_distribution <- delay_map$distribution
   
-  g <- sort(unique(unlist(delay_map$group)))
-  
-  ## logical array - is delay i (row) in group j (col)
-  is_delay_in_group <- t(vapply(seq_len(nrow(delay_map)),
-                                function(i) g %in% unlist(delay_map$group[i]),
-                                logical(length(g))))
-  if (length(g) == 1) {
-    ## if only one group the transpose will have setup the dims correct so we
-    ## need to transpose again
-    is_delay_in_group <- t(is_delay_in_group) 
-  }
+  groups <- sort(unique(unlist(delay_map$group)))
   
   d <- seq_along(dates)
   
-  ## logical array - is date i (row) in delay j (col) for group k (3rd dim) 
-  is_date_in_delay <- vapply(seq_len(nrow(delay_map)),
-                             function (i) {
-                               x <- d %in% c(delay_from[i], delay_to[i])
-                               y <- is_delay_in_group[i, ]
-                               outer(x, y)
-                             }, array(0, c(length(d), length(g))))
-  is_date_in_delay <- 
-    apply(aperm(is_date_in_delay, c(1, 3, 2)), c(1, 2, 3), as.logical)
+  make_group_info <- function(g) {
+    ## logical vector - is delay i in group g
+    is_delay_in_group <- 
+      vapply(seq_len(nrow(delay_map)),
+             function(i) g %in% unlist(delay_map$group[i]),
+             logical(1L))
+    
+    ## logical array - is date i (row) in delay j (col) for group g
+    is_date_in_delay <- vapply(seq_len(nrow(delay_map)),
+                               function (i) {
+                                 (d %in% c(delay_from[i], delay_to[i])) & 
+                                   is_delay_in_group[i, ]
+                              }, logical(length(d)))
+    
+    ## logical vector - is date i in group g
+    is_date_in_group <- apply(is_date_in_delay, 1, any)
+    
+    ## logical array - is date i (row) connected to date j (col)
+    ##                 for group g
+    is_date_connected <- array(FALSE, c(length(d), length(d), length(g)))
+    for (i in seq_along(delay_from)) {
+      if (is_delay_in_group[i]) {
+        is_date_connected[delay_from[i], delay_to[i]] <- TRUE
+        is_date_connected[delay_to[i], delay_from[i]] <- TRUE
+      }
+    }
+    
   
-  ## logical array - is date i (row) in group j (col)
-  is_date_in_group <- apply(is_date_in_delay, c(1, 3), any)
-  
-  ## logical array - is date i (row) connected to date j (col)
-  ##                 for group k (3rd dim)
-  is_date_connected <- array(FALSE, c(length(d), length(d), length(g)))
-  for (i in seq_along(delay_from)) {
-    delay_groups <- match(unlist(delay_map$group[i]), g)
-    is_date_connected[delay_from[i], delay_to[i], delay_groups] <- TRUE
-    is_date_connected[delay_to[i], delay_from[i], delay_groups] <- TRUE
-  }
-  
-  calc_event_order <- function(group) {
+    # order of events in group
     # identify relevant delays and event dates for a group
-    dates_from <- delay_from[is_delay_in_group[, group]]
-    dates_to <- delay_to[is_delay_in_group[, group]]
+    dates_from <- delay_from[is_delay_in_group]
+    dates_to <- delay_to[is_delay_in_group]
     
     relevant_dates <- unique(c(dates_from, dates_to))
     delay_df <- data.frame(from = dates_from, to = dates_to)
@@ -241,23 +237,10 @@ make_model_info <- function(delay_map, dates) {
                                                  directed = TRUE,
                                                  vertices = relevant_dates)
     
-    as.numeric(names(igraph::topo_sort(event_graph)))
-  }
-  event_order <- lapply(seq_along(g), calc_event_order)
-  
-  calc_shortest_paths <- function(group) {
-    # identify relevant delays and event dates for a group
-    dates_from <- delay_from[is_delay_in_group[, group]]
-    dates_to <- delay_to[is_delay_in_group[, group]]
+    event_order <- as.numeric(names(igraph::topo_sort(event_graph)))  
     
-    relevant_dates <- unique(c(dates_from, dates_to))
-    delay_df <- data.frame(from = dates_from, to = dates_to)
-    
-    event_graph <- igraph::graph_from_data_frame(delay_df,
-                                                 directed = FALSE,
-                                                 vertices = relevant_dates)
-    
-    paths <- rep(list(NULL), length(dates))
+    ## shortest paths
+    shortest_paths <- rep(list(NULL), length(dates))
     for (i in relevant_dates) {
       paths_i <- rep(list(NULL), length(dates))
       for (j in relevant_dates[relevant_dates != i]) {
@@ -267,22 +250,26 @@ make_model_info <- function(delay_map, dates) {
                                  as.character(j))$vpath[[1]])
         paths_i[[j]] <- relevant_dates[as.integer(p)]
       }
-      paths[[i]] <- paths_i
+      shortest_paths[[i]] <- paths_i
     }
-    paths
+    
+    list(is_delay_in_group = is_delay_in_group,
+         is_date_in_delay = is_date_in_delay,
+         is_date_in_group = is_date_in_group,
+         is_date_connected = is_date_connected,
+         event_order = event_order,
+         shortest_paths = shortest_paths
+         )
   }
-  shortest_paths <- lapply(seq_along(g), calc_shortest_paths)
+  
+  group_info <- lapply(groups, make_group_info)
+  
   
   list(delay_from = delay_from,
        delay_to = delay_to,
        delay_distribution = delay_distribution,
-       is_delay_in_group = is_delay_in_group,
-       is_date_in_delay = is_date_in_delay,
-       is_date_in_group = is_date_in_group,
-       is_date_connected = is_date_connected,
-       event_order = event_order,
-       shortest_paths = shortest_paths,
-       groups = g)  
+       group_info = group_info,
+       groups = groups)  
 }
 
 
@@ -390,12 +377,11 @@ chronofix_log_likelihood_delays <- function(estimated_dates, groups, delay_pars,
   for (i in unique(groups)) {
     group_i <- groups == i
     ll_delays[group_i, ] <- 
-      chronofix_log_likelihood_delays1(estimated_dates[group_i, , drop = FALSE],
-                                       delay_pars,
-                                       model_info$delay_from,
-                                       model_info$delay_to,
-                                       model_info$delay_distribution,
-                                       model_info$is_delay_in_group[, i])
+      chronofix_log_likelihood_delays1(
+        estimated_dates[group_i, , drop = FALSE], 
+        delay_pars, model_info$delay_from, model_info$delay_to, 
+        model_info$delay_distribution,
+        model_info$group_info[[i]]$is_delay_in_group)
   }
   
   sum(ll_delays)
