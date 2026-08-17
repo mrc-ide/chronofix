@@ -329,26 +329,32 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
     return(-Inf)
   }
   
-  prop_current <- 
-    calc_proposal_density(sampling_order_reverse, augmented_data, group, 
-                          delay_pars, model_info, date_range)
-  prop_new <- calc_proposal_density(sampling_order, augmented_data_new,
-                                    group, delay_pars, model_info, date_range)
-  ratio_prop <- prop_current - prop_new
-  
-  ratio_post + ratio_prop
-}
-
-
-calc_proposal_density <- function(sampling_order, augmented_data,
-                                  group, delay_pars, model_info, date_range) {
   is_date_in_delay <- model_info$is_date_in_delay[, , group]
   dim(is_date_in_delay) <- dim(model_info$is_date_in_delay)[1:2]
   is_date_in_group <- model_info$is_date_in_group[, group]
   is_date_connected <- model_info$is_date_connected[, , group]
   dim(is_date_connected) <- dim(model_info$is_date_connected)[1:2]
   
-  dates <- which(is_date_in_group)
+  prop_current <- 
+    calc_proposal_density(sampling_order_reverse, augmented_data, delay_pars,
+                          model_info$delay_from, model_info$delay_to, 
+                          model_info$delay_distribution, is_date_in_delay,
+                          is_date_in_group, is_date_connected, date_range)
+  prop_new <- 
+    calc_proposal_density(sampling_order, augmented_data_new, delay_pars,
+                          model_info$delay_from, model_info$delay_to, 
+                          model_info$delay_distribution, is_date_in_delay,
+                          is_date_in_group, is_date_connected, date_range)
+  ratio_prop <- prop_current - prop_new
+  
+  ratio_post + ratio_prop
+}
+
+
+calc_proposal_density <- function(sampling_order, augmented_data, delay_pars, 
+                                  delay_from, delay_to, delay_distribution,
+                                  is_date_in_delay, is_date_in_group,
+                                  is_date_connected, date_range) {
   is_resampled <- 
     seq_along(augmented_data$error_indicators) %in% sampling_order
   available_dates <- which(is_date_in_group & !is_resampled)
@@ -378,20 +384,21 @@ calc_proposal_density <- function(sampling_order, augmented_data,
         
         ## error or missing - proposal is based on delay(s)
         delay_pars_sample <- delay_pars[can_sample_from_delay]
-        delay_distribution <- model_info$delay_distribution[can_sample_from_delay]
-        delay_from <- model_info$delay_from[can_sample_from_delay]
-        delay_to <- model_info$delay_to[can_sample_from_delay]
-        delay_values <- augmented_data$estimated_dates[delay_to] - 
-          augmented_data$estimated_dates[delay_from]
+        delay_values <- 
+          augmented_data$estimated_dates[delay_to[can_sample_from_delay]] - 
+          augmented_data$estimated_dates[delay_from[can_sample_from_delay]]
         
         if (sum(can_sample_from_delay) == 1) {
           ## single delay involving date i
-          d[j] <- log_density_delay(delay_values, delay_pars_sample[[1]],
-                                    delay_distribution)
+          d[j] <- log_density_delay(delay_values, 
+                                    delay_pars[can_sample_from_delay][[1]],
+                                    delay_distribution[can_sample_from_delay])
         } else {
           ## multiple delays involving date i, so delay selected at random
-          d[j] <- log(sum(exp(mapply(log_density_delay, delay_values, 
-                                     delay_pars_sample, delay_distribution)))) - 
+          d[j] <- 
+            log(sum(exp(mapply(log_density_delay, delay_values, 
+                               delay_pars[can_sample_from_delay], 
+                               delay_distribution[can_sample_from_delay])))) - 
             log(sum(can_sample_from_delay))
         }
       }
