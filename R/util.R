@@ -30,8 +30,8 @@ squote <- function(x) {
 }
 
 
-vlapply <- function(...) {
-  vapply(..., FUN.VALUE = TRUE)
+visFALSE <- function(x) {
+  !is.na(x) & x == FALSE
 }
 
 

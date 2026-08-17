@@ -503,7 +503,7 @@ calc_cascade_sampling_order <- function(i, event_order,
                                         shortest_paths) {
   
   ## Check if there are any correct dates, if not then we do not cascade
-  is_possible_anchor <- vlapply(error_indicators[event_order], isFALSE)
+  is_possible_anchor <- visFALSE(error_indicators[event_order])
   
   if (is_possible_anchor[event_order == i]) {
     ## Date i is correct so use itself as an anchor
@@ -533,8 +533,7 @@ calc_cascade_sampling_order <- function(i, event_order,
   ## cascade_candidates are dates not already in sampling_order that are
   ## missing or erroneous
   cascade_candidates <- event_order[!(event_order %in% sampling_order)]
-  is_cascade_candidate <- 
-    !vlapply(error_indicators[cascade_candidates], isFALSE)
+  is_cascade_candidate <- !visFALSE(error_indicators[cascade_candidates])
   cascade_candidates <- cascade_candidates[is_cascade_candidate]
   
   while (length(cascade_candidates) > 0) {
