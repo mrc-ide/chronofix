@@ -208,7 +208,7 @@ make_model_info <- function(delay_map, dates) {
     is_date_in_delay <- vapply(seq_len(nrow(delay_map)),
                                function (i) {
                                  (d %in% c(delay_from[i], delay_to[i])) & 
-                                   is_delay_in_group[i, ]
+                                   is_delay_in_group[i]
                               }, logical(length(d)))
     
     ## logical vector - is date i in group g
@@ -216,7 +216,7 @@ make_model_info <- function(delay_map, dates) {
     
     ## logical array - is date i (row) connected to date j (col)
     ##                 for group g
-    is_date_connected <- array(FALSE, c(length(d), length(d), length(g)))
+    is_date_connected <- array(FALSE, c(length(d), length(d)))
     for (i in seq_along(delay_from)) {
       if (is_delay_in_group[i]) {
         is_date_connected[delay_from[i], delay_to[i]] <- TRUE

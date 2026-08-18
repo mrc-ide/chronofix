@@ -133,7 +133,7 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
     return(augmented_data)
   }
   
-  group_info <- model_info$group_info[[i]]
+  group_info <- model_info$group_info[[group]]
   
   augmented_data_new <- change_error_indicators(augmented_data, i)
   if (control$cascade_sampling) {
