@@ -217,10 +217,13 @@ make_model_info <- function(delay_map, dates) {
     ## logical array - is date i (row) connected to date j (col)
     ##                 for group g
     is_date_connected <- array(FALSE, c(length(d), length(d)))
+    delay_connecting_dates <- array(NA, c(length(d), length(d)))
     for (i in seq_along(delay_from)) {
       if (is_delay_in_group[i]) {
         is_date_connected[delay_from[i], delay_to[i]] <- TRUE
         is_date_connected[delay_to[i], delay_from[i]] <- TRUE
+        delay_connecting_dates[delay_from[i], delay_to[i]] <- i
+        delay_connecting_dates[delay_to[i], delay_from[i]] <- i
       }
     }
     
@@ -261,7 +264,8 @@ make_model_info <- function(delay_map, dates) {
          is_date_in_group = is_date_in_group,
          is_date_connected = is_date_connected,
          event_order = event_order,
-         shortest_paths = shortest_paths
+         shortest_paths = shortest_paths,
+         delay_connecting_dates = delay_connecting_dates
          )
   }
   

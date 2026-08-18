@@ -350,11 +350,11 @@ calc_proposal_density <- function(sampling_order, augmented_data,
   is_date_in_delay <- group_info$is_date_in_delay
   is_date_in_group <- group_info$is_date_in_group
   is_date_connected <- group_info$is_date_connected
+  delay_connecting_dates <- group_info$delay_connecting_dates
   
-  dates <- which(is_date_in_group)
   is_resampled <- 
     seq_along(augmented_data$error_indicators) %in% sampling_order
-  available_dates <- which(is_date_in_group & !is_resampled)
+  is_date_available <- is_date_in_group & !is_resampled
   
   d <- rep(0, length(sampling_order))
   
@@ -367,28 +367,23 @@ calc_proposal_density <- function(sampling_order, augmented_data,
     
     if (!isFALSE(augmented_data$error_indicators[i])) {
       ## which dates were available for sampling
-      connected_dates <- available_dates[is_date_connected[i, available_dates]]
+      delays_for_sampling <- 
+        delay_connecting_dates[i, is_date_available & is_date_connected[i, ]]
       
-      if (length(connected_dates) == 0) {
+      if (length(delays_for_sampling) == 0) {
         ## no connected date available so just sampled from date range
         d[j] <- -log(date_range[2L] - date_range[1L])
       } else {
-        is_delay_available <- 
-          colSums(is_date_in_delay[connected_dates, , drop = FALSE]) > 0
-        ## which delays could be sampled from
-        can_sample_from_delay <- is_date_in_delay[i, ] & 
-          is_delay_available
-        
         ## error or missing - proposal is based on delay(s)
-        delay_pars_sample <- delay_pars[can_sample_from_delay]
+        delay_pars_sample <- delay_pars[delays_for_sampling]
         delay_distribution <- 
-          model_info$delay_distribution[can_sample_from_delay]
-        delay_from <- model_info$delay_from[can_sample_from_delay]
-        delay_to <- model_info$delay_to[can_sample_from_delay]
+          model_info$delay_distribution[delays_for_sampling]
+        delay_from <- model_info$delay_from[delays_for_sampling]
+        delay_to <- model_info$delay_to[delays_for_sampling]
         delay_values <- augmented_data$estimated_dates[delay_to] - 
           augmented_data$estimated_dates[delay_from]
         
-        if (sum(can_sample_from_delay) == 1) {
+        if (length(delays_for_sampling) == 1) {
           ## single delay involving date i
           d[j] <- log_density_delay(delay_values, delay_pars_sample[[1]],
                                     delay_distribution)
@@ -396,13 +391,13 @@ calc_proposal_density <- function(sampling_order, augmented_data,
           ## multiple delays involving date i, so delay selected at random
           d[j] <- log(sum(exp(mapply(log_density_delay, delay_values, 
                                      delay_pars_sample, delay_distribution)))) - 
-            log(sum(can_sample_from_delay))
+            log(length(delays_for_sampling))
         }
       }
       
     }
     
-    available_dates <- c(available_dates, i)
+    is_date_available[i] <- TRUE
   }
   
   sum(d)
