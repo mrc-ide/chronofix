@@ -174,43 +174,42 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
 sample_from_delay <- function(i, augmented_data, group, delay_pars, model_info,
                               date_range, rng) {
   group_info <- model_info$group_info[[group]]
-  is_date_in_delay <- group_info$is_date_in_delay[i, ]
+  is_date_connected <- group_info$is_date_connected[i, ]
+  delay_connecting_dates <- group_info$delay_connecting_dates[i, ]
+  is_date_available <- !is.na(augmented_data$estimated_dates)
   
-  ## Which delays involve this date
-  which_delays <- which(is_date_in_delay)
-  other_date_idx <- ifelse(model_info$delay_from[which_delays] != i,
-                           model_info$delay_from[which_delays], 
-                           model_info$delay_to[which_delays])
+  delays_for_sampling <- 
+    delay_connecting_dates[is_date_available & is_date_connected]
   
   ## Filter to only delays where the other date is available (needed for swap)
-  is_available_date <- !is.na(augmented_data$estimated_dates[other_date_idx])
-  if (!any(is_available_date)) {
+  if (length(delays_for_sampling) == 0) {
     ## not possible to sample from a delay so sample a random date
     d <- as.numeric(date_range)
     proposed_date <- monty::monty_random_uniform(d[1L], d[2L], rng)
   } else {
-    valid_delays <- which_delays[is_available_date]
-    other_date_idx <- other_date_idx[is_available_date]
-    
     ## If it is involved in several delays, randomly select one
-    delay_idx <- if (length(valid_delays) == 1) 1 else 
-      ceiling(length(valid_delays) * monty::monty_random_real(rng))
-    selected_delay <- valid_delays[delay_idx]
+    delay_idx <- if (length(delays_for_sampling) == 1) 1 else 
+      ceiling(length(delays_for_sampling) * monty::monty_random_real(rng))
+    selected_delay <- delays_for_sampling[delay_idx]
     
-    ## Find the other date in this date pair
-    other_date <- augmented_data$estimated_dates[other_date_idx[delay_idx]]
+    delay_from <- model_info$delay_from[selected_delay]
     
     ## Is date i the 'from' or 'to' in this delay
-    is_from <- (i == model_info$delay_from[selected_delay])
+    is_from <- (i == delay_from)
     
     if (is_from) {
       ## proposed date = other_date - delay
       ## so delay = other_date - proposed_date
       sign <- -1
+      ## Find the other date in this date pair
+      delay_to <- model_info$delay_to[selected_delay]
+      other_date <- augmented_data$estimated_dates[delay_to]
     } else {
       ## proposed date = other_date + delay  
       ## so delay = proposed_date - other_date
       sign <- 1
+      ## Find the other date in this date pair
+      other_date <- augmented_data$estimated_dates[delay_from]
     }
     
     ## Sample a delay from the marginal posterior
