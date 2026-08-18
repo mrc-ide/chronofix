@@ -240,6 +240,9 @@ make_model_info <- function(delay_map, dates) {
     event_order <- as.numeric(names(igraph::topo_sort(event_graph)))  
     
     ## shortest paths
+    event_graph <- igraph::graph_from_data_frame(delay_df,
+                                                 directed = FALSE,
+                                                 vertices = relevant_dates)
     shortest_paths <- rep(list(NULL), length(dates))
     for (i in relevant_dates) {
       paths_i <- rep(list(NULL), length(dates))

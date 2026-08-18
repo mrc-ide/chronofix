@@ -10,35 +10,35 @@ test_that("sampling order calculated correctly", {
   ## delay-connected dates to use for sampling
   expect_equal(
     calc_batch_sampling_order(c(1, 3), c(FALSE, NA, TRUE, NA, NA),
-                              model_info$is_date_connected[, , 1]),
+                              model_info$group_info[[1]]$is_date_connected),
     c(1, 3))
   expect_equal(
     calc_batch_sampling_order(c(1, 3), c(TRUE, NA, FALSE, NA, NA),
-                              model_info$is_date_connected[, , 1]),
+                              model_info$group_info[[1]]$is_date_connected),
     c(3, 1))
   expect_equal(
     calc_batch_sampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, FALSE, NA),
-                              model_info$is_date_connected[, , 2]),
+                              model_info$group_info[[2]]$is_date_connected),
     c(4, 3, 1))
   expect_equal(
     calc_batch_sampling_order(c(1, 4, 3), c(FALSE, NA, TRUE, TRUE, NA),
-                              model_info$is_date_connected[, , 2]),
+                              model_info$group_info[[2]]$is_date_connected),
     c(1, 4, 3))
   expect_equal(
     calc_batch_sampling_order(c(1, 4, 3), c(TRUE, NA, FALSE, NA, NA),
-                              model_info$is_date_connected[, , 2]), 
+                              model_info$group_info[[2]]$is_date_connected), 
     c(3, 1, 4))
   expect_equal(
     calc_batch_sampling_order(c(5, 3, 2, 1), c(TRUE, NA, FALSE, NA, TRUE),
-                              model_info$is_date_connected[, , 3]), 
+                              model_info$group_info[[3]]$is_date_connected), 
     c(3, 1, 2, 5))
   expect_equal(
     calc_batch_sampling_order(c(5, 3, 2, 1), c(FALSE, NA, TRUE, NA, FALSE),
-                              model_info$is_date_connected[, , 3]),
+                              model_info$group_info[[3]]$is_date_connected),
     c(5, 1, 3, 2))
   expect_equal(
     calc_batch_sampling_order(c(5, 3, 2, 1), c(TRUE, FALSE, FALSE, NA, NA),
-                              model_info$is_date_connected[, , 3]), 
+                              model_info$group_info[[3]]$is_date_connected), 
     c(3, 2, 5, 1))
 })
 
@@ -51,9 +51,10 @@ test_that("cascade resampling order calculated correctly", {
   # group 2: onset(1) to report(3) and onset(1) to death(4)
   # 3 and 4 NOT directly connected
   
-  event_order <- model_info$event_order[[2]]
-  is_date_connected <- model_info$is_date_connected[, , 2]
-  shortest_paths <- model_info$shortest_paths[[2]]
+  group_info <- model_info$group_info[[2]]
+  event_order <- group_info$event_order
+  is_date_connected <- group_info$is_date_connected
+  shortest_paths <- group_info$shortest_paths
   
   ## i = 3
   ## all correct, no cascade
@@ -157,9 +158,10 @@ test_that("cascade resampling order calculated correctly", {
   # group 4: onset(1) to report(3) and onset(1) to hospitalisation (2) then
   #          hospitalisation (2) to death (4)
   
-  event_order <- model_info$event_order[[4]]
-  is_date_connected <- model_info$is_date_connected[, , 4]
-  shortest_paths <- model_info$shortest_paths[[4]]
+  group_info <- model_info$group_info[[4]]
+  event_order <- group_info$event_order
+  is_date_connected <- group_info$is_date_connected
+  shortest_paths <- group_info$shortest_paths
   
   ## i = 1
   ## all correct, no cascade
@@ -262,9 +264,10 @@ test_that("cascade resampling order calculated correctly", {
   model_info <- 
     make_model_info(delay_map, c("onset", "hospitalisation", "report", "death"))
   
-  event_order <- model_info$event_order[[1]]
-  is_date_connected <- model_info$is_date_connected[, , 1]
-  shortest_paths <- model_info$shortest_paths[[1]]
+  group_info <- model_info$group_info[[1]]
+  event_order <- group_info$event_order
+  is_date_connected <- group_info$is_date_connected
+  shortest_paths <- group_info$shortest_paths
   ## 3 is only possible anchor but no path to it
   expect_equal(
     calc_cascade_sampling_order(2, event_order, c(NA, TRUE, FALSE, NA),
@@ -533,9 +536,9 @@ test_that("estimated dates proposed correctly", {
   augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
                          error_indicators = c(NA, NA, TRUE, FALSE, NA))
   sampling_order <-
-    calc_batch_sampling_order(model_info$event_order[[group]],
+    calc_batch_sampling_order(model_info$group_info[[group]]$event_order,
                               augmented_data$error_indicators,
-                              model_info$is_date_connected[, , group])
+                              model_info$group_info[[group]]$is_date_connected)
   augmented_data_new <- 
     propose_estimated_dates(sampling_order, augmented_data, observed_dates,
                             group, delay_pars, model_info, date_range, rng)
@@ -611,9 +614,9 @@ test_that("proposal density calculated correctly", {
   ## then death is proposed based on delay 2 (gamma),
   ##               onset (date 1) to death (date 4)
   updated <-
-    calc_batch_sampling_order(model_info$event_order[[group]],
+    calc_batch_sampling_order(model_info$group_info[[group]]$event_order,
                               augmented_data$error_indicators,
-                              model_info$is_date_connected[, , group])
+                              model_info$group_info[[group]]$is_date_connected)
   d <- sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
                     augmented_data$estimated_dates[1],
                   shape = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape), 
@@ -666,10 +669,10 @@ test_that("proposal density calculated correctly", {
   augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
                          error_indicators = c(NA, NA, TRUE, TRUE, NA))
   updated <-
-    calc_cascade_sampling_order(3, model_info$event_order[[group]],
+    calc_cascade_sampling_order(3, model_info$group_info[[group]]$event_order,
                                 augmented_data$error_indicators,
-                                model_info$is_date_connected[, , group],
-                                model_info$shortest_paths[[group]])
+                                model_info$group_info[[group]]$is_date_connected,
+                                model_info$group_info[[group]]$shortest_paths)
   d <- -log(date_range[2] - date_range[1]) +
     sum(dgamma(augmented_data$estimated_dates[c(3, 4)] - 
                     augmented_data$estimated_dates[1],
@@ -793,19 +796,15 @@ test_that("acceptance probability calculated correctly", {
   calc_accept <- function(sampling_order, sampling_order_reverse,
                           augmented_data_new, augmented_data, group) {
     ll_delays_current <- 
-      chronofix_log_likelihood_delays1(augmented_data$estimated_dates,
-                                       delay_pars,
-                                       model_info$delay_from, 
-                                       model_info$delay_to,
-                                       model_info$delay_distribution,
-                                       model_info$is_delay_in_group[, group])
+      chronofix_log_likelihood_delays1(
+        augmented_data$estimated_dates, delay_pars, model_info$delay_from, 
+        model_info$delay_to, model_info$delay_distribution,
+        model_info$group_info[[group]]$is_delay_in_group)
     ll_delays_new <- 
-      chronofix_log_likelihood_delays1(augmented_data_new$estimated_dates,
-                                       delay_pars,
-                                       model_info$delay_from, 
-                                       model_info$delay_to,
-                                       model_info$delay_distribution,
-                                       model_info$is_delay_in_group[, group])
+      chronofix_log_likelihood_delays1(
+        augmented_data_new$estimated_dates, delay_pars, model_info$delay_from, 
+        model_info$delay_to, model_info$delay_distribution,
+        model_info$group_info[[group]]$is_delay_in_group)
     
     ll_errors_current <-
       chronofix_log_likelihood_errors(prob_error, 
@@ -918,13 +917,13 @@ test_that("acceptance probability calculated correctly", {
   augmented_data_new <- list(estimated_dates = c(10.5, NA, 50.2, 68.1, NA),
                              error_indicators = c(NA, NA, TRUE, FALSE, NA))
   sampling_order <-
-    calc_batch_sampling_order(model_info$event_order[[group]],
+    calc_batch_sampling_order(model_info$group_info[[group]]$event_order,
                               augmented_data_new$error_indicators,
-                              model_info$is_date_connected[, , group])
+                              model_info$group_info[[group]]$is_date_connected)
   sampling_order_reverse <-
-    calc_batch_sampling_order(model_info$event_order[[group]],
+    calc_batch_sampling_order(model_info$group_info[[group]]$event_order,
                               augmented_data$error_indicators,
-                              model_info$is_date_connected[, , group])
+                              model_info$group_info[[group]]$is_date_connected)
   expect_equal(
     calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
@@ -944,13 +943,13 @@ test_that("acceptance probability calculated correctly", {
   augmented_data_new <- list(estimated_dates = c(2.3, 5.2, 33.2, 40.1, NA),
                              error_indicators = c(TRUE, FALSE, TRUE, NA, NA))
   sampling_order <-
-    calc_batch_sampling_order(model_info$event_order[[group]],
+    calc_batch_sampling_order(model_info$group_info[[group]]$event_order,
                               augmented_data_new$error_indicators,
-                              model_info$is_date_connected[, , group])
+                              model_info$group_info[[group]]$is_date_connected)
   sampling_order_reverse <-
-    calc_batch_sampling_order(model_info$event_order[[group]],
+    calc_batch_sampling_order(model_info$group_info[[group]]$event_order,
                               augmented_data$error_indicators,
-                              model_info$is_date_connected[, , group])
+                              model_info$group_info[[group]]$is_date_connected)
   expect_equal(
     calc_accept_prob(sampling_order, sampling_order_reverse,
                      augmented_data_new, augmented_data,
