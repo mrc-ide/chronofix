@@ -195,6 +195,7 @@ test_that("data and delays are validated correctly", {
   expect_identical(x$model_info, model_info)
   expect_equal(x$observed_dates, observed_dates_to_int(data))
   expect_equal(x$groups, match(data$group, model_info$groups))
+  
 })
 
 
@@ -279,6 +280,72 @@ test_that("Error when data and delay_map have different groups", {
                "Groups in 'data'")
 })
 
+test_that("validate_events correctly flags missing columns and date errors", {
+  toy <- toy_model()
+  data <- toy$data$observed_data
+  delay_map <- toy$delay_map
+  
+  # missing id column in data
+  data_no_id <- data
+  data_no_id$id <- NULL
+  expect_error(
+    validate_data_and_delays(data_no_id, delay_map),
+    "must contain an `id` column"
+  )
+  
+  # NA ids
+  data_na_id <- data
+  data_na_id$id[3] <- NA
+  
+  expect_error(
+    validate_data_and_delays(data_na_id, delay_map),
+    "cannot contain missing values"
+  )
+  
+  # duplicated ids
+  data_duplicate_id <- data
+  data_duplicate_id$id[2] <- data_duplicate_id$id[1]
+  
+  expect_error(
+    validate_data_and_delays(data_duplicate_id, delay_map),
+    "must contain unique values"
+  )
+  
+  # missing column in data
+  data_missing_col <- data
+  data_missing_col$report <- NULL 
+  expect_error(
+    validate_data_and_delays(data_missing_col, delay_map),
+    "must exist as columns in `data`"
+  )
+  
+  # unmapped event column in data
+  data_extra_col <- data
+  data_extra_col$symptom_resolution <- Sys.Date()
+  expect_error(
+    validate_data_and_delays(data_extra_col, delay_map),
+    "must be mapped in `delay_map`"
+  )
+  
+  # individual has all NA dates
+  data_all_na <- data
+  event_cols <- setdiff(names(data), c("id", "group"))
+  data_all_na[1, event_cols] <- NA # row 1 dates set to all NA
+  expect_error(
+    validate_data_and_delays(data_all_na, delay_map),
+    "cannot have `NA` for all event dates"
+  )
+  
+  # invalid date for an individual's group
+  data_invalid_date <- data
+  # give a 'community-alive' person an invalid 'discharge' date
+  comm_idx <- which(data_invalid_date$group == "community-alive")[1]
+  data_invalid_date$discharge[comm_idx] <- as.Date("2026-01-01") 
+  expect_error(
+    validate_data_and_delays(data_invalid_date, delay_map),
+    "events not associated with their group"
+  )
+})
 
 test_that("date range is calculated correctly", {
   data <- toy_model()$data
