@@ -12,20 +12,21 @@ test_that("chronofix_plot_delays generates a correct ggplot object", {
   )
   mock_delay_map$group <- list("community-alive", "hospitalised-dead")
   
-  # minimal mock mcmc_output array [parameters, iterations, chains]
+  # minimal mock mcmc_output matrix [parameters, total_samples]
   param_names <- c("delay_mean1", "delay_shape1", "delay_meanlog2", "delay_precisionlog2")
   
   set.seed(1)
-  mock_pars <- array(
+  mock_pars <- matrix(
     data = NA, 
-    dim = c(4, 50, 2),
-    dimnames = list(param_names, NULL, NULL)
+    nrow = 4,
+    ncol = 100, # 50 iter * 2 chains
+    dimnames = list(param_names, NULL)
   )
   
-  mock_pars["delay_mean1", , ] <- runif(100, min = 3, max = 8)
-  mock_pars["delay_shape1", , ] <- runif(100, min = 2, max = 5)
-  mock_pars["delay_meanlog2", , ] <- runif(100, min = 1, max = 2)
-  mock_pars["delay_precisionlog2", , ] <- runif(100, min = 2, max = 5)
+  mock_pars["delay_mean1", ] <- runif(100, min = 3, max = 8)
+  mock_pars["delay_shape1", ] <- runif(100, min = 2, max = 5)
+  mock_pars["delay_meanlog2", ] <- runif(100, min = 1, max = 2)
+  mock_pars["delay_precisionlog2", ] <- runif(100, min = 2, max = 5)
   
   mock_mcmc_output <- list(pars = mock_pars)
   
@@ -54,10 +55,11 @@ test_that("chronofix_plot_delays handles edge cases in group names gracefully", 
   mock_delay_map$group <- list("c(\"complex_group_name\")")
   
   param_names <- c("delay_mean1", "delay_shape1")
-  mock_pars <- array(
-    data = runif(100, min = 0.5, max = 5), 
-    dim = c(2, 50, 1),
-    dimnames = list(param_names, NULL, NULL)
+  mock_pars <- matrix(
+    data = runif(100, min = 0.5, max = 5),
+    nrow = 2,
+    ncol = 50, # 50 iter * 1 chain
+    dimnames = list(param_names, NULL)
   )
   mock_mcmc_output <- list(pars = mock_pars)
   
@@ -84,10 +86,11 @@ test_that("chronofix_plot_delays handles multiple groups in a single facet", {
   
   param_names <- c("delay_mean1", "delay_shape1")
   set.seed(1)
-  mock_pars <- array(
+  mock_pars <- matrix(
     data = runif(100, min = 0.5, max = 5), 
-    dim = c(2, 50, 1),
-    dimnames = list(param_names, NULL, NULL)
+    nrow = 2,
+    ncol = 50,
+    dimnames = list(param_names, NULL)
   )
   mock_mcmc_output <- list(pars = mock_pars)
   
