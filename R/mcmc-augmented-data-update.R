@@ -388,8 +388,13 @@ calc_proposal_density <- function(sampling_order, augmented_data,
                                     delay_distribution)
         } else {
           ## multiple delays involving date i, so delay selected at random
-          d[j] <- log(sum(exp(mapply(log_density_delay, delay_values, 
-                                     delay_pars_sample, delay_distribution)))) - 
+          d[j] <- 
+            log(sum(exp(vnapply(seq_along(delays_for_sampling),
+                                function(i) {
+                                  log_density_delay(delay_values[i], 
+                                                    delay_pars_sample[[i]], 
+                                                    delay_distribution[i])
+                                  })))) - 
             log(length(delays_for_sampling))
         }
       }
