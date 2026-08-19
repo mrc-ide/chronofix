@@ -25,7 +25,7 @@ validate_delay_inputs <- function(mcmc_output, delay_map) {
     ))
   }
   
-  param_names <- dimnames(mcmc_output$pars)[[1]]
+  param_names <- rownames(mcmc_output$pars)
   
   if (is.null(param_names)) {
     cli::cli_abort(c(
@@ -57,9 +57,13 @@ validate_delay_inputs <- function(mcmc_output, delay_map) {
   for (i in seq_len(nrow(delay_map))) {
     dist <- tolower(as.character(delay_map$distribution[i]))
     if (grepl("gamma", dist)) {
-      required_pars <- c(required_pars, paste0("delay_mean", i), paste0("delay_shape", i))
+      required_pars <- c(required_pars, 
+                         paste0("delay", i, "_mean"), 
+                         paste0("delay", i, "_shape"))
     } else {
-      required_pars <- c(required_pars, paste0("delay_meanlog", i), paste0("delay_precisionlog", i))
+      required_pars <- c(required_pars, 
+                         paste0("delay", i, "_meanlog"), 
+                         paste0("delay", i, "_precisionlog"))
     }
   }
   

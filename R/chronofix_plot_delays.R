@@ -36,8 +36,8 @@ chronofix_plot_delays <- function(mcmc_output,
     )
     
     if (is_gamma) {
-      mean_samps <- pars_flat[paste0("delay_mean", i), ]
-      shape_samps <- pars_flat[paste0("delay_shape", i), ]
+      mean_samps <- pars_flat[paste0("delay", i, "_mean"), ]
+      shape_samps <- pars_flat[paste0("delay", i, "_shape"), ]
       scale_samps <- mean_samps / shape_samps
       
       max_x <- stats::qgamma(0.99,
@@ -50,8 +50,8 @@ chronofix_plot_delays <- function(mcmc_output,
       }))
       
     } else {
-      meanlog_samps <- pars_flat[paste0("delay_meanlog", i), ]
-      prec_samps <- pars_flat[paste0("delay_precisionlog", i), ]
+      meanlog_samps <- pars_flat[paste0("delay", i, "_meanlog"), ]
+      prec_samps <- pars_flat[paste0("delay", i, "_precisionlog"), ]
       sdlog_samps <- sqrt(1 / prec_samps)
       
       max_x <- stats::qlnorm(0.99,

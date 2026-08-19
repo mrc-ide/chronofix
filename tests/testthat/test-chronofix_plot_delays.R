@@ -13,7 +13,7 @@ test_that("chronofix_plot_delays generates a correct ggplot object", {
   mock_delay_map$group <- list("community-alive", "hospitalised-dead")
   
   # minimal mock mcmc_output matrix [parameters, total_samples]
-  param_names <- c("delay_mean1", "delay_shape1", "delay_meanlog2", "delay_precisionlog2")
+  param_names <- c("delay1_mean", "delay1_shape", "delay2_meanlog", "delay2_precisionlog")
   
   set.seed(1)
   mock_pars <- matrix(
@@ -23,10 +23,10 @@ test_that("chronofix_plot_delays generates a correct ggplot object", {
     dimnames = list(param_names, NULL)
   )
   
-  mock_pars["delay_mean1", ] <- runif(100, min = 3, max = 8)
-  mock_pars["delay_shape1", ] <- runif(100, min = 2, max = 5)
-  mock_pars["delay_meanlog2", ] <- runif(100, min = 1, max = 2)
-  mock_pars["delay_precisionlog2", ] <- runif(100, min = 2, max = 5)
+  mock_pars["delay1_mean", ] <- runif(100, min = 3, max = 8)
+  mock_pars["delay1_shape", ] <- runif(100, min = 2, max = 5)
+  mock_pars["delay2_meanlog", ] <- runif(100, min = 1, max = 2)
+  mock_pars["delay2_precisionlog", ] <- runif(100, min = 2, max = 5)
   
   mock_mcmc_output <- list(pars = mock_pars)
   
@@ -54,7 +54,7 @@ test_that("chronofix_plot_delays handles edge cases in group names gracefully", 
   )
   mock_delay_map$group <- list("c(\"complex_group_name\")")
   
-  param_names <- c("delay_mean1", "delay_shape1")
+  param_names <- c("delay1_mean", "delay1_shape")
   mock_pars <- matrix(
     data = runif(100, min = 0.5, max = 5),
     nrow = 2,
@@ -84,7 +84,7 @@ test_that("chronofix_plot_delays handles multiple groups in a single facet", {
   # Pass multiple groups into a single row
   mock_delay_map$group <- I(list(c("community_alive", "hospitalised_alive")))
   
-  param_names <- c("delay_mean1", "delay_shape1")
+  param_names <- c("delay1_mean", "delay1_shape")
   set.seed(1)
   mock_pars <- matrix(
     data = runif(100, min = 0.5, max = 5), 
