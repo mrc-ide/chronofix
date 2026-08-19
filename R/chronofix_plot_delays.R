@@ -22,70 +22,59 @@ chronofix_plot_delays <- function(mcmc_output,
   for (i in seq_len(nrow(delay_map))) {
     
     raw_dist <- as.character(delay_map$distribution[i])
-    if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
-      dist_clean <- "Gamma"
-    } else {
-      dist_clean <- "Log-Normal"
-    }
+    is_gamma <- grepl("gamma", raw_dist, ignore.case = TRUE)
+    dist_clean <- if (is_gamma) "Gamma" else "Log-Normal"
     
     clean_group <- clean_group_name(delay_map$group[[i]])
     clean_group_wrapped <- paste(strwrap(clean_group, width = 40), collapse = "<br>")
     
-    from_name <- clean_event_name(delay_map$from[i])
-    to_name <- clean_event_name(delay_map$to[i])
-    
     panel_title <- sprintf(
       "<span style='color: #1F77B4;'>Group: %s</span><br><span style='color: #000000;'>Delay: %s to %s</span>",
       clean_group_wrapped,
-      from_name,
-      to_name
+      clean_event_name(delay_map$from[i]),
+      clean_event_name(delay_map$to[i])
     )
     
-    if (dist_clean == "Gamma") {
-      mean_samps <- pars_flat[paste0("delay_mean", i), , drop = TRUE]
-      shape_samps <- pars_flat[paste0("delay_shape", i), , drop = TRUE]
+    if (is_gamma) {
+      mean_samps <- pars_flat[paste0("delay_mean", i), ]
+      shape_samps <- pars_flat[paste0("delay_shape", i), ]
       scale_samps <- mean_samps / shape_samps
       
-      med_shape <- median(shape_samps, na.rm = TRUE)
-      med_scale <- median(scale_samps, na.rm = TRUE)
-      max_x <- stats::qgamma(0.99, shape = med_shape, scale = med_scale)
-      n_samps <- length(mean_samps)
+      max_x <- stats::qgamma(0.99,
+                             shape = mean(shape_samps, na.rm = TRUE),
+                             scale = mean(scale_samps, na.rm = TRUE))
+      x_seq <- seq(0.01, max_x, length.out = n_points)
       
-    } else if (dist_clean == "Log-Normal") {
-      meanlog_samps <- pars_flat[paste0("delay_meanlog", i), , drop = TRUE]
-      prec_samps <- pars_flat[paste0("delay_precisionlog", i), , drop = TRUE]
+      dens_matrix <- t(sapply(x_seq, function(x) {
+        stats::dgamma(x, shape = shape_samps, scale = scale_samps)
+      }))
+      
+    } else {
+      meanlog_samps <- pars_flat[paste0("delay_meanlog", i), ]
+      prec_samps <- pars_flat[paste0("delay_precisionlog", i), ]
       sdlog_samps <- sqrt(1 / prec_samps)
       
-      med_meanlog <- median(meanlog_samps, na.rm = TRUE)
-      med_sdlog <- median(sdlog_samps, na.rm = TRUE)
-      max_x <- stats::qlnorm(0.99, meanlog = med_meanlog, sdlog = med_sdlog)
-      n_samps <- length(meanlog_samps)
-    }
-    
-    x_seq <- seq(0.01, max_x, length.out = n_points)
-    dens_matrix <- matrix(NA, nrow = n_points, ncol = n_samps)
-    
-    for (k in seq_along(x_seq)) {
-      if (dist_clean == "Gamma") {
-        dens_matrix[k, ] <- stats::dgamma(x_seq[k],
-                                          shape = shape_samps,
-                                          scale = scale_samps)
-      } else if (dist_clean == "Log-Normal") {
-        dens_matrix[k, ] <- stats::dlnorm(x_seq[k],
-                                          meanlog = meanlog_samps,
-                                          sdlog = sdlog_samps)
-      }
+      max_x <- stats::qlnorm(0.99,
+                             meanlog = mean(meanlog_samps, na.rm = TRUE),
+                             sdlog = mean(sdlog_samps, na.rm = TRUE))
+      x_seq <- seq(0.01, max_x, length.out = n_points)
+      
+      dens_matrix <- t(sapply(x_seq, function(x) {
+        stats::dlnorm(x, meanlog = meanlog_samps, sdlog = sdlog_samps)
+      }))
     }
     
     mean_line <- rowMeans(dens_matrix, na.rm = TRUE)
+    
+    quants <- apply(dens_matrix, 1, stats::quantile, probs = c(0.025, 0.975), na.rm = TRUE)
     
     plot_data_list[[i]] <- data.frame(
       Panel_Title = panel_title,
       Distribution = dist_clean, 
       x = x_seq,
-      lower = apply(dens_matrix, 1, stats::quantile, probs = 0.025, na.rm = TRUE),
+      lower = quants[1, ], # 2.5%
       mean_density = mean_line,
-      upper = apply(dens_matrix, 1, stats::quantile, probs = 0.975, na.rm = TRUE)
+      upper = quants[2, ] # 97.5%
     )
     
     # find max density
