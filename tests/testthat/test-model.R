@@ -293,6 +293,15 @@ test_that("validate_events correctly flags missing columns and date errors", {
     "must contain an `id` column"
   )
   
+  # NA ids
+  data_na_id <- data
+  data_na_id$id[3] <- NA
+  
+  expect_error(
+    validate_data_and_delays(data_na_id, delay_map),
+    "cannot contain missing values"
+  )
+  
   # duplicated ids
   data_duplicate_id <- data
   data_duplicate_id$id[2] <- data_duplicate_id$id[1]

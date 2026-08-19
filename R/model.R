@@ -143,6 +143,15 @@ validate_data_and_delays <- function(data, delay_map) {
     ))
   }
   
+  if (any(is.na(data$id))) {
+    na_rows <- which(is.na(data$id))
+    
+    cli::cli_abort(c(
+      "The {.col id} column in {.arg data} cannot contain missing values (`NA`).",
+      "x" = "Found missing ID{?s} on row{?s}: {.val {na_rows}}"
+    ))
+  }
+  
   if (any(duplicated(data$id))) {
     duplicate_ids <- unique(data$id[duplicated(data$id)])
     
