@@ -136,7 +136,12 @@ chronofix_hyperparameters <- function(prob_error_shape1 = 1,
 
 
 validate_data_and_delays <- function(data, delay_map) {
-  dates <- setdiff(names(data), c("id", "group"))
+  
+  if (!("id" %in% names(data))) {
+    cli::cli_abort(c(
+      "x" = "{.arg data} must contain an {.col id} column."
+    ))
+  }
   
   validate_groups(data, delay_map)
   
@@ -147,6 +152,7 @@ validate_data_and_delays <- function(data, delay_map) {
   
   validate_events(data, delay_map)
   
+  dates <- setdiff(names(data), c("id", "group"))
   model_info <- make_model_info(delay_map, dates)
   
   observed_dates <- observed_dates_to_int(data)
