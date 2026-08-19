@@ -8,15 +8,20 @@ make_delay_summary_mock <- function() {
     stringsAsFactors = FALSE
   )
   
-  pars <- array(NA, dim = c(4, 5, 1),
-                dimnames = list(c("delay_mean1", "delay_shape1",
-                                  "delay_meanlog2", "delay_precisionlog2"),
-                                NULL, NULL))
+  param_names <- c("delay1_mean", "delay1_shape",
+                   "delay2_meanlog", "delay2_precisionlog")
   
-  pars["delay_mean1", , 1] <- c(1, 2, 3, 4, 5)
-  pars["delay_shape1", , 1] <- c(2, 4, 6, 8, 10)
-  pars["delay_meanlog2", , 1] <- c(1, 2, 3, 4, 5)
-  pars["delay_precisionlog2", , 1] <- c(1, 2, 3, 4, 5)
+  pars <- matrix(
+    data = NA,
+    nrow = 4,
+    ncol = 5,
+    dimnames = list(param_names, NULL)
+  )
+  
+  pars["delay1_mean", ] <- c(1, 2, 3, 4, 5)
+  pars["delay1_shape", ] <- c(2, 4, 6, 8, 10)
+  pars["delay2_meanlog", ] <- c(1, 2, 3, 4, 5)
+  pars["delay2_precisionlog", ] <- c(3, 3, 3, 3, 3)
   
   list(
     mcmc_output = list(pars = pars),

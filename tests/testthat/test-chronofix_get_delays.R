@@ -11,36 +11,38 @@ test_that("chronofix_get_delays returns posterior delay summaries", {
   )
   
   expect_s3_class(result, "data.frame")
-  expect_equal(nrow(result), 2)
+  # 2 delays * 4 parameters each = 8 rows total
+  expect_equal(nrow(result), 8)
   
   expect_equal(
     names(result),
     c("Group",
       "Delay",
       "Distribution",
-      "Delay_Median",
-      "Delay_Lower_95_CrI",
-      "Delay_Upper_95_CrI",
-      "CV_Median",
-      "CV_Lower_95_CrI",
-      "CV_Upper_95_CrI")
+      "Parameter",
+      "Posterior_Median",
+      "Lower_95_CrI",
+      "Upper_95_CrI")
   )
   
   expect_equal(result$Group[1], "Community Alive")
-  expect_equal(result$Group[2], "Hospitalised Alive, Hospitalised Dead")
+  expect_equal(result$Group[5], "Hospitalised Alive, Hospitalised Dead")
   
   expect_equal(result$Delay[1], "Onset to Report")
-  expect_equal(result$Delay[2], "Hospitalisation to Discharge")
+  expect_equal(result$Delay[5], "Hospitalisation to Discharge")
   
-  expect_equal(result$Distribution, c("Gamma", "Log-Normal"))
+  expect_equal(result$Distribution, c(rep("Gamma", 4), rep("Log-Normal", 4)))
+  
+  mean_rows <- subset(result, Parameter == "Mean")
+  cv_rows <- subset(result, Parameter == "CV")
   
   # calculated expected from mock data
   expected_gamma_cv <- round(1 / sqrt(6), 3) # median of 1/sqrt(c(2, 4, 6, 8, 10))
   expected_ln_mean <- round(exp(3 + (1 / 3) / 2), 3)
   expected_ln_cv <- round(sqrt(exp(1 / 3) - 1), 3)
   
-  expect_equal(result$Delay_Median, c(3, expected_ln_mean))
-  expect_equal(result$CV_Median, c(expected_gamma_cv, expected_ln_cv))
+  expect_equal(mean_rows$Posterior_Median, c(3, expected_ln_mean))
+  expect_equal(cv_rows$Posterior_Median, c(expected_gamma_cv, expected_ln_cv))
 })
 
 test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
@@ -64,22 +66,24 @@ test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
     3
   )
   
-  expect_equal(result$Delay_Lower_95_CrI[1], expected_mean1[1])
-  expect_equal(result$Delay_Median[1], expected_mean1[2])
-  expect_equal(result$Delay_Upper_95_CrI[1], expected_mean1[3])
+  expect_equal(result$Lower_95_CrI[1], expected_mean1[1])
+  expect_equal(result$Posterior_Median[1], expected_mean1[2])
+  expect_equal(result$Upper_95_CrI[1], expected_mean1[3])
   
-  expect_equal(result$CV_Lower_95_CrI[1], expected_cv1[1])
-  expect_equal(result$CV_Median[1], expected_cv1[2])
-  expect_equal(result$CV_Upper_95_CrI[1], expected_cv1[3])
+  expect_equal(result$Lower_95_CrI[2], expected_cv1[1])
+  expect_equal(result$Posterior_Median[2], expected_cv1[2])
+  expect_equal(result$Upper_95_CrI[2], expected_cv1[3])
 })
 
 test_that("chronofix_get_delays handles NAs in MCMC output safely", {
   mock <- make_delay_summary_mock()
-  mock$mcmc_output$pars["delay_mean1", 1, 1] <- NA
+  mock$mcmc_output$pars["delay1_mean", 1] <- NA
   
   result <- chronofix_get_delays(mock$mcmc_output, mock$delay_map)
   
-  expect_false(is.na(result$Delay_Median[1]))
+  mean_row_1 <- subset(result, Delay == "Onset to Report" & Parameter == "Mean")
+  
+  expect_false(is.na(mean_row_1$Posterior_Median))
   # median of c(NA, 2, 3, 4, 5) should be 3.5
-  expect_equal(result$Delay_Median[1], 3.5) 
+  expect_equal(mean_row_1$Posterior_Median, 3.5) 
 })
