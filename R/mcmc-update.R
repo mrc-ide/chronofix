@@ -15,7 +15,8 @@ update_pars_delay1 <- function(i, pars, augmented_data, control, model, rng) {
   
   delay_from <- model$info$delay_from[i]
   delay_to <- model$info$delay_to[i]
-  is_delay_in_group <- model$info$is_delay_in_group[i, ]
+  is_delay_in_group <- 
+    unlist(lapply(model$info$group_info, function (x) x$is_delay_in_group[i]))
   
   k <- model$groups_data %in% which(is_delay_in_group)
   

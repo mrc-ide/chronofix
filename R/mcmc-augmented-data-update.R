@@ -65,7 +65,8 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
   ## we check if date i is in the given group
   ## if FALSE, no update
   ## if TRUE, update with probability prob_update_estimated_dates
-  update <- model_info$is_date_in_group[i, group] &&
+  group_info <- model_info$group_info[[group]]
+  update <- group_info$is_date_in_group[i] &&
     monty::monty_random_real(rng) < control$prob_update_estimated_dates
   if (!update) {
     return(augmented_data)
@@ -73,10 +74,10 @@ update_estimated_dates1 <- function(i, augmented_data, observed_dates, group,
   
   if (control$cascade_sampling) {
     sampling_order <- 
-      calc_cascade_sampling_order(i, model_info$event_order[[group]],
+      calc_cascade_sampling_order(i, group_info$event_order,
                                   augmented_data$error_indicators,
-                                  model_info$is_date_connected[, , group],
-                                  model_info$shortest_paths[[group]])
+                                  group_info$is_date_connected,
+                                  group_info$shortest_paths)
   } else {
     sampling_order <- i
   }
@@ -132,18 +133,20 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
     return(augmented_data)
   }
   
+  group_info <- model_info$group_info[[group]]
+  
   augmented_data_new <- change_error_indicators(augmented_data, i)
   if (control$cascade_sampling) {
     sampling_order <- 
-      calc_cascade_sampling_order(i, model_info$event_order[[group]],
+      calc_cascade_sampling_order(i, group_info$event_order,
                                   augmented_data_new$error_indicators,
-                                  model_info$is_date_connected[, , group],
-                                  model_info$shortest_paths[[group]])
+                                  group_info$is_date_connected,
+                                  group_info$shortest_paths)
     sampling_order_reverse <- 
-      calc_cascade_sampling_order(i, model_info$event_order[[group]],
+      calc_cascade_sampling_order(i, group_info$event_order,
                                   augmented_data$error_indicators,
-                                  model_info$is_date_connected[, , group],
-                                  model_info$shortest_paths[[group]])
+                                  group_info$is_date_connected,
+                                  group_info$shortest_paths)
   } else {
     sampling_order <- i
     sampling_order_reverse <- i
@@ -170,43 +173,43 @@ update_error_indicators1 <- function(i, augmented_data, observed_dates, group,
 # Sample new date using randomly selected delay
 sample_from_delay <- function(i, augmented_data, group, delay_pars, model_info,
                               date_range, rng) {
-  is_date_in_delay <- model_info$is_date_in_delay[i, , group]
+  group_info <- model_info$group_info[[group]]
+  is_date_connected <- group_info$is_date_connected[i, ]
+  delay_connecting_dates <- group_info$delay_connecting_dates[i, ]
+  is_date_available <- !is.na(augmented_data$estimated_dates)
   
-  ## Which delays involve this date
-  which_delays <- which(is_date_in_delay)
-  other_date_idx <- ifelse(model_info$delay_from[which_delays] != i,
-                           model_info$delay_from[which_delays], 
-                           model_info$delay_to[which_delays])
+  delays_for_sampling <- 
+    delay_connecting_dates[is_date_available & is_date_connected]
   
   ## Filter to only delays where the other date is available (needed for swap)
-  is_available_date <- !is.na(augmented_data$estimated_dates[other_date_idx])
-  if (!any(is_available_date)) {
+  if (length(delays_for_sampling) == 0) {
     ## not possible to sample from a delay so sample a random date
     d <- as.numeric(date_range)
     proposed_date <- monty::monty_random_uniform(d[1L], d[2L], rng)
   } else {
-    valid_delays <- which_delays[is_available_date]
-    other_date_idx <- other_date_idx[is_available_date]
-    
     ## If it is involved in several delays, randomly select one
-    delay_idx <- if (length(valid_delays) == 1) 1 else 
-      ceiling(length(valid_delays) * monty::monty_random_real(rng))
-    selected_delay <- valid_delays[delay_idx]
+    delay_idx <- if (length(delays_for_sampling) == 1) 1 else 
+      ceiling(length(delays_for_sampling) * monty::monty_random_real(rng))
+    selected_delay <- delays_for_sampling[delay_idx]
     
-    ## Find the other date in this date pair
-    other_date <- augmented_data$estimated_dates[other_date_idx[delay_idx]]
+    delay_from <- model_info$delay_from[selected_delay]
     
     ## Is date i the 'from' or 'to' in this delay
-    is_from <- (i == model_info$delay_from[selected_delay])
+    is_from <- (i == delay_from)
     
     if (is_from) {
       ## proposed date = other_date - delay
       ## so delay = other_date - proposed_date
       sign <- -1
+      ## Find the other date in this date pair
+      delay_to <- model_info$delay_to[selected_delay]
+      other_date <- augmented_data$estimated_dates[delay_to]
     } else {
       ## proposed date = other_date + delay  
       ## so delay = proposed_date - other_date
       sign <- 1
+      ## Find the other date in this date pair
+      other_date <- augmented_data$estimated_dates[delay_from]
     }
     
     ## Sample a delay from the marginal posterior
@@ -268,7 +271,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
                              observed_dates, group, prob_error, delay_pars,
                              model_info, date_range) {
   
-  is_delay_in_group <- model_info$is_delay_in_group[, group]
+  is_delay_in_group <- model_info$group_info[[group]]$is_delay_in_group
 
   ## are error indicators TRUE with estimated date matching observed date
   incompatible_error_and_date <-
@@ -342,16 +345,15 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
 
 calc_proposal_density <- function(sampling_order, augmented_data,
                                   group, delay_pars, model_info, date_range) {
-  is_date_in_delay <- model_info$is_date_in_delay[, , group]
-  dim(is_date_in_delay) <- dim(model_info$is_date_in_delay)[1:2]
-  is_date_in_group <- model_info$is_date_in_group[, group]
-  is_date_connected <- model_info$is_date_connected[, , group]
-  dim(is_date_connected) <- dim(model_info$is_date_connected)[1:2]
+  group_info <- model_info$group_info[[group]]
+  is_date_in_delay <- group_info$is_date_in_delay
+  is_date_in_group <- group_info$is_date_in_group
+  is_date_connected <- group_info$is_date_connected
+  delay_connecting_dates <- group_info$delay_connecting_dates
   
-  dates <- which(is_date_in_group)
   is_resampled <- 
     seq_along(augmented_data$error_indicators) %in% sampling_order
-  available_dates <- which(is_date_in_group & !is_resampled)
+  is_date_available <- is_date_in_group & !is_resampled
   
   d <- rep(0, length(sampling_order))
   
@@ -364,41 +366,42 @@ calc_proposal_density <- function(sampling_order, augmented_data,
     
     if (!isFALSE(augmented_data$error_indicators[i])) {
       ## which dates were available for sampling
-      connected_dates <- available_dates[is_date_connected[i, available_dates]]
+      delays_for_sampling <- 
+        delay_connecting_dates[i, is_date_available & is_date_connected[i, ]]
       
-      if (length(connected_dates) == 0) {
+      if (length(delays_for_sampling) == 0) {
         ## no connected date available so just sampled from date range
         d[j] <- -log(date_range[2L] - date_range[1L])
       } else {
-        is_delay_available <- 
-          colSums(is_date_in_delay[connected_dates, , drop = FALSE]) > 0
-        ## which delays could be sampled from
-        can_sample_from_delay <- is_date_in_delay[i, ] & 
-          is_delay_available
-        
         ## error or missing - proposal is based on delay(s)
-        delay_pars_sample <- delay_pars[can_sample_from_delay]
-        delay_distribution <- model_info$delay_distribution[can_sample_from_delay]
-        delay_from <- model_info$delay_from[can_sample_from_delay]
-        delay_to <- model_info$delay_to[can_sample_from_delay]
+        delay_pars_sample <- delay_pars[delays_for_sampling]
+        delay_distribution <- 
+          model_info$delay_distribution[delays_for_sampling]
+        delay_from <- model_info$delay_from[delays_for_sampling]
+        delay_to <- model_info$delay_to[delays_for_sampling]
         delay_values <- augmented_data$estimated_dates[delay_to] - 
           augmented_data$estimated_dates[delay_from]
         
-        if (sum(can_sample_from_delay) == 1) {
+        if (length(delays_for_sampling) == 1) {
           ## single delay involving date i
           d[j] <- log_density_delay(delay_values, delay_pars_sample[[1]],
                                     delay_distribution)
         } else {
           ## multiple delays involving date i, so delay selected at random
-          d[j] <- log(sum(exp(mapply(log_density_delay, delay_values, 
-                                     delay_pars_sample, delay_distribution)))) - 
-            log(sum(can_sample_from_delay))
+          d[j] <- 
+            log(sum(exp(vnapply(seq_along(delays_for_sampling),
+                                function(i) {
+                                  log_density_delay(delay_values[i], 
+                                                    delay_pars_sample[[i]], 
+                                                    delay_distribution[i])
+                                  })))) - 
+            log(length(delays_for_sampling))
         }
       }
       
     }
     
-    available_dates <- c(available_dates, i)
+    is_date_available[i] <- TRUE
   }
   
   sum(d)
@@ -427,17 +430,18 @@ swap_error_indicators <- function(augmented_data, observed_dates, group,
     return(augmented_data)
   } 
   
-  event_order <- model_info$event_order[[group]]
+  group_info <- model_info$group_info[[group]]
+  event_order <- group_info$event_order
   
   augmented_data_new <- change_error_indicators(augmented_data, event_order)
   
   sampling_order <- 
     calc_batch_sampling_order(event_order, augmented_data_new$error_indicators,
-                              model_info$is_date_connected[, , group])
+                              group_info$is_date_connected)
   
   sampling_order_reverse <- 
     calc_batch_sampling_order(event_order, augmented_data$error_indicators,
-                              model_info$is_date_connected[, , group])
+                              group_info$is_date_connected)
 
   # systematically sample new errors and missing dates based on new non-errors
   augmented_data_new <- 
@@ -503,7 +507,7 @@ calc_cascade_sampling_order <- function(i, event_order,
                                         shortest_paths) {
   
   ## Check if there are any correct dates, if not then we do not cascade
-  is_possible_anchor <- vlapply(error_indicators[event_order], isFALSE)
+  is_possible_anchor <- visFALSE(error_indicators[event_order])
   
   if (is_possible_anchor[event_order == i]) {
     ## Date i is correct so use itself as an anchor
@@ -533,8 +537,7 @@ calc_cascade_sampling_order <- function(i, event_order,
   ## cascade_candidates are dates not already in sampling_order that are
   ## missing or erroneous
   cascade_candidates <- event_order[!(event_order %in% sampling_order)]
-  is_cascade_candidate <- 
-    !vlapply(error_indicators[cascade_candidates], isFALSE)
+  is_cascade_candidate <- !visFALSE(error_indicators[cascade_candidates])
   cascade_candidates <- cascade_candidates[is_cascade_candidate]
   
   while (length(cascade_candidates) > 0) {

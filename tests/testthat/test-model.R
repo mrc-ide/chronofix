@@ -15,9 +15,7 @@ test_that("model info is setup correctly", {
   model_info <- make_model_info(delay_map, dates)
   
   expect_equal(names(model_info),
-               c("delay_from", "delay_to", "delay_distribution",
-                 "is_delay_in_group", "is_date_in_delay", "is_date_in_group",
-                 "is_date_connected", "event_order", "shortest_paths", 
+               c("delay_from", "delay_to", "delay_distribution", "group_info",
                  "groups"))
   
   delay_from <- c(1, 1, 1, 2, 1, 2)
@@ -29,89 +27,113 @@ test_that("model info is setup correctly", {
   expect_equal(model_info$delay_distribution, delay_distribution)
   expect_equal(model_info$groups, c(1, 2, 3, 4))
   
-  expect_equal(dim(model_info$is_delay_in_group), c(6, 4))
-  expect_equal(model_info$is_delay_in_group,
-               rbind(c(TRUE, TRUE, TRUE, TRUE),
-                     c(FALSE, TRUE, FALSE, FALSE),
-                     c(FALSE, FALSE, TRUE, FALSE),
-                     c(FALSE, FALSE, TRUE, FALSE),
-                     c(FALSE, FALSE, FALSE, TRUE),
-                     c(FALSE, FALSE, FALSE, TRUE)))
+  expect_equal(model_info$group_info[[1]]$is_delay_in_group,
+               c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE))
+  expect_equal(model_info$group_info[[2]]$is_delay_in_group,
+               c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE))
+  expect_equal(model_info$group_info[[3]]$is_delay_in_group,
+               c(TRUE, FALSE, TRUE, TRUE, FALSE, FALSE))
+  expect_equal(model_info$group_info[[4]]$is_delay_in_group,
+               c(TRUE, FALSE, FALSE, FALSE, TRUE, TRUE))
+               
   
-  expect_equal(dim(model_info$is_date_in_delay), c(5, 6, 4))
-  ## easier to test this by checking the number of TRUE/FALSE is correct,
-  ## then checked the TRUEs, we do this by delay
-  for (i in seq_len(nrow(delay_map))) {
-    ## 2 dates per group related to the delay
-    groups <- unlist(delay_map$group[i])
-    n_true <- 2 * length(groups)
-    expect_equal(sum(model_info$is_date_in_delay[, i, ]), n_true)
-    n_false <- 20 - n_true
-    expect_equal(sum(!model_info$is_date_in_delay[, i, ]), n_false)
-    expect_true(all(
-      model_info$is_date_in_delay[c(delay_from[i], delay_to[i]), i, groups]))
-  }
-  
-  expect_equal(dim(model_info$is_date_in_group), c(5, 4))
-  expect_equal(model_info$is_date_in_group,
-               rbind(c(TRUE, TRUE, TRUE, TRUE),
-                     c(FALSE, FALSE, TRUE, TRUE),
-                     c(TRUE, TRUE, TRUE, TRUE),
-                     c(FALSE, TRUE, FALSE, TRUE),
-                     c(FALSE, FALSE, TRUE, FALSE)))
-  
-  expect_equal(dim(model_info$is_date_connected), c(5, 5, 4))
-  is_date_connected <- array(FALSE, c(5, 5, 4))
+  is_date_in_delay <- array(FALSE, c(5, 6))
   ## onset to report for all groups
-  is_date_connected[1, 3, c(1, 2, 3, 4)] <- TRUE
-  is_date_connected[3, 1, c(1, 2, 3, 4)] <- TRUE
+  is_date_in_delay[c(1, 3), 1] <- TRUE
+  expect_equal(model_info$group_info[[1]]$is_date_in_delay, is_date_in_delay)
+  
+  is_date_in_delay2 <- is_date_in_delay
   ## onset to death for group 2
-  is_date_connected[1, 4, 2] <- TRUE
-  is_date_connected[4, 1, 2] <- TRUE
+  is_date_in_delay2[c(1, 4), 2] <- TRUE
+  expect_equal(model_info$group_info[[2]]$is_date_in_delay, is_date_in_delay2)
+  
+  is_date_in_delay3 <- is_date_in_delay
+  ## onset to hospitalisation and hospitalisation to discharge for group 3
+  is_date_in_delay3[c(1, 2), 3] <- TRUE
+  is_date_in_delay3[c(2, 5), 4] <- TRUE
+  expect_equal(model_info$group_info[[3]]$is_date_in_delay, is_date_in_delay3)
+  
+  is_date_in_delay4 <- is_date_in_delay
+  ## onset to hospitalisation and hospitalisation to death for group 4
+  is_date_in_delay4[c(1, 2), 5] <- TRUE
+  is_date_in_delay4[c(2, 4), 6] <- TRUE
+  expect_equal(model_info$group_info[[4]]$is_date_in_delay, is_date_in_delay4)
+  
+  
+  expect_equal(model_info$group_info[[1]]$is_date_in_group, 
+               c(TRUE, FALSE, TRUE, FALSE, FALSE))
+  expect_equal(model_info$group_info[[2]]$is_date_in_group, 
+               c(TRUE, FALSE, TRUE, TRUE, FALSE))
+  expect_equal(model_info$group_info[[3]]$is_date_in_group, 
+               c(TRUE, TRUE, TRUE, FALSE, TRUE))
+  expect_equal(model_info$group_info[[4]]$is_date_in_group, 
+               c(TRUE, TRUE, TRUE, TRUE, FALSE))
+  
+  
+  is_date_connected <- array(FALSE, c(5, 5))
+  ## onset to report for all groups
+  is_date_connected[1, 3] <- TRUE
+  is_date_connected[3, 1] <- TRUE
+  expect_equal(model_info$group_info[[1]]$is_date_connected, is_date_connected)
+  
+  is_date_connected2 <- is_date_connected
+  ## onset to death for group 2
+  is_date_connected2[1, 4] <- TRUE
+  is_date_connected2[4, 1] <- TRUE
+  expect_equal(model_info$group_info[[2]]$is_date_connected, is_date_connected2)
+  
   ## onset to hospitalisation for groups 3/4
-  is_date_connected[1, 2, c(3, 4)] <- TRUE
-  is_date_connected[2, 1, c(3, 4)] <- TRUE
+  is_date_connected[1, 2] <- TRUE
+  is_date_connected[2, 1] <- TRUE
+  
+  is_date_connected3 <- is_date_connected
   ## hospitalisation to discharge for group 3
-  is_date_connected[2, 5, 3] <- TRUE
-  is_date_connected[5, 2, 3] <- TRUE
+  is_date_connected3[2, 5] <- TRUE
+  is_date_connected3[5, 2] <- TRUE
+  expect_equal(model_info$group_info[[3]]$is_date_connected, is_date_connected3)
+  
+  is_date_connected4 <- is_date_connected
   ## hospitalisation to death for group 4
-  is_date_connected[2, 4, 4] <- TRUE
-  is_date_connected[4, 2, 4] <- TRUE
+  is_date_connected4[2, 4] <- TRUE
+  is_date_connected4[4, 2] <- TRUE
+  expect_equal(model_info$group_info[[4]]$is_date_connected, is_date_connected4)
   
-  expect_equal(model_info$is_date_connected, is_date_connected)
   
-  expect_equal(length(model_info$event_order), 4)
-  expect_equal(model_info$event_order,
-               list(c(1, 3),
-                    c(1, 3, 4),
-                    c(1, 2, 3, 5),
-                    c(1, 2, 3, 4)))
+  expect_equal(model_info$group_info[[1]]$event_order, c(1, 3))
+  expect_equal(model_info$group_info[[2]]$event_order, c(1, 3, 4))
+  expect_equal(model_info$group_info[[3]]$event_order, c(1, 2, 3, 5))
+  expect_equal(model_info$group_info[[4]]$event_order, c(1, 2, 3, 4))
   
-  shortest_paths <- rep(list(rep(list(NULL), 5)), 4)
+  shortest_paths <- rep(list(NULL), 5)
   # group 1, onset/report
-  shortest_paths[[1]][[1]] <- list(NULL, NULL, c(1, 3), NULL, NULL)
-  shortest_paths[[1]][[3]] <- list(c(3, 1), NULL, NULL, NULL, NULL)
+  shortest_paths1 <- shortest_paths
+  shortest_paths1[[1]] <- list(NULL, NULL, c(1, 3), NULL, NULL)
+  shortest_paths1[[3]] <- list(c(3, 1), NULL, NULL, NULL, NULL)
+  expect_equal(model_info$group_info[[1]]$shortest_paths, shortest_paths1)
   # group 2, onset/death/report
-  shortest_paths[[2]][[1]] <- list(NULL, NULL, c(1, 3), c(1, 4), NULL)
-  shortest_paths[[2]][[3]] <- list(c(3, 1), NULL, NULL, c(3, 1, 4), NULL)
-  shortest_paths[[2]][[4]] <- list(c(4, 1), NULL, c(4, 1, 3), NULL, NULL)
+  shortest_paths2 <- shortest_paths
+  shortest_paths2[[1]] <- list(NULL, NULL, c(1, 3), c(1, 4), NULL)
+  shortest_paths2[[3]] <- list(c(3, 1), NULL, NULL, c(3, 1, 4), NULL)
+  shortest_paths2[[4]] <- list(c(4, 1), NULL, c(4, 1, 3), NULL, NULL)
+  expect_equal(model_info$group_info[[2]]$shortest_paths, shortest_paths2)
   # group 3, onset/hospitalisation/discharge/report
-  shortest_paths[[3]][[1]] <- list(NULL, c(1, 2), c(1, 3), NULL, c(1, 2, 5))
-  shortest_paths[[3]][[2]] <- list(c(2, 1), NULL, c(2, 1, 3), NULL, c(2, 5))
-  shortest_paths[[3]][[3]] <- 
+  shortest_paths3 <- shortest_paths
+  shortest_paths3[[1]] <- list(NULL, c(1, 2), c(1, 3), NULL, c(1, 2, 5))
+  shortest_paths3[[2]] <- list(c(2, 1), NULL, c(2, 1, 3), NULL, c(2, 5))
+  shortest_paths3[[3]] <- 
     list(c(3, 1), c(3, 1, 2), NULL, NULL, c(3, 1, 2, 5))
-  shortest_paths[[3]][[5]] <- 
+  shortest_paths3[[5]] <- 
     list(c(5, 2, 1), c(5, 2), c(5, 2, 1, 3), NULL, NULL)
+  expect_equal(model_info$group_info[[3]]$shortest_paths, shortest_paths3)
   # group 4, onset/hospitalisation/death/report
-  shortest_paths[[4]][[1]] <- list(NULL, c(1, 2), c(1, 3), c(1, 2, 4), NULL)
-  shortest_paths[[4]][[2]] <- list(c(2, 1), NULL, c(2, 1, 3), c(2, 4), NULL)
-  shortest_paths[[4]][[3]] <- 
+  shortest_paths4 <- shortest_paths
+  shortest_paths4[[1]] <- list(NULL, c(1, 2), c(1, 3), c(1, 2, 4), NULL)
+  shortest_paths4[[2]] <- list(c(2, 1), NULL, c(2, 1, 3), c(2, 4), NULL)
+  shortest_paths4[[3]] <- 
     list(c(3, 1), c(3, 1, 2), NULL, c(3, 1, 2, 4), NULL)
-  shortest_paths[[4]][[4]] <- 
+  shortest_paths4[[4]] <- 
     list(c(4, 2, 1), c(4, 2), c(4, 2, 1, 3), NULL, NULL)
-  expect_equal(model_info$shortest_paths,
-               shortest_paths)
-  
+  expect_equal(model_info$group_info[[4]]$shortest_paths, shortest_paths4)
   
   ## now setup with named groups
   groups <- c("community_alive", "community_dead", "hospitalised_alive",
@@ -157,13 +179,7 @@ test_that("model info is setup correctly", {
   expect_identical(model_info3[unchanged], model_info[unchanged])
   ## elements with a group dimension we expect order to have changed
   g <- match(groups, model_info3$groups)
-  expect_equal(model_info3$is_delay_in_group[, g], model_info$is_delay_in_group)
-  expect_equal(model_info3$is_date_in_delay[, , g], model_info$is_date_in_delay)
-  expect_equal(model_info3$is_date_in_group[, g], model_info$is_date_in_group)
-  expect_equal(model_info3$is_date_connected[, , g],
-               model_info$is_date_connected)
-  expect_equal(model_info3$event_order[g], model_info$event_order)
-  expect_equal(model_info3$shortest_paths[g], model_info$shortest_paths)
+  expect_identical(model_info3$group_info[g], model_info$group_info)
 })
 
 
@@ -204,21 +220,22 @@ test_that("data and delays are validated correctly without groups", {
   expect_identical(x$model_info, model_info)
   expect_equal(model_info$delay_from, match(delay_map$from, dates))
   expect_equal(model_info$delay_to, match(delay_map$to, dates))
-  expect_equal(model_info$is_delay_in_group, array(TRUE, c(3, 1)))
-  expect_equal(dim(model_info$is_date_in_delay), c(4, 3, 1))
-  expect_equal(model_info$is_date_in_delay[, , 1],
+  
+  expect_equal(length(model_info$group_info), 1)
+  group_info <- model_info$group_info[[1]]
+  expect_equal(group_info$is_delay_in_group, rep(TRUE, 3))
+  expect_equal(group_info$is_date_in_delay,
                rbind(c(TRUE, TRUE, FALSE),
                      c(FALSE, TRUE, TRUE),
                      c(TRUE, FALSE, FALSE),
                      c(FALSE, FALSE, TRUE)))
-  expect_equal(model_info$is_date_in_group, array(TRUE, c(4, 1)))
-  expect_equal(dim(model_info$is_date_connected), c(4, 4, 1))
-  expect_equal(model_info$is_date_connected[, , 1],
+  expect_equal(group_info$is_date_in_group, rep(TRUE, 4))
+  expect_equal(group_info$is_date_connected,
                rbind(c(FALSE, TRUE, TRUE, FALSE),
                      c(TRUE, FALSE, FALSE, TRUE),
                      c(TRUE, FALSE, FALSE, FALSE),
                      c(FALSE, TRUE, FALSE, FALSE)))
-  expect_equal(model_info$event_order, list(c(1, 2, 3, 4)))
+  expect_equal(group_info$event_order, c(1, 2, 3, 4))
   expect_equal(model_info$groups, 1)
   expect_equal(x$observed_dates, observed_dates_to_int(data))
   expect_equal(x$groups, rep(1, nrow(data)))
