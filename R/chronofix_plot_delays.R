@@ -14,12 +14,7 @@ chronofix_plot_delays <- function(mcmc_output,
   
   validate_delay_inputs(mcmc_output, delay_map)
   
-  pars_array <- mcmc_output$pars
-  n_params <- dim(pars_array)[1]
-  param_names <- dimnames(pars_array)[[1]]
-  
-  pars_flat <- matrix(pars_array, nrow = n_params)
-  rownames(pars_flat) <- param_names
+  pars_flat <- mcmc_output$pars
   
   plot_data_list <- list()
   peak_data_list <- list() 
