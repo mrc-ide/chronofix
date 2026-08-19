@@ -136,7 +136,6 @@ chronofix_hyperparameters <- function(prob_error_shape1 = 1,
 
 
 validate_data_and_delays <- function(data, delay_map) {
-  ## Here we will validate the data and delays and check they are compatible
   dates <- setdiff(names(data), c("id", "group"))
   
   validate_groups(data, delay_map)
@@ -146,8 +145,7 @@ validate_data_and_delays <- function(data, delay_map) {
     delay_map$group <- 1
   }
   
-  data_groups <- sort(unique(data$group))
-  delay_map_groups <- sort(unique(unlist(delay_map$group)))
+  validate_events(data, delay_map)
   
   model_info <- make_model_info(delay_map, dates)
   
@@ -181,9 +179,78 @@ validate_groups <- function(data, delay_map) {
     if (!is_same_groups) {
       cli::cli_abort(
         c("Groups in 'data' do not match those in 'delay_map'",
-          i = "'data' has: {squote(groups_data)}",
-          x = "'delay_map' has: {squote(groups_delay_map)}"))
+          i = "'data' has: {.val {groups_data}}",
+          x = "'delay_map' has: {.val {groups_delay_map}}"))
     }
+  }
+}
+
+validate_events <- function(data, delay_map) {
+  
+  event_cols <- setdiff(names(data), c("id", "group"))
+  delay_events <- unique(c(delay_map$from, delay_map$to))
+  
+  # from/to event in delay_map does not match a column in data
+  missing_in_data <- setdiff(delay_events, event_cols)
+  if (length(missing_in_data) > 0) {
+    cli::cli_abort(c(
+      "All events in {.arg delay_map} must exist as columns in {.arg data}.",
+      "x" = "Missing column{?s} in data: {.val {missing_in_data}}"
+    ))
+  }
+  
+  # event column in data has no associated delay in delay_map
+  missing_in_map <- setdiff(event_cols, delay_events)
+  if (length(missing_in_map) > 0) {
+    cli::cli_abort(c(
+      "All event columns in {.arg data} must be mapped in {.arg delay_map}.",
+      "x" = "Unmapped event column{?s} found in data: {.val {missing_in_map}}"
+    ))
+  }
+  
+  # individual has all NA dates
+  all_na_row <- rowSums(is.na(data[, event_cols, drop = FALSE])) == length(event_cols)
+  if (any(all_na_row)) {
+    problem_data <- data[all_na_row, ]
+    print(problem_data)
+    
+    cli::cli_abort(c(
+      "Individuals cannot have `NA` for all event dates.",
+      "x" = "Found {nrow(problem_data)} individual{?s} with no recorded dates (see printed data above)."
+    ))
+  }
+  
+  # non-NA dates for events not associated with the individual's group
+  groups_in_data <- unique(data$group)
+  has_invalid_date <- rep(FALSE, nrow(data))
+  
+  for (grp in groups_in_data) {
+    if (is.list(delay_map$group)) {
+      map_idx <- sapply(delay_map$group, function(x) grp %in% x)
+      } else {
+        map_idx <- delay_map$group == grp
+        }
+    
+    valid_events <- unique(c(delay_map$from[map_idx], delay_map$to[map_idx]))
+    invalid_events <- setdiff(event_cols, valid_events)
+    
+    if (length(invalid_events) > 0) {
+      for (ev in invalid_events) {
+        current_bad_rows <- data$group == grp & !is.na(data[[ev]])
+        has_invalid_date <- has_invalid_date | current_bad_rows
+      }
+    }
+  }
+  
+  if (any(has_invalid_date)) {
+    problem_data <- data[has_invalid_date, ]
+    print(problem_data)
+    
+    cli::cli_abort(c(
+      "Individuals have dates for events not associated with their group in {.arg delay_map}.",
+      "i" = "This could indicate an error in the grouping assignment or data entry.",
+      "x" = "Found {nrow(problem_data)} invalid record{?s} (see printed data above)."
+    ))
   }
 }
 
