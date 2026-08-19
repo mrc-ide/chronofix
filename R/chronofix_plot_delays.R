@@ -17,7 +17,7 @@ chronofix_plot_delays <- function(mcmc_output,
   pars_flat <- mcmc_output$pars
   
   plot_data_list <- list()
-  peak_data_list <- list() 
+  peak_data_list <- list()
   
   for (i in seq_len(nrow(delay_map))) {
     
@@ -77,25 +77,24 @@ chronofix_plot_delays <- function(mcmc_output,
       }
     }
     
-    median_line <- apply(dens_matrix, 1, stats::quantile,
-                         probs = 0.5, na.rm = TRUE)
+    mean_line <- rowMeans(dens_matrix, na.rm = TRUE)
     
     plot_data_list[[i]] <- data.frame(
       Panel_Title = panel_title,
       Distribution = dist_clean, 
       x = x_seq,
       lower = apply(dens_matrix, 1, stats::quantile, probs = 0.025, na.rm = TRUE),
-      median = median_line,
+      mean_density = mean_line,
       upper = apply(dens_matrix, 1, stats::quantile, probs = 0.975, na.rm = TRUE)
     )
     
     # find max density
-    peak_idx <- which.max(median_line)
+    peak_idx <- which.max(mean_line)
     peak_data_list[[i]] <- data.frame(
       Panel_Title = panel_title,
       Distribution = dist_clean,
       peak_x = x_seq[peak_idx],
-      peak_y = median_line[peak_idx]
+      peak_y = mean_line[peak_idx]
     )
   }
   
@@ -112,7 +111,7 @@ chronofix_plot_delays <- function(mcmc_output,
       aes(x = peak_x, xend = peak_x, y = 0, yend = peak_y, color = Distribution), 
       linetype = "dotted", linewidth = 0.8, inherit.aes = FALSE
     ) +
-    geom_line(aes(y = median), linetype = "dashed", linewidth = 1) +
+    geom_line(aes(y = mean_density), linetype = "dashed", linewidth = 1) +
     facet_wrap(~ Panel_Title, scales = "free", ncol = 3) +
     scale_fill_manual(values = dist_colors) +
     scale_color_manual(values = line_colors) +
@@ -121,7 +120,7 @@ chronofix_plot_delays <- function(mcmc_output,
       x = "Delay (Days)", 
       y = "Probability Density",
       title = "Posterior Estimated Delay Distributions",
-      subtitle = "Dashed curve: Posterior Median. Dotted line: Peak Density. Shaded area: 95% CrI."
+      subtitle = "Dashed curve: Posterior Mean. Dotted line: Peak Density. Shaded area: 95% CrI."
     ) +
     theme(
       strip.text = element_markdown(face = "bold", size = 9, lineheight = 1.2,
