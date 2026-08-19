@@ -183,7 +183,7 @@ initialise_augmented_data <- function(observed_dates, pars, groups, model_info,
                                                  init_settings$quantile_range)
 
   initialise1 <- function(i) {
-    is_delay_in_group <- model_info$is_delay_in_group[, groups[i]]
+    is_delay_in_group <- model_info$group_info[[groups[i]]]$is_delay_in_group
     initialise_row(observed_dates[i, ], groups[i],
                    delay_map[is_delay_in_group, ],
                    delay_boundaries[is_delay_in_group, ],
