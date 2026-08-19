@@ -143,6 +143,15 @@ validate_data_and_delays <- function(data, delay_map) {
     ))
   }
   
+  if (any(duplicated(data$id))) {
+    duplicate_ids <- unique(data$id[duplicated(data$id)])
+    
+    cli::cli_abort(c(
+      "The {.col id} column in {.arg data} must contain unique values.",
+      "x" = "Found duplicate ID{?s}: {.val {duplicate_ids}}"
+    ))
+  }
+  
   validate_groups(data, delay_map)
   
   if (!("group" %in% names(data))) {
