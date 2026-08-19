@@ -1,84 +1,96 @@
 #' @title Get Summary Table of Estimated Delays
 #'
+#' @description
+#' Summarises posterior samples for each delay distribution described in
+#' `delay_map`, returning the derived mean/CV and the native distribution
+#' parameters (shape/scale for Gamma, meanlog/sdlog for Log-Normal), each
+#' with posterior median and 95% credible interval.
+#' 
 #' @param mcmc_output Output list from `chronofix_mcmc_run()`.
 #' @param delay_map The delay map used for the model setup.
 #'
-#' @return A data frame containing posterior summaries for the estimated delay
-#'   mean and coefficient of variation (CV), including posterior medians and
-#'   95% credible intervals.
+#' @return A data frame with one row per delay x parameter
+#'   (`Mean`, `CV`, and the two native distribution parameters (shape/scale for
+#'   Gamma, meanlog/sdlog for Log-Normal), giving the `Posterior_Median` and
+#'   95% credible interval (`Lower_95_CrI`, `Upper_95_CrI`).
 #'
 #' @importFrom stats quantile
+#' @importFrom cli cli_abort
 #' @export
 chronofix_get_delays <- function(mcmc_output, delay_map) {
   
   validate_delay_inputs(mcmc_output, delay_map)
   
-  pars_array <- mcmc_output$pars
-  n_params <- dim(pars_array)[1]
-  param_names <- dimnames(pars_array)[[1]]
+  pars_flat <- mcmc_output$pars
+  par_names <- rownames(pars_flat)
   
-  pars_flat <- matrix(pars_array, nrow = n_params)
-  rownames(pars_flat) <- param_names
+  calc_q <- function(samps) {
+    unname(round(stats::quantile(samps, probs = c(0.025, 0.5, 0.975), na.rm = TRUE), 3))
+  }
   
-  summary_list <- vector("list", nrow(delay_map))
+  get_par <- function(name) {
+    if (!name %in% par_names) {
+      cli::cli_abort(c(
+        "Expected parameter {.val {name}} not found in {.arg mcmc_output$pars}.",
+        "i" = "Available parameters: {.val {par_names}}.",
+        "i" = "Check that {.arg delay_map} matches the model {.arg mcmc_output} came from."
+      ))
+    }
+    pars_flat[name, ]
+  }
+  
+  results_list <- vector("list", nrow(delay_map))
   
   for (i in seq_len(nrow(delay_map))) {
     
     raw_dist <- as.character(delay_map$distribution[i])
-    if (grepl("gamma", raw_dist, ignore.case = TRUE)) {
-      dist_clean <- "Gamma"
-    } else {
-      dist_clean <- "Log-Normal"
-    }
+    is_gamma <- grepl("gamma", raw_dist, ignore.case = TRUE)
+    dist_clean <- if (is_gamma) "Gamma" else "Log-Normal"
     
     clean_group <- clean_group_name(delay_map$group[[i]])
     from_name <- clean_event_name(delay_map$from[i])
     to_name <- clean_event_name(delay_map$to[i])
+    delay_name <- paste(from_name, "to", to_name)
     
-    delay_label <- paste(from_name, "to", to_name)
-    
-    if (dist_clean == "Gamma") {
-      mean_samps <- pars_flat[paste0("delay_mean", i), , drop = TRUE]
-      shape_samps <- pars_flat[paste0("delay_shape", i), , drop = TRUE]
+    if (is_gamma) {
+      mean_samps <- get_par(paste0("delay", i, "_mean"))
+      shape_samps <- get_par(paste0("delay", i, "_shape"))
       cv_samps <- 1 / sqrt(shape_samps)
+      params <- list(
+        Mean  = calc_q(mean_samps),
+        CV    = calc_q(cv_samps),
+        Shape = calc_q(shape_samps),
+        Scale = calc_q(mean_samps / shape_samps)
+      )
       
-    } else if (dist_clean == "Log-Normal") {
-      meanlog_samps <- pars_flat[paste0("delay_meanlog", i), , drop = TRUE]
-      prec_samps <- pars_flat[paste0("delay_precisionlog", i), , drop = TRUE]
-      mean_samps <- exp(meanlog_samps + (1 / prec_samps) / 2)
-      cv_samps <- sqrt(exp(1 / prec_samps) - 1)
+    } else {
+      meanlog_samps <- get_par(paste0("delay", i, "_meanlog"))
+      prec_samps <- get_par(paste0("delay", i, "_precisionlog"))
+      sdlog_samps <- sqrt(1 / prec_samps)
+      params <- list(
+        Mean    = calc_q(exp(meanlog_samps + (sdlog_samps^2) / 2)),
+        CV      = calc_q(sqrt(exp(sdlog_samps^2) - 1)),
+        Meanlog = calc_q(meanlog_samps),
+        Sdlog   = calc_q(sdlog_samps)
+      )
     }
     
-    mean_quantiles <- stats::quantile(
-      mean_samps,
-      probs = c(0.025, 0.5, 0.975),
-      na.rm = TRUE,
-      names = FALSE
-    )
+    row <- do.call(rbind, lapply(names(params), function(pname) {
+      q <- params[[pname]]
+      data.frame(
+        Group = clean_group,
+        Delay = delay_name,
+        Distribution = dist_clean,
+        Parameter = pname,
+        Posterior_Median = q[2],
+        Lower_95_CrI = q[1],
+        Upper_95_CrI = q[3],
+        row.names = NULL
+        )
+      }))
     
-    cv_quantiles <- stats::quantile(
-      cv_samps,
-      probs = c(0.025, 0.5, 0.975),
-      na.rm = TRUE,
-      names = FALSE
-    )
-    
-    summary_list[[i]] <- data.frame(
-      Group = clean_group,
-      Delay = delay_label,
-      Distribution = dist_clean,
-      Delay_Median = round(mean_quantiles[2], 3),
-      Delay_Lower_95_CrI = round(mean_quantiles[1], 3),
-      Delay_Upper_95_CrI = round(mean_quantiles[3], 3),
-      CV_Median = round(cv_quantiles[2], 3),
-      CV_Lower_95_CrI = round(cv_quantiles[1], 3),
-      CV_Upper_95_CrI = round(cv_quantiles[3], 3),
-      stringsAsFactors = FALSE
-    )
+    results_list[[i]] <- row
   }
   
-  results_df <- do.call(rbind, summary_list)
-  rownames(results_df) <- NULL
-  
-  results_df
+  do.call(rbind, results_list)
 }
