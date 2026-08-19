@@ -195,6 +195,15 @@ test_that("data and delays are validated correctly", {
   expect_identical(x$model_info, model_info)
   expect_equal(x$observed_dates, observed_dates_to_int(data))
   expect_equal(x$groups, match(data$group, model_info$groups))
+  
+  # Missing id column in data
+  data_no_id <- data
+  data_no_id$id <- NULL
+  expect_error(
+    validate_data_and_delays(data_no_id, delay_map),
+    "must contain an `id` column"
+  )
+  
 })
 
 
@@ -247,12 +256,12 @@ test_that("Error when data and delay_map have different groups", {
   data <- toy$data$observed_data
   delay_map <- toy$delay_map
 
-  ## No group column in data
+  ## no group column in data
   data_no_group <- data[, names(data) != "group"]
   expect_error(validate_data_and_delays(data_no_group, delay_map),
                "Expected 'group' column in 'data'")
   
-  ## No group column in delay_map
+  ## no group column in delay_map
   delay_map_no_group <- delay_map[, names(delay_map) != "group"]
   expect_error(validate_data_and_delays(data, delay_map_no_group),
                "Expected 'group' column in 'delay_map'")
