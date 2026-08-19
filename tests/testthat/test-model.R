@@ -196,14 +196,6 @@ test_that("data and delays are validated correctly", {
   expect_equal(x$observed_dates, observed_dates_to_int(data))
   expect_equal(x$groups, match(data$group, model_info$groups))
   
-  # Missing id column in data
-  data_no_id <- data
-  data_no_id$id <- NULL
-  expect_error(
-    validate_data_and_delays(data_no_id, delay_map),
-    "must contain an `id` column"
-  )
-  
 })
 
 
@@ -288,10 +280,18 @@ test_that("Error when data and delay_map have different groups", {
                "Groups in 'data'")
 })
 
-test_that("validate_events correctly flags column and date errors", {
+test_that("validate_events correctly flags missing columns and date errors", {
   toy <- toy_model()
   data <- toy$data$observed_data
   delay_map <- toy$delay_map
+  
+  # missing id column in data
+  data_no_id <- data
+  data_no_id$id <- NULL
+  expect_error(
+    validate_data_and_delays(data_no_id, delay_map),
+    "must contain an `id` column"
+  )
   
   # missing column in data
   data_missing_col <- data
