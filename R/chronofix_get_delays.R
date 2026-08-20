@@ -15,28 +15,15 @@
 #'   95% credible interval (`Lower_95_CrI`, `Upper_95_CrI`).
 #'
 #' @importFrom stats quantile
-#' @importFrom cli cli_abort
 #' @export
 chronofix_get_delays <- function(mcmc_output, delay_map) {
   
   validate_delay_inputs(mcmc_output, delay_map)
   
   pars_flat <- mcmc_output$pars
-  par_names <- rownames(pars_flat)
   
   calc_q <- function(samps) {
     unname(round(stats::quantile(samps, probs = c(0.025, 0.5, 0.975), na.rm = TRUE), 3))
-  }
-  
-  get_par <- function(name) {
-    if (!name %in% par_names) {
-      cli::cli_abort(c(
-        "Expected parameter {.val {name}} not found in {.arg mcmc_output$pars}.",
-        "i" = "Available parameters: {.val {par_names}}.",
-        "i" = "Check that {.arg delay_map} matches the model {.arg mcmc_output} came from."
-      ))
-    }
-    pars_flat[name, ]
   }
   
   results_list <- vector("list", nrow(delay_map))
@@ -53,8 +40,8 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
     delay_name <- paste(from_name, "to", to_name)
     
     if (is_gamma) {
-      mean_samps <- get_par(paste0("delay", i, "_mean"))
-      shape_samps <- get_par(paste0("delay", i, "_shape"))
+      mean_samps <- pars_flat[paste0("delay", i, "_mean"), ]
+      shape_samps <- pars_flat[paste0("delay", i, "_shape"), ]
       cv_samps <- 1 / sqrt(shape_samps)
       params <- list(
         Mean  = calc_q(mean_samps),
@@ -64,8 +51,8 @@ chronofix_get_delays <- function(mcmc_output, delay_map) {
       )
       
     } else {
-      meanlog_samps <- get_par(paste0("delay", i, "_meanlog"))
-      prec_samps <- get_par(paste0("delay", i, "_precisionlog"))
+      meanlog_samps <- pars_flat[paste0("delay", i, "_meanlog"), ]
+      prec_samps <- pars_flat[paste0("delay", i, "_precisionlog"), ]
       sdlog_samps <- sqrt(1 / prec_samps)
       params <- list(
         Mean    = calc_q(exp(meanlog_samps + (sdlog_samps^2) / 2)),
