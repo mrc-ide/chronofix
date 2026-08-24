@@ -438,9 +438,10 @@ chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
   
   augmented_data <- unpack_augmented_data(attr(pars, "data"), data_packer)
   
-  ll_errors <- chronofix_log_likelihood_errors(pars[["prob_error"]],
-                                               augmented_data$error_indicators,
-                                               date_range)
+  ll_errors <- 
+    sum(chronofix_log_likelihood_errors(pars[["prob_error"]],
+                                        augmented_data$error_indicators,
+                                        date_range))
   
   delays <- seq_along(model_info$delay_from)
   
@@ -457,8 +458,8 @@ chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
 
 chronofix_log_likelihood_errors <- function(prob_error, error_indicators,
                                             date_range) {
-  n_errors <- sum(error_indicators, na.rm = TRUE)
-  n_non_errors <- sum(!error_indicators, na.rm = TRUE)
+  n_errors <- rowSums(error_indicators, na.rm = TRUE)
+  n_non_errors <- rowSums(!error_indicators, na.rm = TRUE)
   
   ## prob_error of each error and 1 - prob_error of each non-error
   ## for each error the date is then drawn at random from the range of dates
