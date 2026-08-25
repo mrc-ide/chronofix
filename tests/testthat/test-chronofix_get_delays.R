@@ -20,6 +20,7 @@ test_that("chronofix_get_delays returns posterior delay summaries", {
       "Delay",
       "Distribution",
       "Parameter",
+      "Posterior_Mean",
       "Posterior_Median",
       "Lower_95_CrI",
       "Upper_95_CrI")
@@ -65,10 +66,12 @@ test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
                     names = FALSE),
     3
   )
+  expected_mean1_post_mean <- round(mean(c(1, 2, 3, 4, 5)), 3)
   
   expect_equal(result$Lower_95_CrI[1], expected_mean1[1])
   expect_equal(result$Posterior_Median[1], expected_mean1[2])
   expect_equal(result$Upper_95_CrI[1], expected_mean1[3])
+  expect_equal(result$Posterior_Mean[1], expected_mean1_post_mean)
   
   expect_equal(result$Lower_95_CrI[2], expected_cv1[1])
   expect_equal(result$Posterior_Median[2], expected_cv1[2])
@@ -84,6 +87,8 @@ test_that("chronofix_get_delays handles NAs in MCMC output safely", {
   mean_row_1 <- subset(result, Delay == "Onset to Report" & Parameter == "Mean")
   
   expect_false(is.na(mean_row_1$Posterior_Median))
-  # median of c(NA, 2, 3, 4, 5) should be 3.5
-  expect_equal(mean_row_1$Posterior_Median, 3.5) 
+  expect_false(is.na(mean_row_1$Posterior_Mean))
+  # median and mean of c(NA, 2, 3, 4, 5) should be 3.5
+  expect_equal(mean_row_1$Posterior_Median, 3.5)
+  expect_equal(mean_row_1$Posterior_Mean, 3.5)
 })
