@@ -505,7 +505,7 @@ swap_error_indicators <- function(g, augmented_data, observed_dates, groups,
   update <- monty::monty_random_n_real(group_size, rng) < 
     control$prob_error_swap &
     vapply(i_group, 
-           function (i) has_mixed_errors(augmented_data$error_indicators[i]),
+           function (i) has_mixed_errors(augmented_data$error_indicators[i, ]),
            logical(1))
   i_update <- i_group[update]
   if (length(i_update) == 0) {
@@ -514,7 +514,7 @@ swap_error_indicators <- function(g, augmented_data, observed_dates, groups,
   
   error_indicators_new <- 
     change_error_indicators(augmented_data$error_indicators, 
-                            event_order, i_group)
+                            event_order, i_update)
   
   sampling_order <- 
     lapply(seq_along(i_update), 
@@ -528,7 +528,7 @@ swap_error_indicators <- function(g, augmented_data, observed_dates, groups,
     lapply(i_update, 
            function(i) {
              calc_batch_sampling_order(
-               event_order, augmented_data$error_indicators[i_update[i], ],
+               event_order, augmented_data$error_indicators[i, ],
                group_info$is_date_connected)
            })
   
