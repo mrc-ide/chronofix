@@ -107,7 +107,7 @@ update_estimated_dates1 <- function(d, g, augmented_data, observed_dates,
                      augmented_data$estimated_dates[i_update, , drop = FALSE], 
                      augmented_data$error_indicators[i_update, , drop = FALSE],
                      augmented_data$error_indicators[i_update, , drop = FALSE],
-                     observed_dates[i_update, ], g, prob_error, 
+                     observed_dates[i_update, , drop = FALSE], g, prob_error, 
                      delay_pars, model_info, date_range)
 
   accept <- log(monty::monty_random_n_real(length(i_update), rng)) < accept_prob
@@ -207,7 +207,7 @@ update_error_indicators1 <- function(d, g, augmented_data, observed_dates, group
                      augmented_data$estimated_dates[i_update, , drop = FALSE], 
                      error_indicators_new,
                      augmented_data$error_indicators[i_update, , drop = FALSE],
-                     observed_dates[i_update, ], g, prob_error, 
+                     observed_dates[i_update, , drop = FALSE], g, prob_error, 
                      delay_pars, model_info, date_range)
   
   accept <- log(monty::monty_random_n_real(length(i_update), rng)) < accept_prob
@@ -325,7 +325,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   
   is_delay_in_group <- model_info$group_info[[group]]$is_delay_in_group
 
-  ll <- rep(-Inf, length(sampling_order))
+  accept_prob <- rep(-Inf, length(sampling_order))
   
   ## are error indicators TRUE with estimated date matching observed date
   incompatible_error_and_date <-
@@ -338,7 +338,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
     rowSums(incompatible_error_and_date | date_outside_range, na.rm = TRUE) > 0
   
   if (all(reject)) {
-    return(ll)
+    return(accept_prob)
   }
   
   ## new delays log likelihood
@@ -357,7 +357,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   reject[!reject] <- is_ll_infinite
   ll_delays_new <- ll_delays_new[!is_ll_infinite, , drop = FALSE]
   if (nrow(ll_delays_new) == 0) {
-    return(ll)
+    return(accept_prob)
   }
   
   ## current delays log likelihood
@@ -388,7 +388,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   reject[!reject] <- is_ratio_post_neg_inf
   ratio_post <- ratio_post[!is_ratio_post_neg_inf]
   if (length(ratio_post) == 0) {
-    return(ll)
+    return(accept_prob)
   }
   
   i_prop_to_calc <- which(!reject)
@@ -410,9 +410,9 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
            }, numeric(1))
   ratio_prop <- prop_current - prop_new
   
-  ll[!reject] <- ratio_post + ratio_prop
+  accept_prob[!reject] <- ratio_post + ratio_prop
   
-  ll
+  accept_prob
 }
 
 
@@ -551,7 +551,7 @@ swap_error_indicators <- function(g, augmented_data, observed_dates, groups,
                      augmented_data$estimated_dates[i_update, , drop = FALSE], 
                      error_indicators_new,
                      augmented_data$error_indicators[i_update, , drop = FALSE],
-                     observed_dates[i_update, ], g, prob_error, 
+                     observed_dates[i_update, , drop = FALSE], g, prob_error, 
                      delay_pars, model_info, date_range)
   
   accept <- log(monty::monty_random_n_real(length(i_update), rng)) < accept_prob
