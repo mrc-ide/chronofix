@@ -104,6 +104,8 @@ chronofix_plot_delays <- function(mcmc_output,
     facet_wrap(~ Panel_Title, scales = "free", ncol = 3) +
     scale_fill_manual(values = dist_colors) +
     scale_color_manual(values = line_colors) +
+    scale_x_continuous(expand = c(0, 0)) + 
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
     theme_bw(base_size = 12) +
     labs(
       x = "Delay (Days)", 
