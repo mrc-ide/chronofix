@@ -378,7 +378,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
     ll_errors_new <- chronofix_log_likelihood_errors(
       prob_error, error_indicators_new, date_range)
     
-    ratio_ll_errors <- sum(ll_errors_new - ll_errors_current)
+    ratio_ll_errors <- ll_errors_new - ll_errors_current
   }
   
   ratio_post <- ratio_ll_delays + ratio_ll_errors
@@ -511,7 +511,7 @@ swap_error_indicators <- function(g, augmented_data, observed_dates, groups,
   if (length(i_update) == 0) {
     return(augmented_data)
   }
-  browser()
+  
   error_indicators_new <- 
     change_error_indicators(augmented_data$error_indicators, 
                             event_order, i_group)
