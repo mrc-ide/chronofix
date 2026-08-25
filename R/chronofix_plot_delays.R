@@ -17,7 +17,6 @@ chronofix_plot_delays <- function(mcmc_output,
   pars_flat <- mcmc_output$pars
   
   plot_data_list <- list()
-  peak_data_list <- list()
   
   for (i in seq_len(nrow(delay_map))) {
     
@@ -77,29 +76,15 @@ chronofix_plot_delays <- function(mcmc_output,
       upper = quants[2, ] # 97.5%
     )
     
-    # find max density
-    peak_idx <- which.max(mean_line)
-    peak_data_list[[i]] <- data.frame(
-      Panel_Title = panel_title,
-      Distribution = dist_clean,
-      peak_x = x_seq[peak_idx],
-      peak_y = mean_line[peak_idx]
-    )
   }
   
   plot_data <- do.call(rbind, plot_data_list)
-  peak_data <- do.call(rbind, peak_data_list)
   
   dist_colors <- c("Gamma" = "#A7C1E1", "Log-Normal" = "#B7E4C7")
   line_colors <- c("Gamma" = "#4B7BB6", "Log-Normal" = "#52B788") 
   
   p <- ggplot(plot_data, aes(x = x, fill = Distribution, color = Distribution)) +
     geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.55, color = NA) +
-    geom_segment(
-      data = peak_data, 
-      aes(x = peak_x, xend = peak_x, y = 0, yend = peak_y, color = Distribution), 
-      linetype = "dotted", linewidth = 0.8, inherit.aes = FALSE
-    ) +
     geom_line(aes(y = mean_density), linetype = "dashed", linewidth = 1) +
     facet_wrap(~ Panel_Title, scales = "free", ncol = 3) +
     scale_fill_manual(values = dist_colors) +
@@ -111,7 +96,7 @@ chronofix_plot_delays <- function(mcmc_output,
       x = "Delay (Days)", 
       y = "Probability Density",
       title = "Posterior Estimated Delay Distributions",
-      subtitle = "Dashed curve: Posterior Mean. Dotted line: Peak Density. Shaded area: 95% CrI."
+      subtitle = "Dashed curve: Posterior Mean. Shaded area: 95% CrI."
     ) +
     theme(
       strip.text = element_markdown(face = "bold", size = 9, lineheight = 1.2,

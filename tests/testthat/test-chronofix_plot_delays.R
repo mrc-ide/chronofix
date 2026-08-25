@@ -37,7 +37,7 @@ test_that("chronofix_plot_delays generates a correct ggplot object", {
   )
   
   expect_s3_class(p, "ggplot")
-  expect_length(p$layers, 3) # 3 geom layers (ribbon, segment, line)
+  expect_length(p$layers, 2) # 2 geom layers (ribbon, line)
   expect_identical(p$labels$x, "Delay (Days)")
   expect_identical(p$labels$y, "Probability Density")
   expect_s3_class(p$facet, "FacetWrap")
