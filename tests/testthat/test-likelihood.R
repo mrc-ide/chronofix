@@ -4,12 +4,11 @@ test_that("error log-likelihood calculated correctly", {
   date_range <- c(500, 650)
   prob_error <- 0.2
   
-  n_errors <- 3
-  n_non_errors <- 4
-  n_missing <- 2
-  error_indicators <- c(rep(TRUE, n_errors),
-                        rep(FALSE, n_non_errors),
-                        rep(NA, n_missing))
+  error_indicators <- rbind(c(TRUE, FALSE, NA, FALSE),
+                            c(FALSE, TRUE, FALSE, TRUE),
+                            c(FALSE, NA, NA, FALSE))
+  n_non_errors <- rowSums(!is.na(error_indicators) & error_indicators == FALSE)
+  n_errors <- rowSums(!is.na(error_indicators) & error_indicators == TRUE)
   
   ## prob_error of each error and 1 - prob_error of each non-error
   ## missing dates have no impact here!
@@ -197,9 +196,7 @@ test_that("log-likelihood aggregates correctly", {
   
   ## error log-likelihood by row
   ll_errors <- 
-    apply(error_indicators, 1, 
-          function(x) chronofix_log_likelihood_errors(prob_error, x, date_range)
-    )
+    chronofix_log_likelihood_errors(prob_error, error_indicators, date_range)
   
   ## delay log-likelihood by row (and delay)
   calc_ll_delay1 <- function(i) {
