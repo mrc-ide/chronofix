@@ -403,7 +403,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   prop_new <- 
     vapply(i_prop_to_calc,
            function(i) {
-             calc_proposal_density(sampling_order_reverse[[i]],
+             calc_proposal_density(sampling_order[[i]],
                                    estimated_dates_new[i, ], 
                                    error_indicators_new[i, ],
                                    group, delay_pars, model_info, date_range)
