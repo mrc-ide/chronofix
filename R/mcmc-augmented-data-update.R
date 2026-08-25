@@ -373,10 +373,10 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   } else {
     ## current errors log likelihood
     ll_errors_current <- chronofix_log_likelihood_errors(
-      prob_error, error_indicators, date_range)
+      prob_error, error_indicators[!reject, , drop = FALSE], date_range)
     ## new errors log likelihood
     ll_errors_new <- chronofix_log_likelihood_errors(
-      prob_error, error_indicators_new, date_range)
+      prob_error, error_indicators_new[!reject, , drop = FALSE], date_range)
     
     ratio_ll_errors <- ll_errors_new - ll_errors_current
   }
