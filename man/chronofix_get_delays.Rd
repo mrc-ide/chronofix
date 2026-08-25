@@ -12,10 +12,14 @@ chronofix_get_delays(mcmc_output, delay_map)
 \item{delay_map}{The delay map used for the model setup.}
 }
 \value{
-A data frame containing posterior summaries for the estimated delay
-mean and coefficient of variation (CV), including posterior medians and
-95\% credible intervals.
+A data frame with one row per delay x parameter
+(\code{Mean}, \code{CV}, and the two native distribution parameters (shape/scale for
+Gamma, meanlog/sdlog for Log-Normal), giving the \code{Posterior_Mean},
+\code{Posterior_Median} and 95\% credible interval (\code{Lower_95_CrI}, \code{Upper_95_CrI}).
 }
 \description{
-Get Summary Table of Estimated Delays
+Summarises posterior samples for each delay distribution described in
+\code{delay_map}, returning the derived mean/CV and the native distribution
+parameters (shape/scale for Gamma, meanlog/sdlog for Log-Normal), each
+with posterior mean, posterior median and 95\% credible interval.
 }
