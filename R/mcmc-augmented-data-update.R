@@ -66,7 +66,6 @@ update_estimated_dates1 <- function(date, i_group, augmented_data,
                                     delay_info, group_info, date_range, 
                                     control, rng) {
   
-  
   group_size <- length(i_group)
   ## update each with probability prob_update_estimated_dates
   update <- monty::monty_random_n_real(group_size, rng) < 
@@ -391,23 +390,24 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
     return(accept_prob)
   }
   
+  ll_delays_new <- ll_delays_new[!is_ratio_post_neg_inf, , drop = FALSE]
+  ll_delays_current <- ll_delays_current[!is_ratio_post_neg_inf, , drop = FALSE]
+  
   i_prop_to_calc <- which(!reject)
   prop_current <- 
-    vapply(i_prop_to_calc,
+    vapply(seq_along(i_prop_to_calc),
            function(i) {
-             calc_proposal_density(sampling_order_reverse[[i]],
-                                   estimated_dates[i, ],
-                                   error_indicators[i, ],
-                                   delay_pars, delay_info,
+             calc_proposal_density(sampling_order_reverse[[i_prop_to_calc[i]]],
+                                   error_indicators[i_prop_to_calc[i], ],
+                                   ll_delays_current[i, ], 
                                    group_info, date_range)
            }, numeric(1))
   prop_new <- 
-    vapply(i_prop_to_calc,
+    vapply(seq_along(i_prop_to_calc),
            function(i) {
-             calc_proposal_density(sampling_order[[i]],
-                                   estimated_dates_new[i, ], 
-                                   error_indicators_new[i, ],
-                                   delay_pars, delay_info,
+             calc_proposal_density(sampling_order[[i_prop_to_calc[i]]],
+                                   error_indicators_new[i_prop_to_calc[i], ],
+                                   ll_delays_new[i, ], 
                                    group_info, date_range)
            }, numeric(1))
   ratio_prop <- prop_current - prop_new
@@ -418,10 +418,8 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
 }
 
 
-calc_proposal_density <- function(sampling_order, estimated_dates,
-                                  error_indicators, delay_pars,
-                                  delay_info, group_info, date_range) {
-  is_date_in_delay <- group_info$is_date_in_delay
+calc_proposal_density <- function(sampling_order, error_indicators, ll_delays,
+                                  group_info, date_range) {
   is_date_in_group <- group_info$is_date_in_group
   is_date_connected <- group_info$is_date_connected
   delay_connecting_dates <- group_info$delay_connecting_dates
@@ -448,25 +446,12 @@ calc_proposal_density <- function(sampling_order, estimated_dates,
         d[j] <- -log(date_range[2L] - date_range[1L])
       } else {
         ## error or missing - proposal is based on delay(s)
-        delay_pars_sample <- delay_pars[delays_for_sampling]
-        delay_distribution <- delay_info$distribution[delays_for_sampling]
-        delay_from <- delay_info$from[delays_for_sampling]
-        delay_to <- delay_info$to[delays_for_sampling]
-        delay_values <- estimated_dates[delay_to] - estimated_dates[delay_from]
-        
         if (length(delays_for_sampling) == 1) {
           ## single delay involving date i
-          d[j] <- log_density_delay(delay_values, delay_pars_sample[[1]],
-                                    delay_distribution)
+          d[j] <- ll_delays[delays_for_sampling]
         } else {
           ## multiple delays involving date i, so delay selected at random
-          d[j] <- 
-            log(sum(exp(vnapply(seq_along(delays_for_sampling),
-                                function(i) {
-                                  log_density_delay(delay_values[i], 
-                                                    delay_pars_sample[[i]], 
-                                                    delay_distribution[i])
-                                  })))) - 
+          d[j] <- log(sum(exp(ll_delays[delays_for_sampling]))) - 
             log(length(delays_for_sampling))
         }
       }
