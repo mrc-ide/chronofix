@@ -280,6 +280,7 @@ test_that("updating estimated dates skipped correctly", {
   delay_map <- toy_model()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
+  delay_info <- model_info$delay_info
   
   rng <- monty::monty_rng_create(seed = 1)
   rng1 <- monty::monty_rng_create(seed = 1) 
@@ -292,45 +293,22 @@ test_that("updating estimated dates skipped correctly", {
                      list(mean = 6.4, shape = 2.7),
                      list(meanlog = 2.5, precisionlog = 0.3),
                      list(meanlog = 1.8, precisionlog = 0.8))
-  control <- chronofix_mcmc_control(prob_update_estimated_dates = 1)
-  
-  ## group = 2, i = 2 - no hospitalisation for this group so no update
-  group <- 2
-  i <- 2
-  observed_dates <- c(NA, NA, 40, 68, NA)
-  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
-                         error_indicators = c(NA, NA, FALSE, TRUE, NA))
-  augmented_data_new <- 
-    update_estimated_dates1(i, augmented_data, observed_dates, group,
-                            prob_error, delay_pars, model_info, 
-                            date_range, control, rng)
-  ## augmented_data and rng should be unchanged
-  expect_equal(augmented_data, augmented_data_new)
-  expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
-  
-  
-  ## group = 4, i = 5 - no discharge for this group so no update
-  group <- 4
-  i <- 5
-  observed_dates <- c(10, 5, 30, NA, NA)
-  augmented_data <- list(estimated_dates = c(10.3, 15.4, 30.2, 40.1, NA),
-                         error_indicators = c(FALSE, TRUE, FALSE, NA, NA))
-  augmented_data_new <- 
-    update_estimated_dates1(i, augmented_data, observed_dates, group,
-                            prob_error, delay_pars, model_info, 
-                            date_range, control, rng)
-  ## augmented_data and rng should be unchanged
-  expect_equal(augmented_data, augmented_data_new)
-  expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
-  
-  
-  ## Try to update i = 4 for group 4, but with prob_update_estimated_dates = 0
-  ## there should be no update, and a single random draw
-  i <- 4
   control <- chronofix_mcmc_control(prob_update_estimated_dates = 0)
+  
+  ## Try to update date = 4 for group 4, but with 
+  ## prob_update_estimated_dates = 0 there should be no update,
+  ## and a single random draw
+  group <- 4
+  group_info <- model_info$group_info[[group]]
+  date <- 4
+  i_group <- 1
+  observed_dates <- rbind(c(10, 5, 30, NA, NA))
+  augmented_data <- 
+    list(estimated_dates = rbind(c(10.3, 15.4, 30.2, 40.1, NA)),
+         error_indicators = rbind(c(FALSE, TRUE, FALSE, NA, NA)))
   augmented_data_new <- 
-    update_estimated_dates1(i, augmented_data, observed_dates, group,
-                            prob_error, delay_pars, model_info, 
+    update_estimated_dates1(date, i_group, augmented_data, observed_dates,
+                            prob_error, delay_pars, delay_info, group_info,
                             date_range, control, rng)
   ## augmented_data should be unchanged
   expect_equal(augmented_data, augmented_data_new)
@@ -338,7 +316,6 @@ test_that("updating estimated dates skipped correctly", {
   ## to rng1 and check they match
   x <- monty::monty_random_real(rng1)
   expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
-  
 })
 
 
@@ -346,6 +323,7 @@ test_that("updating error indicators skipped correctly", {
   delay_map <- toy_model()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
+  delay_info <- model_info$delay_info
   
   rng <- monty::monty_rng_create(seed = 1)
   rng1 <- monty::monty_rng_create(seed = 1)
@@ -360,43 +338,55 @@ test_that("updating error indicators skipped correctly", {
                      list(meanlog = 1.8, precisionlog = 0.8))
   control <- chronofix_mcmc_control(prob_update_error_indicators = 1)
   
-  ## group = 2, i = 2 - missing date so no update
+  ## group = 2, date = 2 - missing date so no update
   group <- 2
-  i <- 2
-  observed_dates <- c(NA, NA, 40, 68, NA)
-  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 50.1, NA),
-                         error_indicators = c(NA, NA, FALSE, TRUE, NA))
+  group_info <- model_info$group_info[[group]]
+  date <- 2
+  i_group <- 1
+  observed_dates <- rbind(c(NA, NA, 40, 68, NA))
+  augmented_data <-
+    list(rbind(estimated_dates = c(20.5, NA, 40.2, 50.1, NA)),
+         error_indicators = rbind(c(NA, NA, FALSE, TRUE, NA)))
   augmented_data_new <- 
-    update_error_indicators1(i, augmented_data, observed_dates, group,
-                             prob_error, delay_pars, model_info, 
+    update_error_indicators1(date, i_group, augmented_data, observed_dates,
+                             prob_error, delay_pars, delay_info, group_info,
                              date_range, control, rng)
-  ## augmented_data and rng should be unchanged
+  ## augmented_data should be unchanged
   expect_equal(augmented_data, augmented_data_new)
+  ## rng should have gone through a single random_real draw so let's do the same
+  ## to rng1 and check they match
+  x <- monty::monty_random_real(rng1)
   expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
   
   
   ## group = 4, i = 4 - missing date so no update
   group <- 4
-  i <- 4
-  observed_dates <- c(10, 5, 30, NA, NA)
-  augmented_data <- list(estimated_dates = c(10.3, 15.4, 30.2, 40.1, NA),
-                         error_indicators = c(FALSE, TRUE, FALSE, NA, NA))
+  group_info <- model_info$group_info[[group]]
+  date <- 4
+  i_group <- 1
+  observed_dates <- rbind(c(10, 5, 30, NA, NA))
+  augmented_data <-
+    list(estimated_dates = rbind(c(10.3, 15.4, 30.2, 40.1, NA)),
+         error_indicators = rbind(c(FALSE, TRUE, FALSE, NA, NA)))
   augmented_data_new <- 
-    update_error_indicators1(i, augmented_data, observed_dates, group,
-                             prob_error, delay_pars, model_info, 
+    update_error_indicators1(date, i_group, augmented_data, observed_dates,
+                             prob_error, delay_pars, delay_info, group_info,
                              date_range, control, rng)
-  ## augmented_data and rng should be unchanged
+  ## augmented_data should be unchanged
   expect_equal(augmented_data, augmented_data_new)
+  ## rng should have gone through a single random_real draw so let's do the same
+  ## to rng1 and check they match
+  x <- monty::monty_random_real(rng1)
   expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
   
   
   ## Try to update i = 3 for group 4, but with prob_update_error_indicators = 0
   ## there should be no update, and a single random draw
-  i <- 3
+  date <- 3
   control <- chronofix_mcmc_control(prob_update_error_indicators = 0)
   augmented_data_new <- 
-    update_error_indicators1(i, augmented_data, observed_dates, group,
-                             prob_error, delay_pars, model_info, 
+    update_error_indicators1(date, i_group, augmented_data, observed_dates,
+                             prob_error, delay_pars, delay_info, group_info,
                              date_range, control, rng)
   ## augmented_data should be unchanged
   expect_equal(augmented_data, augmented_data_new)
@@ -412,6 +402,7 @@ test_that("swap error indicators skipped correctly", {
   delay_map <- toy_model()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
+  delay_info <- model_info$delay_info
   
   rng <- monty::monty_rng_create(seed = 1)
   rng1 <- monty::monty_rng_create(seed = 1)
@@ -428,43 +419,55 @@ test_that("swap error indicators skipped correctly", {
   
   ## group = 2, both dates FALSE so no update
   group <- 2
-  observed_dates <- c(NA, NA, 40, 68, NA)
-  augmented_data <- list(estimated_dates = c(20.5, NA, 40.2, 68.1, NA),
-                         error_indicators = c(NA, NA, FALSE, FALSE, NA))
+  group_info <- model_info$group_info[[group]]
+  i_group <- 1
+  observed_dates <- rbind(c(NA, NA, 40, 68, NA))
+  augmented_data <-
+    list(estimated_dates = rbind(c(20.5, NA, 40.2, 68.1, NA)),
+         error_indicators = rbind(c(NA, NA, FALSE, FALSE, NA)))
   augmented_data_new <- 
-    swap_error_indicators(augmented_data, observed_dates, group,
-                          prob_error, delay_pars, model_info, 
+    swap_error_indicators(i_group, augmented_data, observed_dates,
+                          prob_error, delay_pars, delay_info, group_info,
                           date_range, control, rng)
-  ## augmented_data and rng should be unchanged
+  ## augmented_data should be unchanged
   expect_equal(augmented_data, augmented_data_new)
+  ## rng should have gone through a single random_real draw so let's do the same
+  ## to rng1 and check they match
+  x <- monty::monty_random_real(rng1)
   expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
   
   
   ## group = 4, no TRUE (only FALSE or missing) so no update
   group <- 4
-  i <- 4
-  observed_dates <- c(10, 15, 30, NA, NA)
-  augmented_data <- list(estimated_dates = c(10.3, 15.4, 30.2, 40.1, NA),
-                         error_indicators = c(FALSE, FALSE, FALSE, NA, NA))
+  group_info <- model_info$group_info[[group]]
+  i_group <- 1
+  observed_dates <- rbind(c(10, 15, 30, NA, NA))
+  augmented_data <-
+    list(estimated_dates = rbind(c(10.3, 15.4, 30.2, 40.1, NA)),
+         error_indicators = rbind(c(FALSE, FALSE, FALSE, NA, NA)))
   augmented_data_new <- 
-    swap_error_indicators(augmented_data, observed_dates, group,
-                          prob_error, delay_pars, model_info, 
+    swap_error_indicators(i_group, augmented_data, observed_dates,
+                          prob_error, delay_pars, delay_info, group_info,
                           date_range, control, rng)
-  ## augmented_data and rng should be unchanged
+  ## augmented_data should be unchanged
   expect_equal(augmented_data, augmented_data_new)
+  ## rng should have gone through a single random_real draw so let's do the same
+  ## to rng1 and check they match
+  x <- monty::monty_random_real(rng1)
   expect_equal(monty::monty_rng_state(rng), monty::monty_rng_state(rng1))
   
   
   ## Try to update individual with mixed errors, but with
   ## prob_swap_error_indicators = 0 there should be no update, and a single
   ## random draw
-  augmented_data <- list(estimated_dates = c(10.3, 20.4, 30.2, 40.1, NA),
-                         error_indicators = c(FALSE, TRUE, FALSE, NA, NA))
+  augmented_data <-
+    list(estimated_dates = rbind(c(10.3, 20.4, 30.2, 40.1, NA)),
+         error_indicators = rbind(c(FALSE, TRUE, FALSE, NA, NA)))
   expect_true(has_mixed_errors(augmented_data$error_indicators))
   control <- chronofix_mcmc_control(prob_error_swap = 0)
   augmented_data_new <- 
-    swap_error_indicators(augmented_data, observed_dates, group,
-                          prob_error, delay_pars, model_info, 
+    swap_error_indicators(i_group, augmented_data, observed_dates,
+                          prob_error, delay_pars, delay_info, group_info,
                           date_range, control, rng)
   ## augmented_data should be unchanged
   expect_equal(augmented_data, augmented_data_new)
@@ -577,12 +580,15 @@ test_that("proposal density calculated correctly", {
   estimated_dates <- c(20.5, NA, 40.2, 50.1, NA)
   error_indicators <- c(NA, NA, FALSE, TRUE, NA)
   
+  ll_delays <- chronofix_log_likelihood_delays1(
+    estimated_dates, delay_pars, delay_info$from, delay_info$to,
+    delay_info$distribution, group_info$is_delay_in_group)
+  
   ## group 2, updated correct report date
   ## proposal log-density should be zero
   updated <- 3
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), 0)
+    updated, error_indicators, ll_delays, group_info, date_range), 0)
   
   ## group 2, updated error death date
   ## proposal based on delay 2 (gamma) onset (date 1) to death (date 4)
@@ -591,8 +597,7 @@ test_that("proposal density calculated correctly", {
               shape = delay_pars[[2]]$shape, 
               rate = delay_pars[[2]]$shape / delay_pars[[2]]$mean, log = TRUE)
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   ## group 2, updated missing onset date 
   ## based on delay 1 (gamma), onset (date 1) to report (date 3)
@@ -605,8 +610,7 @@ test_that("proposal density calculated correctly", {
            rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
              c(delay_pars[[1]]$mean, delay_pars[[2]]$mean)))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   ## group 2, updated all dates
   ## report (date 3) is correct so has no impact for proposing this
@@ -623,8 +627,7 @@ test_that("proposal density calculated correctly", {
                   rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
                     c(delay_pars[[1]]$mean, delay_pars[[2]]$mean), log = TRUE))
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
     
   
   ## group 2, updated missing onset date 
@@ -634,14 +637,16 @@ test_that("proposal density calculated correctly", {
   estimated_dates <- c(20.5, NA, 40.2, 50.1, NA)
   error_indicators <- c(NA, NA, FALSE, FALSE, NA)
   updated <- 1
+  ll_delays <- chronofix_log_likelihood_delays1(
+    estimated_dates, delay_pars, delay_info$from, delay_info$to,
+    delay_info$distribution, group_info$is_delay_in_group)
   d <- log(sum(
     dgamma(estimated_dates[c(3, 4)] - estimated_dates[1],
            shape = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape), 
            rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
              c(delay_pars[[1]]$mean, delay_pars[[2]]$mean)))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   ## group 2, updated missing onset date 
   ## based on delay 1 (gamma), onset (date 1) to report (date 3)
@@ -650,14 +655,16 @@ test_that("proposal density calculated correctly", {
   estimated_dates <- c(20.5, NA, 40.2, 50.1, NA)
   error_indicators <- c(NA, NA, FALSE, FALSE, NA)
   updated <- 1
+  ll_delays <- chronofix_log_likelihood_delays1(
+    estimated_dates, delay_pars, delay_info$from, delay_info$to,
+    delay_info$distribution, group_info$is_delay_in_group)
   d <- log(sum(
     dgamma(estimated_dates[c(3, 4)] - estimated_dates[1],
            shape = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape), 
            rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
              c(delay_pars[[1]]$mean, delay_pars[[2]]$mean)))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   
   ## group 2, updated all dates via cascade
@@ -670,18 +677,19 @@ test_that("proposal density calculated correctly", {
   estimated_dates <- c(20.5, NA, 40.2, 50.1, NA)
   error_indicators <- c(NA, NA, TRUE, TRUE, NA)
   updated <-
-    calc_cascade_sampling_order(3, model_info$group_info[[group]]$event_order,
-                                error_indicators,
-                                model_info$group_info[[group]]$is_date_connected,
-                                model_info$group_info[[group]]$shortest_paths)
+    calc_cascade_sampling_order(3, group_info$event_order, error_indicators,
+                                group_info$is_date_connected,
+                                group_info$shortest_paths)
+  ll_delays <- chronofix_log_likelihood_delays1(
+    estimated_dates, delay_pars, delay_info$from, delay_info$to,
+    delay_info$distribution, group_info$is_delay_in_group)
   d <- -log(date_range[2] - date_range[1]) +
     sum(dgamma(estimated_dates[c(3, 4)] - estimated_dates[1],
                   shape = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape), 
                   rate = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape) /
                     c(delay_pars[[1]]$mean, delay_pars[[2]]$mean), log = TRUE))
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   
   # group 4, 3 dates
@@ -689,20 +697,21 @@ test_that("proposal density calculated correctly", {
   group_info <- model_info$group_info[[group]]
   estimated_dates <- c(10.3, 15.4, 30.2, 40.1, NA)
   error_indicators <- c(FALSE, TRUE, FALSE, NA, NA)
+  ll_delays <- chronofix_log_likelihood_delays1(
+    estimated_dates, delay_pars, delay_info$from, delay_info$to,
+    delay_info$distribution, group_info$is_delay_in_group)
   
   ## group 4, updated correct onset date
   ## proposal log-density should be zero
   updated <- 1
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), 0)
+    updated, error_indicators, ll_delays, group_info, date_range), 0)
   
   ## group 4, updated correct report date
   ## proposal log-density should be zero
   updated <- 3
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), 0)
+    updated, error_indicators, ll_delays, group_info, date_range), 0)
   
   ## group 4, updated error hospitalisation date 
   ## based on delay 5 (log-normal), onset (date 1) to hospitalisation (date 2)
@@ -715,8 +724,7 @@ test_that("proposal density calculated correctly", {
            sdlog = 1 / sqrt(c(delay_pars[[5]]$precisionlog, 
                               delay_pars[[6]]$precisionlog))))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   ## group 4, updated missing death date 
   ## based on delay 6 (log-normal), hospitalisation (date 2) to death (date 4)
@@ -725,8 +733,7 @@ test_that("proposal density calculated correctly", {
               meanlog = delay_pars[[6]]$meanlog, 
               sdlog = 1 / sqrt(delay_pars[[6]]$precisionlog), log = TRUE)
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   ## group 4, updated all dates
   ## onset (date 1) and report (date 3) correct so no impact for proposing
@@ -741,8 +748,7 @@ test_that("proposal density calculated correctly", {
                                      delay_pars[[6]]$precisionlog)),
                   log = TRUE))
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   
   ## group 4, updated error hospitalisation date 
@@ -752,14 +758,16 @@ test_that("proposal density calculated correctly", {
   updated <- 2
   estimated_dates <- c(10.3, 15.4, 30.2, 40.1, NA)
   error_indicators <- c(FALSE, TRUE, FALSE, FALSE, NA)
+  ll_delays <- chronofix_log_likelihood_delays1(
+    estimated_dates, delay_pars, delay_info$from, delay_info$to,
+    delay_info$distribution, group_info$is_delay_in_group)
   d <- log(sum(
     dlnorm(estimated_dates[c(2, 4)] - estimated_dates[c(1, 2)],
            meanlog = c(delay_pars[[5]]$meanlog, delay_pars[[6]]$meanlog), 
            sdlog = 1 / sqrt(c(delay_pars[[5]]$precisionlog, 
                               delay_pars[[6]]$precisionlog))))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
   
   
   ## group 4, updated error hospitalisation date 
@@ -769,14 +777,16 @@ test_that("proposal density calculated correctly", {
   updated <- 2
   estimated_dates <- c(10.3, 15.4, 30.2, 40.1, NA)
   error_indicators <- c(TRUE, TRUE, FALSE, NA, NA)
+  ll_delays <- chronofix_log_likelihood_delays1(
+    estimated_dates, delay_pars, delay_info$from, delay_info$to,
+    delay_info$distribution, group_info$is_delay_in_group)
   d <- log(sum(
     dlnorm(estimated_dates[c(2, 4)] - estimated_dates[c(1, 2)],
            meanlog = c(delay_pars[[5]]$meanlog, delay_pars[[6]]$meanlog), 
            sdlog = 1 / sqrt(c(delay_pars[[5]]$precisionlog, 
                               delay_pars[[6]]$precisionlog))))) - log(2)
   expect_equal(calc_proposal_density(
-    updated, estimated_dates, error_indicators, 
-    delay_pars, delay_info, group_info, date_range), d)
+    updated, error_indicators, ll_delays, group_info, date_range), d)
 })
 
 
@@ -822,13 +832,11 @@ test_that("acceptance probability calculated correctly", {
     ratio_post <- ratio_ll_delays + ratio_ll_errors
     
     prop_current <- 
-      calc_proposal_density(sampling_order_reverse, estimated_dates, 
-                            error_indicators, delay_pars, delay_info, 
-                            group_info)
-    prop_new <- 
-      calc_proposal_density(sampling_order, estimated_dates_new,
-                            error_indicators_new, delay_pars, delay_info,
-                            group_info)
+      calc_proposal_density(sampling_order_reverse, error_indicators,
+                            ll_delays_current, group_info, date_range)
+    prop_new <- calc_proposal_density(sampling_order, error_indicators_new,
+                                      ll_delays_new, group_info, date_range)
+      
     ratio_prop <- prop_current - prop_new
     
     ratio_post + ratio_prop
