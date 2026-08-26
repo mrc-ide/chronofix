@@ -329,11 +329,11 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   
   ## are error indicators TRUE with estimated date matching observed date
   incompatible_error_and_date <-
-    !is.na(error_indicators) & error_indicators == TRUE &
-    (floor(estimated_dates) == observed_dates)
+    !is.na(error_indicators_new) & error_indicators_new == TRUE &
+    (floor(estimated_dates_new) == observed_dates)
   ## are estimated dates outside the date range 
   date_outside_range <- 
-    estimated_dates < date_range[1] | estimated_dates >= date_range[2]
+    estimated_dates_new < date_range[1] | estimated_dates_new >= date_range[2]
   reject <- 
     rowSums(incompatible_error_and_date | date_outside_range, na.rm = TRUE) > 0
   
