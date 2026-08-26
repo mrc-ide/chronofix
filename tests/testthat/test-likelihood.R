@@ -57,9 +57,9 @@ test_that("individual delay log-likelihood calculated correctly", {
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   
   model_info <- make_model_info(delay_map, dates)
-  delay_from <- model_info$delay_from
-  delay_to <- model_info$delay_to
-  delay_distribution <- model_info$delay_distribution
+  delay_from <- model_info$delay_info$from
+  delay_to <- model_info$delay_info$to
+  delay_distribution <- model_info$delay_info$distribution
   group_info <- model_info$group_info
   
   delay_pars <- list(list(mean = 8, shape = 4),
@@ -202,8 +202,8 @@ test_that("log-likelihood aggregates correctly", {
   calc_ll_delay1 <- function(i) {
     group <- which(model_info$groups == data$true_data$group[i])
     chronofix_log_likelihood_delays1(
-      estimated_dates[i, ], delay_pars, model_info$delay_from,
-      model_info$delay_to, model_info$delay_distribution,
+      estimated_dates[i, ], delay_pars, model_info$delay_info$from,
+      model_info$delay_info$to, model_info$delay_info$distribution,
       model_info$group_info[[group]]$is_delay_in_group)
   }
   ll_delays <- vapply(seq_len(nrow(estimated_dates)), 
