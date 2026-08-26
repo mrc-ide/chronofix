@@ -2,7 +2,7 @@ update_pars_delay <- function(state_chain, control, model, rng) {
   
   augmented_data <- model$data_packer$unpack(attr(state_chain$pars, "data"))
   
-  for (i in seq_along(model$info$delay_info$info$distribution)) {
+  for (i in seq_along(model$info$delay_info$distribution)) {
     state_chain$pars <- update_pars_delay1(i, state_chain$pars, augmented_data,
                                            control, model, rng)
   }
