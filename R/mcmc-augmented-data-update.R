@@ -87,7 +87,7 @@ update_estimated_dates1 <- function(date, i_group, augmented_data,
              })
       
   } else {
-    rep(list(date), length(i_update))
+    sampling_order <- rep(list(date), length(i_update))
   }
   sampling_order_reverse <- sampling_order
   
