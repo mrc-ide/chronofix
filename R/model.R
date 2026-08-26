@@ -284,6 +284,10 @@ make_model_info <- function(delay_map, dates) {
   delay_to <- match(delay_map$to, dates)
   delay_distribution <- delay_map$distribution
   
+  delay_info <- list(from = delay_from,
+                     to = delay_to,
+                     distribution = delay_distribution)
+  
   groups <- sort(unique(unlist(delay_map$group)))
   
   d <- seq_along(dates)
@@ -363,9 +367,7 @@ make_model_info <- function(delay_map, dates) {
   group_info <- lapply(groups, make_group_info)
   
   
-  list(delay_from = delay_from,
-       delay_to = delay_to,
-       delay_distribution = delay_distribution,
+  list(delay_info = delay_info,
        group_info = group_info,
        groups = groups)  
 }
@@ -443,9 +445,9 @@ chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
                                         augmented_data$error_indicators,
                                         date_range))
   
-  delays <- seq_along(model_info$delay_from)
+  delays <- seq_along(model_info$delay_info$from)
   
-  delay_pars <- unpack_delay_pars(pars, model_info$delay_distribution)
+  delay_pars <- unpack_delay_pars(pars, model_info$delay_info$distribution)
   
   ll_delays <- 
     chronofix_log_likelihood_delays(augmented_data$estimated_dates,
@@ -478,8 +480,8 @@ chronofix_log_likelihood_delays <- function(estimated_dates, groups, delay_pars,
     ll_delays[group_i, ] <- 
       chronofix_log_likelihood_delays1(
         estimated_dates[group_i, , drop = FALSE], 
-        delay_pars, model_info$delay_from, model_info$delay_to, 
-        model_info$delay_distribution,
+        delay_pars, model_info$delay_info$from, model_info$delay_info$to, 
+        model_info$delay_info$distribution,
         model_info$group_info[[i]]$is_delay_in_group)
   }
   
