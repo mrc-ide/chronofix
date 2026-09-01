@@ -445,8 +445,6 @@ chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
                                         augmented_data$error_indicators,
                                         date_range))
   
-  delays <- seq_along(model_info$delay_info$from)
-  
   delay_pars <- unpack_delay_pars(pars, model_info$delay_info$distribution)
   
   ll_delays <- 
@@ -479,10 +477,8 @@ chronofix_log_likelihood_delays <- function(estimated_dates, groups, delay_pars,
     group_i <- groups == i
     ll_delays[group_i, ] <- 
       chronofix_log_likelihood_delays1(
-        estimated_dates[group_i, , drop = FALSE], 
-        delay_pars, model_info$delay_info$from, model_info$delay_info$to, 
-        model_info$delay_info$distribution,
-        model_info$group_info[[i]]$is_delay_in_group)
+        estimated_dates[group_i, , drop = FALSE], delay_pars, 
+        model_info$delay_info, model_info$group_info[[i]]$is_delay_in_group)
   }
   
   sum(ll_delays)
@@ -491,9 +487,7 @@ chronofix_log_likelihood_delays <- function(estimated_dates, groups, delay_pars,
 
 
 chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_pars,
-                                             delay_from, delay_to,
-                                             delay_distribution,
-                                             is_delay_in_group) {
+                                             delay_info, is_delay_in_group) {
   
   is_vec <- is.vector(estimated_dates)
   if (is_vec) {
@@ -503,17 +497,19 @@ chronofix_log_likelihood_delays1 <- function(estimated_dates, delay_pars,
   group_size <- nrow(estimated_dates)
   
   group_delay_pars <- delay_pars[is_delay_in_group]
-  group_distributions <- delay_distribution[is_delay_in_group]
+  delay_from <- delay_info$from[is_delay_in_group]
+  delay_to <- delay_info$to[is_delay_in_group]
+  delay_distribution <- delay_info$distribution[is_delay_in_group]
   
-  delay_values <- estimated_dates[, delay_to[is_delay_in_group], drop = FALSE] -
-    estimated_dates[, delay_from[is_delay_in_group], drop = FALSE]
+  delay_values <- estimated_dates[, delay_to, drop = FALSE] -
+    estimated_dates[, delay_from, drop = FALSE]
   
   ll <- array(0, c(group_size, length(is_delay_in_group)))
   ll[, is_delay_in_group] <- 
     vapply(seq_along(group_delay_pars),
            function(i) {
              log_density_delay(delay_values[, i], group_delay_pars[[i]],
-                               group_distributions[[i]])
+                               delay_distribution[[i]])
            },
            numeric(group_size))
   

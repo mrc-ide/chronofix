@@ -343,8 +343,7 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   ## new delays log likelihood
   ll_delays_new <- chronofix_log_likelihood_delays1(
     estimated_dates_new[!reject, , drop = FALSE], delay_pars,
-    delay_info$from, delay_info$to, delay_info$distribution,
-    is_delay_in_group)
+    delay_info, is_delay_in_group)
   
   ## Covering two cases here:
   ## 1. a proposed delay is negative so we want to auto-reject
@@ -361,8 +360,8 @@ calc_accept_prob <- function(sampling_order, sampling_order_reverse,
   
   ## current delays log likelihood
   ll_delays_current <- chronofix_log_likelihood_delays1(
-    estimated_dates[!reject, , drop = FALSE], delay_pars, delay_info$from,
-    delay_info$to, delay_info$distribution, is_delay_in_group)
+    estimated_dates[!reject, , drop = FALSE], delay_pars, 
+    delay_info, is_delay_in_group)
   
   ratio_ll_delays <- rowSums(ll_delays_new - ll_delays_current)
   
