@@ -581,8 +581,7 @@ test_that("proposal density calculated correctly", {
   error_indicators <- c(NA, NA, FALSE, TRUE, NA)
   
   ll_delays <- chronofix_log_likelihood_delays1(
-    estimated_dates, delay_pars, delay_info$from, delay_info$to,
-    delay_info$distribution, group_info$is_delay_in_group)
+    estimated_dates, delay_pars, delay_info, group_info$is_delay_in_group)
   
   ## group 2, updated correct report date
   ## proposal log-density should be zero
@@ -638,8 +637,7 @@ test_that("proposal density calculated correctly", {
   error_indicators <- c(NA, NA, FALSE, FALSE, NA)
   updated <- 1
   ll_delays <- chronofix_log_likelihood_delays1(
-    estimated_dates, delay_pars, delay_info$from, delay_info$to,
-    delay_info$distribution, group_info$is_delay_in_group)
+    estimated_dates, delay_pars, delay_info, group_info$is_delay_in_group)
   d <- log(sum(
     dgamma(estimated_dates[c(3, 4)] - estimated_dates[1],
            shape = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape), 
@@ -656,8 +654,7 @@ test_that("proposal density calculated correctly", {
   error_indicators <- c(NA, NA, FALSE, FALSE, NA)
   updated <- 1
   ll_delays <- chronofix_log_likelihood_delays1(
-    estimated_dates, delay_pars, delay_info$from, delay_info$to,
-    delay_info$distribution, group_info$is_delay_in_group)
+    estimated_dates, delay_pars, delay_info, group_info$is_delay_in_group)
   d <- log(sum(
     dgamma(estimated_dates[c(3, 4)] - estimated_dates[1],
            shape = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape), 
@@ -681,8 +678,7 @@ test_that("proposal density calculated correctly", {
                                 group_info$is_date_connected,
                                 group_info$shortest_paths)
   ll_delays <- chronofix_log_likelihood_delays1(
-    estimated_dates, delay_pars, delay_info$from, delay_info$to,
-    delay_info$distribution, group_info$is_delay_in_group)
+    estimated_dates, delay_pars, delay_info, group_info$is_delay_in_group)
   d <- -log(date_range[2] - date_range[1]) +
     sum(dgamma(estimated_dates[c(3, 4)] - estimated_dates[1],
                   shape = c(delay_pars[[1]]$shape, delay_pars[[2]]$shape), 
@@ -698,8 +694,7 @@ test_that("proposal density calculated correctly", {
   estimated_dates <- c(10.3, 15.4, 30.2, 40.1, NA)
   error_indicators <- c(FALSE, TRUE, FALSE, NA, NA)
   ll_delays <- chronofix_log_likelihood_delays1(
-    estimated_dates, delay_pars, delay_info$from, delay_info$to,
-    delay_info$distribution, group_info$is_delay_in_group)
+    estimated_dates, delay_pars, delay_info, group_info$is_delay_in_group)
   
   ## group 4, updated correct onset date
   ## proposal log-density should be zero
@@ -759,8 +754,7 @@ test_that("proposal density calculated correctly", {
   estimated_dates <- c(10.3, 15.4, 30.2, 40.1, NA)
   error_indicators <- c(FALSE, TRUE, FALSE, FALSE, NA)
   ll_delays <- chronofix_log_likelihood_delays1(
-    estimated_dates, delay_pars, delay_info$from, delay_info$to,
-    delay_info$distribution, group_info$is_delay_in_group)
+    estimated_dates, delay_pars, delay_info, group_info$is_delay_in_group)
   d <- log(sum(
     dlnorm(estimated_dates[c(2, 4)] - estimated_dates[c(1, 2)],
            meanlog = c(delay_pars[[5]]$meanlog, delay_pars[[6]]$meanlog), 
@@ -778,8 +772,7 @@ test_that("proposal density calculated correctly", {
   estimated_dates <- c(10.3, 15.4, 30.2, 40.1, NA)
   error_indicators <- c(TRUE, TRUE, FALSE, NA, NA)
   ll_delays <- chronofix_log_likelihood_delays1(
-    estimated_dates, delay_pars, delay_info$from, delay_info$to,
-    delay_info$distribution, group_info$is_delay_in_group)
+    estimated_dates, delay_pars, delay_info, group_info$is_delay_in_group)
   d <- log(sum(
     dlnorm(estimated_dates[c(2, 4)] - estimated_dates[c(1, 2)],
            meanlog = c(delay_pars[[5]]$meanlog, delay_pars[[6]]$meanlog), 
@@ -813,13 +806,11 @@ test_that("acceptance probability calculated correctly", {
                           error_indicators_new, error_indicators,
                           group_info) {
     ll_delays_current <- 
-      chronofix_log_likelihood_delays1(
-        estimated_dates, delay_pars, delay_info$from, delay_info$to, 
-        delay_info$distribution, group_info$is_delay_in_group)
+      chronofix_log_likelihood_delays1(estimated_dates, delay_pars, 
+                                       delay_info, group_info$is_delay_in_group)
     ll_delays_new <- 
-      chronofix_log_likelihood_delays1(
-        estimated_dates_new, delay_pars, delay_info$from, delay_info$to, 
-        delay_info$distribution, group_info$is_delay_in_group)
+      chronofix_log_likelihood_delays1(estimated_dates_new, delay_pars, 
+                                       delay_info, group_info$is_delay_in_group)
     
     ll_errors_current <-
       chronofix_log_likelihood_errors(prob_error, error_indicators, date_range)
