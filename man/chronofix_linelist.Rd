@@ -7,7 +7,7 @@
 chronofix_linelist(
   mcmc_output = NULL,
   observed_data = NULL,
-  error_threshold = 0.5,
+  error_thresholds = c(0.05, 0.5, 0.95),
   format = "xlsx",
   filename = NULL,
   show_p_error = FALSE
@@ -19,8 +19,10 @@ chronofix_linelist(
 \item{observed_data}{Original observed data containing the 'id', 'group',
 and event columns.}
 
-\item{error_threshold}{Posterior probability threshold to classify a date
-as an error (default 0.5).}
+\item{error_thresholds}{Numeric vector of length 3, giving the posterior
+probability thresholds to classify a date as a possible error
+(default 0.05), likely error (default 0.5) and highly likely error
+(default 0.95).}
 
 \item{format}{File format for the corrected linelist. Default xlsx.}
 
