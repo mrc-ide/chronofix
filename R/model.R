@@ -136,46 +136,27 @@ chronofix_hyperparameters <- function(prob_error_shape1 = 1,
 
 
 validate_data_and_delays <- function(data, delay_map) {
-  
-  if (!("id" %in% names(data))) {
-    cli::cli_abort(c(
-      "x" = "{.arg data} must contain an {.col id} column."
-    ))
-  }
-  
-  if (any(is.na(data$id))) {
-    na_rows <- which(is.na(data$id))
-    
-    cli::cli_abort(c(
-      "The {.col id} column in {.arg data} cannot contain missing values (`NA`).",
-      "x" = "Found missing ID{?s} on row{?s}: {.val {na_rows}}"
-    ))
-  }
-  
-  if (any(duplicated(data$id))) {
-    duplicate_ids <- unique(data$id[duplicated(data$id)])
-    
-    cli::cli_abort(c(
-      "The {.col id} column in {.arg data} must contain unique values.",
-      "x" = "Found duplicate ID{?s}: {.val {duplicate_ids}}"
-    ))
-  }
+  chronofix_prepare_data(data)
   
   validate_groups(data, delay_map)
   
   if (!("group" %in% names(data))) {
     data$group <- 1
+    attr(data, "group") <- "group"
     delay_map$group <- 1
   }
   
+  id <- attr(data, "id")
+  group <- attr(data, "group")
+  
   validate_events(data, delay_map)
   
-  dates <- setdiff(names(data), c("id", "group"))
+  dates <- setdiff(names(data), c(id, group))
   model_info <- make_model_info(delay_map, dates)
   
   observed_dates <- observed_dates_to_int(data)
   
-  groups <- match(data$group, model_info$groups)
+  groups <- match(data[[group]], model_info$groups)
   
   list(model_info = model_info,
        observed_dates = observed_dates,
@@ -210,8 +191,9 @@ validate_groups <- function(data, delay_map) {
 }
 
 validate_events <- function(data, delay_map) {
-  
-  event_cols <- setdiff(names(data), c("id", "group"))
+  id <- attr(data, "id")
+  group <- attr(data, "group")
+  event_cols <- setdiff(names(data), c(id, group))
   delay_events <- unique(c(delay_map$from, delay_map$to))
   
   # from/to event in delay_map does not match a column in data
@@ -245,7 +227,7 @@ validate_events <- function(data, delay_map) {
   }
   
   # non-NA dates for events not associated with the individual's group
-  groups_in_data <- unique(data$group)
+  groups_in_data <- unique(data[[group]])
   has_invalid_date <- rep(FALSE, nrow(data))
   
   for (grp in groups_in_data) {
