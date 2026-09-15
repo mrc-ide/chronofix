@@ -165,7 +165,8 @@ validate_data_and_delays <- function(data, delay_map) {
 
 validate_groups <- function(data, delay_map) {
   
-  is_group_in_data <- "group" %in% names(data)
+  group <- attr(data, "group")
+  is_group_in_data <- !is.null(group)
   is_group_in_delay_map <- "group" %in% names(delay_map)
   if (!is_group_in_data && is_group_in_delay_map) {
     stop("Expected 'group' column in 'data' given it exists in 'delay_map'")
@@ -175,7 +176,7 @@ validate_groups <- function(data, delay_map) {
   }
   
   if (is_group_in_data && is_group_in_delay_map) {
-    groups_data <- sort(unique(data$group))
+    groups_data <- sort(unique(data[[group]]))
     groups_delay_map <- sort(unique(unlist(delay_map$group)))
     ## could use identical() here but that will throw an error if groups
     ## are the same but one set is numeric and one is integer type
