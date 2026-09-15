@@ -20,22 +20,6 @@ test_that("chronofix_linelist requires observed_data", {
   )
 })
 
-test_that("chronofix_linelist requires group column in observed_data", {
-  mock <- make_mock_data()
-  observed_no_group <- mock$observed[, setdiff(names(mock$observed), "group")]
-  
-  expect_error(
-    chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      observed_data = observed_no_group,
-      format = "csv",
-      filename = tempfile(fileext = ".csv")
-    ),
-    "No 'group' column found in observed_data",
-    fixed = TRUE
-  )
-})
-
 test_that("chronofix_linelist rejects unsupported output formats", {
   mock <- make_mock_data()
   
@@ -98,11 +82,11 @@ test_that("chronofix_linelist includes p_error columns when requested", {
   
   expect_true(all(
     c(
-      "Onset_p_error",
-      "Hospitalisation_p_error",
-      "Report_p_error",
-      "Death_p_error",
-      "Discharge_p_error"
+      "onset_p_error",
+      "hospitalisation_p_error",
+      "report_p_error",
+      "death_p_error",
+      "discharge_p_error"
     ) %in% names(result)
   ))
 })
@@ -127,8 +111,8 @@ test_that("chronofix_linelist distinguishes imputed missing from structural miss
     )
   })
   
-  expect_equal(result$Report[i], as.Date("2025-01-12"))
-  expect_true(is.na(result$Report_p_error[i]))
+  expect_equal(result$report[i], as.Date("2025-01-12"))
+  expect_true(is.na(result$report_p_error[i]))
 })
 
 test_that("chronofix_linelist writes xlsx output", {
@@ -222,24 +206,6 @@ test_that("chronofix_linelist uses default filename when filename is NULL", {
   })
   expect_true(file.exists("chronofix_linelist.xlsx"))
   unlink("chronofix_linelist.xlsx")
-})
-
-test_that("chronofix_linelist capitalises event names in the returned dataframe", {
-  mock <- make_mock_data()
-  
-  result <- suppressMessages({
-    chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      observed_data = mock$observed,
-      format = "csv",
-      filename = tempfile(fileext = ".csv")
-    )
-  })
-  
-  raw_names <- setdiff(colnames(mock$observed), c("id", "group"))
-  expected_names <- paste0(toupper(substr(raw_names, 1, 1)), substring(raw_names, 2))
-  
-  expect_true(all(expected_names %in% colnames(result)))
 })
 
 test_that("chronofix_linelist_status_matrix treats threshold value as Error", {

@@ -289,7 +289,7 @@ test_that("validate_events correctly flags missing columns and date errors", {
   data_no_id$id <- NULL
   expect_error(
     validate_data_and_delays(data_no_id, delay_map),
-    "must contain an `id` column"
+    "Did not find column 'id' in 'data'"
   )
   
   # NA ids

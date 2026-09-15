@@ -2,42 +2,49 @@
 
 export(chronofix_hyperparameters)
 export(chronofix_linelist)
+export(chronofix_mcmc)
 export(chronofix_mcmc_control)
 export(chronofix_mcmc_initial)
-export(chronofix_mcmc_run)
-export(chronofix_model)
-export(chronofix_sampler)
+export(chronofix_prepare_data)
 export(chronofix_simulate_data)
 export(chronofix_simulate_observation_errors)
 export(chronofix_simulate_true_data)
 import(dplyr)
 import(openxlsx)
-importFrom(dplyr,"%>%")
-importFrom(dplyr,case_when)
-importFrom(dplyr,group_by)
-importFrom(dplyr,group_modify)
-importFrom(dplyr,inner_join)
-importFrom(dplyr,mutate)
-importFrom(dplyr,select)
+importFrom(dplyr,
+  "%>%",
+  case_when,
+  group_by,
+  group_modify,
+  inner_join,
+  mutate,
+  select
+)
 importFrom(generics,setdiff)
-importFrom(igraph,all_shortest_paths)
-importFrom(igraph,degree)
-importFrom(igraph,distances)
-importFrom(igraph,graph_from_data_frame)
-importFrom(igraph,topo_sort)
+importFrom(igraph,
+  all_shortest_paths,
+  degree,
+  distances,
+  graph_from_data_frame,
+  topo_sort
+)
 importFrom(purrr,map_dfr)
-importFrom(stats,dbeta)
-importFrom(stats,dexp)
-importFrom(stats,dgamma)
-importFrom(stats,dlnorm)
-importFrom(stats,dnorm)
-importFrom(stats,median)
-importFrom(stats,na.omit)
-importFrom(stats,qgamma)
-importFrom(stats,qlnorm)
-importFrom(stats,rgamma)
-importFrom(stats,rlnorm)
-importFrom(stats,runif)
+importFrom(stats,
+  dbeta,
+  dexp,
+  dgamma,
+  dlnorm,
+  dnorm,
+  median,
+  na.omit,
+  qgamma,
+  qlnorm,
+  rgamma,
+  rlnorm,
+  runif
+)
 importFrom(tools,file_ext)
-importFrom(utils,head)
-importFrom(utils,tail)
+importFrom(utils,
+  head,
+  tail
+)

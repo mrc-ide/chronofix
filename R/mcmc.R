@@ -2,32 +2,40 @@
 ##'
 ##' @title Run MCMC
 ##'
-##' @param model Model
+##' @param data Observed data
 ##'
-##' @param sampler Sampler
-##'
-##' @param control List of control parameters
+##' @param delay_map Delays information
 ##' 
+##' @param hyperparameters List of hyperparameters
+##'
 ##' @param initial Initial values
+##' 
+##' @param control List of control parameters
 ##'
 ##' @return Output
 ##'
 ##' @export
-chronofix_mcmc_run <- function(model,
-                     sampler,
-                     initial = NULL,
-                     control = chronofix_mcmc_control()) {
+chronofix_mcmc <- function(data,
+                           delay_map,
+                           hyperparameters = chronofix_hyperparameters(),
+                           initial = chronofix_mcmc_initial(),
+                           control = chronofix_mcmc_control()) {
+  
+  data <- chronofix_prepare_data(data)
+  
+  model <- chronofix_model(data, delay_map, hyperparameters, control)
+  sampler <- chronofix_sampler(control)
+  
+  pars_initial <- mcmc_pars_initialise(model, initial)
   
   parameters <- model$parameters
-  
-  initial <- initial %||% chronofix_mcmc_initial(model)
   
   runner <- 
     if (control$parallel) monty::monty_runner_callr(control$n_workers) else
       monty::monty_runner_serial()
   
   samples <- monty::monty_sample(model, sampler, control$n_steps,
-                                 initial = initial,
+                                 initial = pars_initial,
                                  n_chains = control$n_chains, runner = runner,
                                  burnin = control$burnin, 
                                  thinning_factor = control$thinning_factor,
@@ -36,6 +44,12 @@ chronofix_mcmc_run <- function(model,
   
   ## Unpack augmented data
   samples$data <- unpack_augmented_data(samples$data, model$data_packer)
+  id <- attr(data, "id")
+  group <- attr(data, "group")
+  rownames(samples$data$estimated_dates) <- data[[id]]
+  colnames(samples$data$estimated_dates) <- setdiff(names(data), c(id, group))
+  rownames(samples$data$error_indicators) <- data[[id]]
+  colnames(samples$data$error_indicators) <- setdiff(names(data), c(id, group))
   
   samples
   
@@ -135,8 +149,6 @@ chronofix_mcmc_control <- function(n_steps = 1000,
 ##'
 ##' @title Create initial parameter values
 ##'
-##' @param model Model
-##' 
 ##' @param initial_delay_shape The initial value for the shape parameter of
 ##'   gamma-distributed delays
 ##' 
@@ -151,22 +163,34 @@ chronofix_mcmc_control <- function(n_steps = 1000,
 ##'
 ##' @param initial_prob_error The initial value for the probability of error  
 ##' 
-##' @return Vector of initial parameter values
+##' @return List of initial parameter values
 ##'
 ##' @export
-chronofix_mcmc_initial <- function(model,
-                                   initial_delay_shape = 1,
+chronofix_mcmc_initial <- function(initial_delay_shape = 1,
                                    initial_delay_mean = 5,
                                    initial_delay_meanlog = 1,
                                    initial_delay_precisionlog = 1,
                                    initial_prob_error = 0.1) {
-  initial <- numeric(length(model$parameters))
-  initial[model$parameters == "prob_error"] <- initial_prob_error
-  initial[endsWith(model$parameters, "shape")] <- initial_delay_shape
-  initial[endsWith(model$parameters, "mean")] <- initial_delay_mean
-  initial[endsWith(model$parameters, "meanlog")] <- initial_delay_meanlog
-  initial[endsWith(model$parameters, "precisionlog")] <- 
-    initial_delay_precisionlog
   
-  initial
+  list(initial_delay_shape = initial_delay_shape,
+       initial_delay_mean = initial_delay_mean,
+       initial_delay_meanlog = initial_delay_meanlog,
+       initial_delay_precisionlog = initial_delay_precisionlog,
+       initial_prob_error = initial_prob_error)
+}
+
+
+mcmc_pars_initialise <- function(model, initial) {
+  
+  pars_initial <- numeric(length(model$parameters))
+  pars_initial[model$parameters == "prob_error"] <- initial$initial_prob_error
+  pars_initial[endsWith(model$parameters, "shape")] <- 
+    initial$initial_delay_shape
+  pars_initial[endsWith(model$parameters, "mean")] <- initial$initial_delay_mean
+  pars_initial[endsWith(model$parameters, "meanlog")] <- 
+    initial$initial_delay_meanlog
+  pars_initial[endsWith(model$parameters, "precisionlog")] <- 
+    initial$initial_delay_precisionlog
+  
+  pars_initial
 }
