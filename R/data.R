@@ -22,6 +22,7 @@
 ##'
 ##' @export
 chronofix_prepare_data <- function(data, id = NULL, group = NULL) {
+  
   if (inherits(data, "chronofix_data")) {
     return(data)
   }
@@ -67,10 +68,8 @@ chronofix_prepare_data <- function(data, id = NULL, group = NULL) {
   }
   
   if (is.null(group)) {
-    group <- "group"
-    if (is.null(data[[group]])) {
-      cli::cli_abort(
-        "Did not find column '{group}' in 'data'")
+    if ("group" %in% names(data)) {
+      group <- "group"
     }
   } else {
     if (is.null(data[[group]])) {
