@@ -27,9 +27,11 @@ chronofix_linelist <- function(mcmc_output = NULL,
   
   if (missing(mcmc_output)) stop("'mcmc_output' is missing.")
   if (missing(observed_data)) stop("'observed_data' is missing.")
-  if (!"group" %in% colnames(observed_data)) {
-    stop("No 'group' column found in observed_data")
-  }
+  
+  observed_data <- chronofix_prepare_data(observed_data)
+  id <- attr(observed_data, "id")
+  group <- attr(observed_data, "group")
+  
   format_lower <- tolower(format)
   if (!format_lower %in% c("xlsx", "csv")) {
     stop("The 'format' argument must be either 'xlsx' or 'csv'.")
@@ -59,15 +61,14 @@ chronofix_linelist <- function(mcmc_output = NULL,
   n_individuals <- dim(error_ind_array)[1]
   n_events <- dim(error_ind_array)[2]
   
-  raw_names <- setdiff(colnames(observed_data), c("id", "group"))
-  if (length(raw_names) != n_events) {
+  event_names <- setdiff(colnames(observed_data), c(id, group))
+  if (length(event_names) != n_events) {
     stop("Only 'id', 'group' and event date columns can be supplied as observed data")
   }
-  # capitalise first letter of event names
-  event_names <- paste0(toupper(substr(raw_names, 1, 1)), substring(raw_names, 2))
   
-  results_data <- data.frame(ID = seq_len(n_individuals))
-  results_data$Group <- observed_data$group
+  results_data <- data.frame(id = observed_data[[id]],
+                             group = observed_data[[group]]) 
+  results_data <- setNames(results_data, c(id, group))
   
   status_matrix <- chronofix_linelist_status_matrix(
     mode_dates_num = mode_dates_num,
@@ -102,7 +103,7 @@ chronofix_linelist <- function(mcmc_output = NULL,
     openxlsx::addWorksheet(wb, "Reconstructed Dates")
     openxlsx::writeData(wb, "Reconstructed Dates", results_data)
     
-    group_col <- which(colnames(results_data) == "Group")
+    group_col <- which(colnames(results_data) == group)
     openxlsx::setColWidths(wb, "Reconstructed Dates", cols = group_col, widths = 22)
     
     col_struct <- "#D3D3D3"
