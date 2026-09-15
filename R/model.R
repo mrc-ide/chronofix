@@ -1,18 +1,3 @@
-##' Create a chronofix model
-##'
-##' @title Create a chronofix model
-##'
-##' @param data Observed data
-##'
-##' @param delay_map Delays information
-##' 
-##' @param hyperparameters List of hyperparameters
-##' 
-##' @param control List of control parameters
-##' 
-##' @return A chronofix model
-##'
-##' @export
 chronofix_model <- function(data, delay_map, hyperparameters, control) {
   
   x <- validate_data_and_delays(data, delay_map)
@@ -136,7 +121,6 @@ chronofix_hyperparameters <- function(prob_error_shape1 = 1,
 
 
 validate_data_and_delays <- function(data, delay_map) {
-  data <- chronofix_prepare_data(data)
   
   validate_groups(data, delay_map)
   

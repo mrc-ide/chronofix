@@ -5,7 +5,6 @@
 \title{Create initial parameter values}
 \usage{
 chronofix_mcmc_initial(
-  model,
   initial_delay_shape = 1,
   initial_delay_mean = 5,
   initial_delay_meanlog = 1,
@@ -14,8 +13,6 @@ chronofix_mcmc_initial(
 )
 }
 \arguments{
-\item{model}{Model}
-
 \item{initial_delay_shape}{The initial value for the shape parameter of
 gamma-distributed delays}
 
@@ -31,7 +28,7 @@ log-scale of log-normal-distributed delays}
 \item{initial_prob_error}{The initial value for the probability of error}
 }
 \value{
-Vector of initial parameter values
+List of initial parameter values
 }
 \description{
 Create initial parameter values
