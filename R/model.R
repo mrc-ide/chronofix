@@ -136,7 +136,7 @@ chronofix_hyperparameters <- function(prob_error_shape1 = 1,
 
 
 validate_data_and_delays <- function(data, delay_map) {
-  chronofix_prepare_data(data)
+  data <- chronofix_prepare_data(data)
   
   validate_groups(data, delay_map)
   
