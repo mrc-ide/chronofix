@@ -88,7 +88,7 @@ test_that("Can run mcmc with data prepared with chronofix_prepare_data", {
   ## Error produced without running chronofix_prepare_data
   expect_error(
     chronofix_mcmc(data, delay_map, hyperparameters, initial, control),
-    "Did not find column 'id' in 'data'",
+    "Did not find column `id` in `data`",
     fixed = TRUE)
   
   data <- chronofix_prepare_data(data, id = "number", group = "set")
