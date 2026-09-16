@@ -124,7 +124,7 @@ validate_data_and_delays <- function(data, delay_map) {
   
   validate_groups(data, delay_map)
   
-  if (!("group" %in% names(data))) {
+  if (is.null(attr(data, "group"))) {
     data$group <- 1
     attr(data, "group") <- "group"
     delay_map$group <- 1
@@ -559,7 +559,9 @@ make_augmented_data_update <- function(observed_dates, parameters, groups,
 
 
 observed_dates_to_int <- function(data) {
-  dates <- setdiff(names(data), c("id", "group"))
+  id <- attr(data, "id")
+  group <- attr(data, "group")
+  dates <- setdiff(names(data), c(id, group))
   
   observed_dates <- data_frame_to_array(data[, dates])
   
