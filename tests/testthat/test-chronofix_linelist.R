@@ -13,6 +13,52 @@ test_that("chronofix_linelist requires mcmc_output to be chronofix_mcmc_samples"
 })
 
 
+
+test_that("chronofix_linelist requires error_thresholds in the right format", {
+  mock <- make_mock_data()
+  
+  expect_error(
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      data = mock$observed,
+      error_thresholds = 1,
+    ),
+    "Expected 'error_thresholds' to be a numeric vector of length 3",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      data = mock$observed,
+      error_thresholds = c(0, 0.5, 2),
+    ),
+    "Expected all values in 'error_thresholds' to be in the range [0, 1]",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      data = mock$observed,
+      error_thresholds = c(-1, 0.5, 0.95),
+    ),
+    "Expected all values in 'error_thresholds' to be in the range [0, 1]",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      data = mock$observed,
+      error_thresholds = c(0.05, 0.95, 0.5),
+    ),
+    "Expected values in 'error_thresholds' to be strictly increasing",
+    fixed = TRUE
+  )
+})
+
+
 test_that("chronofix_linelist rejects unsupported output formats", {
   mock <- make_mock_data()
   
