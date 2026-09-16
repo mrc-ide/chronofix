@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">chronofix</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.10</span>
       </span>
     </div>
 
@@ -45,7 +45,6 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">chronofix_mcmc_initial</span><span class="op">(</span></span>
-<span>  <span class="va">model</span>,</span>
 <span>  initial_delay_shape <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  initial_delay_mean <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  initial_delay_meanlog <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -58,11 +57,7 @@
     <h2>Arguments</h2>
 
 
-<dl><dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
-<dd><p>Model</p></dd>
-
-
-<dt id="arg-initial-delay-shape">initial_delay_shape<a class="anchor" aria-label="anchor" href="#arg-initial-delay-shape"></a></dt>
+<dl><dt id="arg-initial-delay-shape">initial_delay_shape<a class="anchor" aria-label="anchor" href="#arg-initial-delay-shape"></a></dt>
 <dd><p>The initial value for the shape parameter of
 gamma-distributed delays</p></dd>
 
@@ -88,7 +83,7 @@ log-scale of log-normal-distributed delays</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>Vector of initial parameter values</p>
+    <p>List of initial parameter values</p>
     </div>
 
   </div>
