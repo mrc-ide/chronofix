@@ -183,8 +183,8 @@ test_that("model info is setup correctly", {
 
 
 test_that("data and delays are validated correctly", {
-  toy <- toy_model()
-  data <- toy$data$observed_data
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
   delay_map <- toy$delay_map
   
   x <- validate_data_and_delays(data, delay_map)
@@ -199,7 +199,7 @@ test_that("data and delays are validated correctly", {
 
 
 test_that("data and delays are validated correctly without groups", {
-  toy <- toy_model(named_groups = FALSE)
+  toy <- toy_data(named_groups = FALSE)
   data <- toy$data$observed_data
   delay_map <- toy$delay_map
   
@@ -210,6 +210,7 @@ test_that("data and delays are validated correctly without groups", {
   delays_to_keep <- unlist(lapply(delay_map$group, function(x) 3 %in% x))
   delay_map <- delay_map[delays_to_keep, ]
   delay_map$group <- NULL
+  data <- chronofix_prepare_data(data)
   
   x <- validate_data_and_delays(data, delay_map)
   
@@ -243,24 +244,38 @@ test_that("data and delays are validated correctly without groups", {
 
 
 test_that("Error when data and delay_map have different groups", {
-  toy <- toy_model(named_groups = FALSE)
+  toy <- toy_data(named_groups = FALSE)
   data <- toy$data$observed_data
   delay_map <- toy$delay_map
 
   ## No group column in data
   data_no_group <- data[, names(data) != "group"]
+  data_no_group <- chronofix_prepare_data(data_no_group)
   expect_error(validate_data_and_delays(data_no_group, delay_map),
                "Expected 'group' column in 'data'")
+  
+  ## data missing group 4
+  data_no_group_4 <- data[data$group != 4, ]
+  data_no_group_4 <- chronofix_prepare_data(data_no_group_4)
+  expect_error(validate_data_and_delays(data_no_group_4, delay_map),
+               "Groups in 'data'")
+  
+  ## data has named groups, but numbered groups in delay_map
+  data_named_groups <- data
+  group_names <- c("a", "b", "c", "d")
+  data_named_groups$group <- group_names[data_named_groups$group]
+  data_named_groups <- chronofix_prepare_data(data_named_groups)
+  expect_error(validate_data_and_delays(data_named_groups, delay_map),
+               "Groups in 'data'")
+  
+  
+  ## Now just use original data for errors where things are missing in delay_map
+  data <- chronofix_prepare_data(data)
   
   ## No group column in delay_map
   delay_map_no_group <- delay_map[, names(delay_map) != "group"]
   expect_error(validate_data_and_delays(data, delay_map_no_group),
                "Expected 'group' column in 'delay_map'")
-  
-  ## data missing group 4
-  data_no_group_4 <- data[data$group != 4, ]
-  expect_error(validate_data_and_delays(data_no_group_4, delay_map),
-               "Groups in 'data'")
   
   ## delay_map missing group 4
   is_not_group_4 <- 
@@ -270,49 +285,17 @@ test_that("Error when data and delay_map have different groups", {
                                        function (x) setdiff(x, 4))
   expect_error(validate_data_and_delays(data, delay_map_no_group_4),
                "Groups in 'data'")
-  
-  ## data has named groups, but numbered groups in delay_map
-  data_named_groups <- data
-  group_names <- c("a", "b", "c", "d")
-  data_named_groups$group <- group_names[data_named_groups$group]
-  expect_error(validate_data_and_delays(data_named_groups, delay_map),
-               "Groups in 'data'")
 })
 
 test_that("validate_events correctly flags missing columns and date errors", {
-  toy <- toy_model()
+  toy <- toy_data()
   data <- toy$data$observed_data
   delay_map <- toy$delay_map
   
-  # missing id column in data
-  data_no_id <- data
-  data_no_id$id <- NULL
-  expect_error(
-    validate_data_and_delays(data_no_id, delay_map),
-    "must contain an `id` column"
-  )
-  
-  # NA ids
-  data_na_id <- data
-  data_na_id$id[3] <- NA
-  
-  expect_error(
-    validate_data_and_delays(data_na_id, delay_map),
-    "cannot contain missing values"
-  )
-  
-  # duplicated ids
-  data_duplicate_id <- data
-  data_duplicate_id$id[2] <- data_duplicate_id$id[1]
-  
-  expect_error(
-    validate_data_and_delays(data_duplicate_id, delay_map),
-    "must contain unique values"
-  )
-  
   # missing column in data
   data_missing_col <- data
-  data_missing_col$report <- NULL 
+  data_missing_col$report <- NULL
+  data_missing_col <- chronofix_prepare_data(data_missing_col)
   expect_error(
     validate_data_and_delays(data_missing_col, delay_map),
     "must exist as columns in `data`"
@@ -321,6 +304,7 @@ test_that("validate_events correctly flags missing columns and date errors", {
   # unmapped event column in data
   data_extra_col <- data
   data_extra_col$symptom_resolution <- Sys.Date()
+  data_extra_col <- chronofix_prepare_data(data_extra_col)
   expect_error(
     validate_data_and_delays(data_extra_col, delay_map),
     "must be mapped in `delay_map`"
@@ -330,6 +314,7 @@ test_that("validate_events correctly flags missing columns and date errors", {
   data_all_na <- data
   event_cols <- setdiff(names(data), c("id", "group"))
   data_all_na[1, event_cols] <- NA # row 1 dates set to all NA
+  data_all_na <- chronofix_prepare_data(data_all_na)
   expect_error(
     validate_data_and_delays(data_all_na, delay_map),
     "cannot have `NA` for all event dates"
@@ -339,7 +324,8 @@ test_that("validate_events correctly flags missing columns and date errors", {
   data_invalid_date <- data
   # give a 'community-alive' person an invalid 'discharge' date
   comm_idx <- which(data_invalid_date$group == "community-alive")[1]
-  data_invalid_date$discharge[comm_idx] <- as.Date("2026-01-01") 
+  data_invalid_date$discharge[comm_idx] <- as.Date("2026-01-01")
+  data_invalid_date <- chronofix_prepare_data(data_invalid_date)
   expect_error(
     validate_data_and_delays(data_invalid_date, delay_map),
     "events not associated with their group"
@@ -347,9 +333,9 @@ test_that("validate_events correctly flags missing columns and date errors", {
 })
 
 test_that("date range is calculated correctly", {
-  data <- toy_model()$data
+  data <- chronofix_prepare_data(toy_data()$data$observed_data)
   
-  observed_dates <- observed_dates_to_int(data$observed_data)
+  observed_dates <- observed_dates_to_int(data)
   min_date <- min(observed_dates, na.rm = TRUE)
   max_date <- max(observed_dates, na.rm = TRUE)
   

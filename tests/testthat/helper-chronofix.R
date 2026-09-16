@@ -1,4 +1,4 @@
-toy_model_params <- function(named_groups = TRUE, single_group = NULL) {
+toy_data_params <- function(named_groups = TRUE, single_group = NULL) {
   
   if (named_groups) {
     group_names <- c("community-alive", "community-dead",
@@ -52,9 +52,8 @@ toy_model_params <- function(named_groups = TRUE, single_group = NULL) {
        date_range = date_range)
 }
 
-toy_model <- function(named_groups = TRUE, control = chronofix_mcmc_control(),
-                      single_group = NULL) {
-  params <- toy_model_params(named_groups, single_group)
+toy_data <- function(named_groups = TRUE, single_group = NULL) {
+  params <- toy_data_params(named_groups, single_group)
   
   # Run simulation
   sim_result <- chronofix_simulate_data(
@@ -65,14 +64,7 @@ toy_model <- function(named_groups = TRUE, control = chronofix_mcmc_control(),
     date_range = params$date_range
   )
   
-  ## setup model
-  hyperparameters <- chronofix_hyperparameters()
-  
-  model <- chronofix_model(sim_result$observed_data, params$delay_map, 
-                           hyperparameters, control)
-  
-  list(model = model,
-       delay_map = params$delay_map,
+  list(delay_map = params$delay_map,
        data = sim_result,
        date_range = params$date_range)
   

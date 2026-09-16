@@ -139,10 +139,12 @@ test_that("individual delay log-likelihood calculated correctly", {
 
 test_that("log-likelihood aggregates correctly", {
   control <- chronofix_mcmc_control()
-  toy <- toy_model(control = control)
-  model <- toy$model
-  data <- toy$data
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
   delay_map <- toy$delay_map
+  hyperparameters <- chronofix_hyperparameters()
+  control <- chronofix_mcmc_control()
+  model <- chronofix_model(data, delay_map, hyperparameters, control)
   
   ## split the model into the prior and likelihood
   model_split <- monty::monty_model_split(model)
@@ -169,8 +171,8 @@ test_that("log-likelihood aggregates correctly", {
   ## use true data and error indicators from simulated data as
   ## estimated dates and error indicators in augmented data respectively
   ## remove first two columns (id and group)
-  estimated_dates <- as.matrix(data$true_data[, -c(1, 2)])
-  error_indicators <- as.matrix(data$error_indicators[, -c(1, 2)])
+  estimated_dates <- as.matrix(toy$data$true_data[, -c(1, 2)])
+  error_indicators <- as.matrix(toy$data$error_indicators[, -c(1, 2)])
   
   augmented_data <- 
     model$data_packer$pack(list(estimated_dates = estimated_dates,
@@ -183,7 +185,7 @@ test_that("log-likelihood aggregates correctly", {
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   date_range <- 
-    calc_date_range(observed_dates_to_int(data$observed_data), control)
+    calc_date_range(observed_dates_to_int(data), control)
   
   ## error log-likelihood by row
   ll_errors <- 
@@ -191,7 +193,7 @@ test_that("log-likelihood aggregates correctly", {
   
   ## delay log-likelihood by row (and delay)
   calc_ll_delay1 <- function(i) {
-    group <- which(model_info$groups == data$true_data$group[i])
+    group <- which(model_info$groups == toy$data$true_data$group[i])
     chronofix_log_likelihood_delays1(
       estimated_dates[i, ], delay_pars, model_info$delay_info,
       model_info$group_info[[group]]$is_delay_in_group)
