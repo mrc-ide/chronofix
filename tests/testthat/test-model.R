@@ -333,9 +333,9 @@ test_that("validate_events correctly flags missing columns and date errors", {
 })
 
 test_that("date range is calculated correctly", {
-  data <- toy_data()$data
+  data <- chronofix_prepare_data(toy_data()$data$observed_data)
   
-  observed_dates <- observed_dates_to_int(data$observed_data)
+  observed_dates <- observed_dates_to_int(data)
   min_date <- min(observed_dates, na.rm = TRUE)
   max_date <- max(observed_dates, na.rm = TRUE)
   
