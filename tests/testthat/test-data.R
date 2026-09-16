@@ -22,6 +22,37 @@ test_that("chronofix_prepare_data prepares data correctly with custom names", {
   
   expect_equal(attr(prepared_data, "id"), "number")
   expect_equal(attr(prepared_data, "group"), "set")
+  
+  prepared_data2 <- chronofix_prepare_data(prepared_data)
+  expect_identical(prepared_data, prepared_data2)
+  
+  data_no_id <- data
+  data_no_id$number <- NULL
+  expect_error(
+    chronofix_prepare_data(data_no_id, id = "number", group = "set"),
+    "Did not find column `number` in `data`"
+  )
+  
+  data_no_group <- data
+  data_no_group$set <- NULL
+  expect_error(
+    chronofix_prepare_data(data_no_group, id = "number", group = "set"),
+    "Did not find column `set` in `data`"
+  )
+  
+})
+
+
+test_that("chronofix_prepare_data requires data.frame input", {
+  expect_error(
+    chronofix_prepare_data(NULL),
+    "Expected `data` to be a 'data.frame' object"
+  )
+  
+  expect_error(
+    chronofix_prepare_data(data.frame()),
+    "Expected `data` to have at least one row"
+  )
 })
 
 
@@ -34,7 +65,7 @@ test_that("chronofix_prepare_data correctly flags missing columns", {
   data_no_id$id <- NULL
   expect_error(
     chronofix_prepare_data(data_no_id),
-    "Did not find column 'id' in 'data'"
+    "Did not find column `id` in `data`"
   )
   
   # NA ids

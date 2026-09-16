@@ -28,24 +28,24 @@ chronofix_prepare_data <- function(data, id = NULL, group = NULL) {
   }
   
   if (!inherits(data, "data.frame")) {
-    cli::cli_abort("Expected 'data' to be a 'data.frame' object")
+    cli::cli_abort("Expected {.arg data} to be a 'data.frame' object")
   }
   
   if (nrow(data) == 0) {
-    cli::cli_abort("Expected 'data' to have at least one row")
+    cli::cli_abort("Expected {.arg data} to have at least one row")
   }
   
   if (is.null(id)) {
     id <- "id"
     if (is.null(data[[id]])) {
       cli::cli_abort(
-        "Did not find column '{id}' in 'data'")
+        "Did not find column {.col {id}} in {.arg data}")
     }
   } else {
     if (is.null(data[[id]])) {
       cli::cli_abort(
-        c("Did not find column '{id}' in 'data'",
-          i = "You provided the argument 'id'"))
+        c("Did not find column {.col {id}} in {.arg data}",
+          i = "You provided the argument {.arg id}"))
     }
   }
   
@@ -74,14 +74,14 @@ chronofix_prepare_data <- function(data, id = NULL, group = NULL) {
   } else {
     if (is.null(data[[group]])) {
       cli::cli_abort(
-        c("Did not find column '{group}' in 'data'",
-          i = "You provided the argument 'group'"))
+        c("Did not find column {.col {group}} in {.arg data}",
+          i = "You provided the argument {.arg group}"))
     }
   }
   
   if (length(setdiff(names(data), c(id, group))) < 2) {
     cli::cli_abort(
-      paste("Expected 'data' to have at least two columns in addition to",
+      paste("Expected {.arg data} to have at least two columns in addition to",
             "{squote(c(id, group))}"))
   }
   
