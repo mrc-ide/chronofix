@@ -85,4 +85,11 @@ test_that("chronofix_prepare_data correctly flags missing columns", {
     chronofix_prepare_data(data_duplicate_id),
     "must contain unique values"
   )
+  
+  # only one event column
+  data_only_onset <- data[, c("id", "group", "onset")]
+  expect_error(
+    chronofix_prepare_data(data_only_onset),
+    "Expected `data` to have at least two columns in addition to"
+  )
 })
