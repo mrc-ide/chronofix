@@ -13,7 +13,6 @@ test_that("chronofix_linelist requires mcmc_output to be chronofix_mcmc_samples"
 })
 
 
-
 test_that("chronofix_linelist requires error_thresholds in the right format", {
   mock <- make_mock_data()
   
@@ -246,6 +245,26 @@ test_that("chronofix_linelist uses default filename when filename is NULL", {
   expect_true(file.exists("chronofix_linelist.xlsx"))
   unlink("chronofix_linelist.xlsx")
 })
+
+
+test_that("chronofix_linelist replicates custom id and group column names", {
+  mock <- make_mock_data()
+  data <- mock$observed
+  names(data)[names(data) == "id"] <- "number"
+  names(data)[names(data) == "group"] <- "set"
+  
+  data <- chronofix_prepare_data(data, id = "number", group = "set")
+  
+  result <- suppressMessages({
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      data = data)
+  })
+  unlink("chronofix_linelist.xlsx")
+  
+  expect_equal(names(result)[1:2], c("number", "set"))
+})
+
 
 test_that("chronofix_linelist_status_matrix treats threshold value as Error", {
   mode_dates_num <- matrix(rep(20000, 6), ncol = 1)
