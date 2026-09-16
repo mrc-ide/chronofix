@@ -28,6 +28,10 @@ chronofix_linelist <- function(mcmc_output,
                                filename = NULL,
                                show_p_error = FALSE) {
   
+  if (!inherits(mcmc_output, "chronofix_mcmc_samples")) {
+    cli::cli_abort("Expected 'mcmc_output' to be a 'chronofix_mcmc_samples' object")
+  }
+  
   data <- chronofix_prepare_data(data)
   id <- attr(data, "id")
   group <- attr(data, "group")

@@ -51,6 +51,8 @@ chronofix_mcmc <- function(data,
   rownames(samples$data$error_indicators) <- data[[id]]
   colnames(samples$data$error_indicators) <- setdiff(names(data), c(id, group))
   
+  class(samples) <- c(class(samples), "chronofix_mcmc_samples")
+  
   samples
   
 }

@@ -10,6 +10,8 @@ test_that("Can run mcmc", {
   
   samples <- chronofix_mcmc(data, delay_map, hyperparameters, initial, control)
   
+  expect_true(inherits(samples, "chronofix_mcmc_samples"))
+  
   ## 2 parameters per delay plus prob_error
   expect_equal(dim(samples$pars), c(2 * nrow(delay_map) + 1, 150))
   ## 40 individuals x 5 dates x 150 samples (3 chains of 50 samples)
@@ -31,6 +33,8 @@ test_that("Can run mcmc with cascade sampling", {
   
   samples <- chronofix_mcmc(data, delay_map, hyperparameters, initial, control)
   
+  expect_true(inherits(samples, "chronofix_mcmc_samples"))
+  
   ## 2 parameters per delay plus prob_error
   expect_equal(dim(samples$pars), c(2 * nrow(delay_map) + 1, 150))
   ## 40 individuals x 5 dates x 150 samples (3 chains of 50 samples)
@@ -51,6 +55,8 @@ test_that("Can run mcmc with single group and single delay", {
                                     cascade_sampling = TRUE)
   
   samples <- chronofix_mcmc(data, delay_map, hyperparameters, initial, control)
+  
+  expect_true(inherits(samples, "chronofix_mcmc_samples"))
   
   ## 2 parameters per delay plus prob_error
   expect_equal(dim(samples$pars), c(2 * nrow(delay_map) + 1, 150))

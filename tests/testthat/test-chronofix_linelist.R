@@ -1,4 +1,18 @@
 
+test_that("chronofix_linelist requires mcmc_output to be chronofix_mcmc_samples", {
+  mock <- make_mock_data()
+  
+  expect_error(
+    chronofix_linelist(
+      mcmc_output = NULL,
+      data = mock$observed
+    ),
+    "Expected 'mcmc_output' to be a 'chronofix_mcmc_samples' object",
+    fixed = TRUE
+  )
+})
+
+
 test_that("chronofix_linelist rejects unsupported output formats", {
   mock <- make_mock_data()
   
