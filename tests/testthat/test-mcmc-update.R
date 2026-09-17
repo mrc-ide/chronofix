@@ -18,7 +18,11 @@ test_that("update_prob_error_parameters works correctly", {
 
 test_that("update_prob_error updates correctly", {
   
-  model <- toy_model()$model
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
+  hyperparameters <- chronofix_hyperparameters()
+  control <- chronofix_mcmc_control()
+  model <- chronofix_model(data, toy$delay_map, hyperparameters, control)
   
   parameters <- model$parameters
   pars <- numeric(length(parameters))
@@ -63,9 +67,11 @@ test_that("update_prob_error updates correctly", {
 
 test_that("update gamma mean works correctly", {
   
-  toy <- toy_model()
-  
-  model <- toy$model
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
+  hyperparameters <- chronofix_hyperparameters()
+  control <- chronofix_mcmc_control()
+  model <- chronofix_model(data, toy$delay_map, hyperparameters, control)
   
   estimated_dates <- toy$data$true_data
   estimated_dates$id <- NULL
@@ -105,9 +111,11 @@ test_that("update gamma shape works correctly", {
   
   set.seed(1)
   
-  toy <- toy_model()
-  
-  model <- toy$model
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
+  hyperparameters <- chronofix_hyperparameters()
+  control <- chronofix_mcmc_control()
+  model <- chronofix_model(data, toy$delay_map, hyperparameters, control)
   
   estimated_dates <- toy$data$true_data
   estimated_dates$id <- NULL
@@ -165,11 +173,11 @@ test_that("update gamma shape works correctly", {
 
 
 test_that("update gamma pars works correctly", {
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
+  hyperparameters <- chronofix_hyperparameters()
   control <- chronofix_mcmc_control()
-  
-  toy <- toy_model(control = control)
-
-  model <- toy$model
+  model <- chronofix_model(data, toy$delay_map, hyperparameters, control)
   
   estimated_dates <- toy$data$true_data
   estimated_dates$id <- NULL
@@ -182,7 +190,7 @@ test_that("update gamma pars works correctly", {
   augmented_data <- list(estimated_dates = as.matrix(estimated_dates),
                          error_indicators = as.matrix(error_indicators))
   
-  pars <- chronofix_mcmc_initial(model)
+  pars <- mcmc_pars_initialise(model, chronofix_mcmc_initial())
   
   rng <- monty::monty_rng_create(seed = 1)
   rng1 <- monty::monty_rng_create(seed = 1)
@@ -217,9 +225,11 @@ test_that("update gamma pars works correctly", {
 
 test_that("update log-normal meanlog works correctly", {
   
-  toy <- toy_model()
-  
-  model <- toy$model
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
+  hyperparameters <- chronofix_hyperparameters()
+  control <- chronofix_mcmc_control()
+  model <- chronofix_model(data, toy$delay_map, hyperparameters, control)
   
   estimated_dates <- toy$data$true_data
   estimated_dates$id <- NULL
@@ -262,9 +272,11 @@ test_that("update log-normal meanlog works correctly", {
 
 test_that("update log-normal precisionlog works correctly", {
   
-  toy <- toy_model()
-  
-  model <- toy$model
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
+  hyperparameters <- chronofix_hyperparameters()
+  control <- chronofix_mcmc_control()
+  model <- chronofix_model(data, toy$delay_map, hyperparameters, control)
   
   estimated_dates <- toy$data$true_data
   estimated_dates$id <- NULL
@@ -304,11 +316,11 @@ test_that("update log-normal precisionlog works correctly", {
 
 
 test_that("update log-normal pars works correctly", {
+  toy <- toy_data()
+  data <- chronofix_prepare_data(toy$data$observed_data)
+  hyperparameters <- chronofix_hyperparameters()
   control <- chronofix_mcmc_control()
-  
-  toy <- toy_model(control = control)
-  
-  model <- toy$model
+  model <- chronofix_model(data, toy$delay_map, hyperparameters, control)
   
   estimated_dates <- toy$data$true_data
   estimated_dates$id <- NULL
@@ -321,7 +333,7 @@ test_that("update log-normal pars works correctly", {
   augmented_data <- list(estimated_dates = as.matrix(estimated_dates),
                          error_indicators = as.matrix(error_indicators))
   
-  pars <- chronofix_mcmc_initial(model)
+  pars <- mcmc_pars_initialise(model, chronofix_mcmc_initial())
   
   rng <- monty::monty_rng_create(seed = 1)
   rng1 <- monty::monty_rng_create(seed = 1)

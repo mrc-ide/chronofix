@@ -1,40 +1,62 @@
-library(testthat)
 
-test_that("chronofix_linelist requires mcmc_output", {
+test_that("chronofix_linelist requires mcmc_output to be chronofix_mcmc_samples", {
   mock <- make_mock_data()
   
   expect_error(
-    chronofix_linelist(observed_data = mock$observed),
-    "'mcmc_output' is missing.",
+    chronofix_linelist(
+      mcmc_output = NULL,
+      data = mock$observed
+    ),
+    "Expected 'mcmc_output' to be a 'chronofix_mcmc_samples' object",
     fixed = TRUE
   )
 })
 
-test_that("chronofix_linelist requires observed_data", {
-  mock <- make_mock_data()
-  
-  expect_error(
-    chronofix_linelist(mcmc_output = mock$mcmc),
-    "'observed_data' is missing.",
-    fixed = TRUE
-  )
-})
 
-test_that("chronofix_linelist requires group column in observed_data", {
+test_that("chronofix_linelist requires error_thresholds in the right format", {
   mock <- make_mock_data()
-  observed_no_group <- mock$observed[, setdiff(names(mock$observed), "group")]
   
   expect_error(
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = observed_no_group,
-      format = "csv",
-      filename = tempfile(fileext = ".csv")
+      data = mock$observed,
+      error_thresholds = 1,
     ),
-    "No 'group' column found in observed_data",
+    "Expected 'error_thresholds' to be a numeric vector of length 3",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      data = mock$observed,
+      error_thresholds = c(0, 0.5, 2),
+    ),
+    "Expected all values in 'error_thresholds' to be in the range [0, 1]",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      data = mock$observed,
+      error_thresholds = c(-1, 0.5, 0.95),
+    ),
+    "Expected all values in 'error_thresholds' to be in the range [0, 1]",
+    fixed = TRUE
+  )
+  
+  expect_error(
+    chronofix_linelist(
+      mcmc_output = mock$mcmc,
+      data = mock$observed,
+      error_thresholds = c(0.05, 0.95, 0.5),
+    ),
+    "Expected values in 'error_thresholds' to be strictly increasing",
     fixed = TRUE
   )
 })
+
 
 test_that("chronofix_linelist rejects unsupported output formats", {
   mock <- make_mock_data()
@@ -42,7 +64,7 @@ test_that("chronofix_linelist rejects unsupported output formats", {
   expect_error(
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = mock$observed,
+      data = mock$observed,
       format = "pdf"
     ),
     "The 'format' argument must be either 'xlsx' or 'csv'.",
@@ -59,7 +81,7 @@ test_that("chronofix_linelist checks observed event columns match MCMC event dim
   expect_error(
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = observed_extra_event,
+      data = observed_extra_event,
       format = "csv",
       filename = tempfile(fileext = ".csv")
     ),
@@ -74,7 +96,7 @@ test_that("chronofix_linelist hides p_error columns by default", {
   result <- suppressMessages({
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = mock$observed,
+      data = mock$observed,
       format = "csv",
       filename = tempfile(fileext = ".csv")
     )
@@ -89,7 +111,7 @@ test_that("chronofix_linelist includes p_error columns when requested", {
   result <- suppressMessages({
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = mock$observed,
+      data = mock$observed,
       format = "csv",
       filename = tempfile(fileext = ".csv"),
       show_p_error = TRUE
@@ -98,11 +120,11 @@ test_that("chronofix_linelist includes p_error columns when requested", {
   
   expect_true(all(
     c(
-      "Onset_p_error",
-      "Hospitalisation_p_error",
-      "Report_p_error",
-      "Death_p_error",
-      "Discharge_p_error"
+      "onset_p_error",
+      "hospitalisation_p_error",
+      "report_p_error",
+      "death_p_error",
+      "discharge_p_error"
     ) %in% names(result)
   ))
 })
@@ -120,15 +142,15 @@ test_that("chronofix_linelist distinguishes imputed missing from structural miss
   result <- suppressMessages({
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = mock$observed,
+      data = mock$observed,
       format = "csv",
       filename = tempfile(fileext = ".csv"),
       show_p_error = TRUE
     )
   })
   
-  expect_equal(result$Report[i], as.Date("2025-01-12"))
-  expect_true(is.na(result$Report_p_error[i]))
+  expect_equal(result$report[i], as.Date("2025-01-12"))
+  expect_true(is.na(result$report_p_error[i]))
 })
 
 test_that("chronofix_linelist writes xlsx output", {
@@ -138,7 +160,7 @@ test_that("chronofix_linelist writes xlsx output", {
   result <- suppressMessages({
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = mock$observed,
+      data = mock$observed,
       format = "xlsx",
       filename = path
     )
@@ -155,7 +177,7 @@ test_that("chronofix_linelist creates expected worksheets in xlsx output", {
   suppressMessages({
     chronofix_linelist(
       mcmc_output = mock$mcmc, 
-      observed_data = mock$observed, 
+      data = mock$observed, 
       format = "xlsx", 
       filename = path
     )
@@ -174,7 +196,7 @@ test_that("chronofix_linelist flags filename and fileext mismatch", {
     result <-
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = mock$observed,
+      data = mock$observed,
       format = "csv",
       filename = path),
     "Extension mismatch: 'filename' has extension '.xlsx' but 'format' is set to 'csv'.",
@@ -187,7 +209,7 @@ test_that("chronofix_linelist flags filename and fileext mismatch", {
     result <-
       chronofix_linelist(
         mcmc_output = mock$mcmc,
-        observed_data = mock$observed,
+        data = mock$observed,
         format = "xlsx",
         filename = path),
     "Extension mismatch: 'filename' has extension '.csv' but 'format' is set to 'xlsx'.",
@@ -203,7 +225,7 @@ test_that("chronofix_linelist uses default filename when filename is NULL", {
   suppressMessages({
     chronofix_linelist(
       mcmc_output = mock$mcmc, 
-      observed_data = mock$observed, 
+      data = mock$observed, 
       format = "csv", 
       filename = NULL
     )
@@ -215,7 +237,7 @@ test_that("chronofix_linelist uses default filename when filename is NULL", {
   suppressMessages({
     chronofix_linelist(
       mcmc_output = mock$mcmc, 
-      observed_data = mock$observed, 
+      data = mock$observed, 
       format = "xlsx", 
       filename = NULL
     )
@@ -224,37 +246,44 @@ test_that("chronofix_linelist uses default filename when filename is NULL", {
   unlink("chronofix_linelist.xlsx")
 })
 
-test_that("chronofix_linelist capitalises event names in the returned dataframe", {
+
+test_that("chronofix_linelist replicates custom id and group column names", {
   mock <- make_mock_data()
+  data <- mock$observed
+  names(data)[names(data) == "id"] <- "number"
+  names(data)[names(data) == "group"] <- "set"
+  
+  data <- chronofix_prepare_data(data, id = "number", group = "set")
   
   result <- suppressMessages({
     chronofix_linelist(
       mcmc_output = mock$mcmc,
-      observed_data = mock$observed,
-      format = "csv",
-      filename = tempfile(fileext = ".csv")
-    )
+      data = data)
   })
+  unlink("chronofix_linelist.xlsx")
   
-  raw_names <- setdiff(colnames(mock$observed), c("id", "group"))
-  expected_names <- paste0(toupper(substr(raw_names, 1, 1)), substring(raw_names, 2))
-  
-  expect_true(all(expected_names %in% colnames(result)))
+  expect_equal(names(result)[1:2], c("number", "set"))
 })
 
+
 test_that("chronofix_linelist_status_matrix treats threshold value as Error", {
-  mode_dates_num <- matrix(c(20000, 20000), ncol = 1)
-  prob_error <- matrix(c(0.5, 0.499), ncol = 1)
+  mode_dates_num <- matrix(rep(20000, 6), ncol = 1)
+  prob_error <- matrix(c(0.04, 0.06, 0.49, 0.51, 0.94, 0.96), ncol = 1)
   
   status <- chronofix_linelist_status_matrix(
     mode_dates_num = mode_dates_num,
     prob_error = prob_error,
-    error_threshold = 0.5
+    error_thresholds = c(0.05, 0.5, 0.95)
   )
   
   expect_equal(
     as.vector(status),
-    c("Error", "Potential Error")
+    c("Correct", 
+      "Possible Error", 
+      "Possible Error", 
+      "Likely Error",
+      "Likely Error", 
+      "Highly Likely Error")
   )
 })
 
@@ -263,8 +292,9 @@ test_that("chronofix_linelist_status_matrix classifies date statuses correctly",
     c(
       NA, # structurally missing
       20000, # imputed missing
-      20000, # error
-      20000, # potential error
+      20000, # highly likely error
+      20000, # likely error
+      20000, # possible error
       20000 # correct
     ),
     ncol = 1
@@ -274,8 +304,9 @@ test_that("chronofix_linelist_status_matrix classifies date statuses correctly",
     c(
       NA, # structurally missing
       NA, # imputed missing
-      0.75, # error
-      0.25, # potential error
+      1, # highly likely error
+      0.75, # likely error
+      0.25, # possible error
       0 # correct
     ),
     ncol = 1
@@ -284,7 +315,7 @@ test_that("chronofix_linelist_status_matrix classifies date statuses correctly",
   status <- chronofix_linelist_status_matrix(
     mode_dates_num = mode_dates_num,
     prob_error = prob_error,
-    error_threshold = 0.5
+    error_thresholds = c(0.05, 0.5, 0.95)
   )
   
   expect_equal(
@@ -292,8 +323,9 @@ test_that("chronofix_linelist_status_matrix classifies date statuses correctly",
     c(
       "Structurally Missing",
       "Imputed Missing",
-      "Error",
-      "Potential Error",
+      "Highly Likely Error",
+      "Likely Error",
+      "Possible Error",
       "Correct"
     )
   )
@@ -302,8 +334,9 @@ test_that("chronofix_linelist_status_matrix classifies date statuses correctly",
 test_that("chronofix_style_mapper returns correct style keys for known statuses", {
   expect_equal(chronofix_style_mapper("Structurally Missing"), "style_structural")
   expect_equal(chronofix_style_mapper("Imputed Missing"), "style_imputed")
-  expect_equal(chronofix_style_mapper("Error"), "style_error")
-  expect_equal(chronofix_style_mapper("Potential Error"), "style_potential")
+  expect_equal(chronofix_style_mapper("Highly Likely Error"), "style_highly_likely_error")
+  expect_equal(chronofix_style_mapper("Likely Error"), "style_likely_error")
+  expect_equal(chronofix_style_mapper("Possible Error"), "style_possible_error")
 })
 
 test_that("chronofix_style_mapper returns NA for unstyled statuses", {

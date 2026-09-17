@@ -1,5 +1,5 @@
 test_that("sampling order calculated correctly", {
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   
@@ -44,7 +44,7 @@ test_that("sampling order calculated correctly", {
 
 
 test_that("cascade resampling order calculated correctly", {
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   
@@ -277,7 +277,7 @@ test_that("cascade resampling order calculated correctly", {
 
 
 test_that("updating estimated dates skipped correctly", {
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   delay_info <- model_info$delay_info
@@ -320,7 +320,7 @@ test_that("updating estimated dates skipped correctly", {
 
 
 test_that("updating error indicators skipped correctly", {
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   delay_info <- model_info$delay_info
@@ -399,7 +399,7 @@ test_that("updating error indicators skipped correctly", {
 
 
 test_that("swap error indicators skipped correctly", {
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   delay_info <- model_info$delay_info
@@ -481,11 +481,11 @@ test_that("swap error indicators skipped correctly", {
 
 test_that("estimated dates proposed correctly", {
   
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   delay_info <- model_info$delay_info
-  date_range <- toy_model()$date_range
+  date_range <- toy_data()$date_range
   
   delay_pars <- list(list(mean = 8, shape = 4),
                      list(mean = 5, shape = 3),
@@ -561,11 +561,11 @@ test_that("estimated dates proposed correctly", {
 
 test_that("proposal density calculated correctly", {
   
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   delay_info <- model_info$delay_info
-  date_range <- toy_model()$date_range
+  date_range <- toy_data()$date_range
   
   delay_pars <- list(list(mean = 8, shape = 4),
                      list(mean = 5, shape = 3),
@@ -785,7 +785,7 @@ test_that("proposal density calculated correctly", {
 
 test_that("acceptance probability calculated correctly", {
   
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   delay_info <- model_info$delay_info
@@ -973,7 +973,7 @@ test_that("acceptance probability calculated correctly", {
 })
 
 test_that("acceptance probability is positive for a better fitting proposed state", {
-  delay_map <- toy_model()$delay_map
+  delay_map <- toy_data()$delay_map
   dates <- c("onset", "hospitalisation", "report", "death", "discharge")
   model_info <- make_model_info(delay_map, dates)
   delay_info <- model_info$delay_info

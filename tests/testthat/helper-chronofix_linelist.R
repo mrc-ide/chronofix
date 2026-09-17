@@ -44,13 +44,16 @@ make_mock_data <- function() {
     }
   }
   
+  mcmc <- list(
+    data = list(
+      estimated_dates = estimated_dates,
+      error_indicators = error_indicators
+    )
+  )
+  class(mcmc) <- "chronofix_mcmc_samples"
+  
   list(
     observed = observed_data,
-    mcmc = list(
-      data = list(
-        estimated_dates = estimated_dates,
-        error_indicators = error_indicators
-      )
-    )
+    mcmc = mcmc
   )
 }

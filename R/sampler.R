@@ -1,7 +1,4 @@
-#' chronofix sampler
-#' @param control Object produced by `chronofix_mcmc_control()`
-#' @return A monty sampler configured for the chronofix model.
-#' @export
+
 chronofix_sampler <- function(control) {
   monty::monty_sampler(
     "chronofix sampler",

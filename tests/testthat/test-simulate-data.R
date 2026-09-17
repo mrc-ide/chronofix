@@ -1,6 +1,6 @@
 
 test_that("chronofix_simulate_data returns correct structure and dimensions", {
-  params <- toy_model_params()
+  params <- toy_data_params()
   
   set.seed(1)
   sim_result <- chronofix_simulate_data(
@@ -27,7 +27,7 @@ test_that("chronofix_simulate_data returns correct structure and dimensions", {
 
 
 test_that("error_params as expected in simulated data", {
-  params <- toy_model_params()
+  params <- toy_data_params()
   n_per_group <- rep(100, length(params$group_names))
   
   set.seed(1)
@@ -64,7 +64,7 @@ test_that("error_params as expected in simulated data", {
 
 
 test_that("chronofix_simulate_data handles numeric groups correctly", {
-  params <- toy_model_params(named_groups = FALSE)
+  params <- toy_data_params(named_groups = FALSE)
   
   set.seed(1)
   sim_result <- chronofix_simulate_data(
@@ -104,7 +104,7 @@ test_that("chronofix_simulate_data handles numeric groups correctly", {
 
 
 test_that("chronofix_simulate_data handles bad inputs correctly", {
-  params <- toy_model_params()
+  params <- toy_data_params()
   
   ## n_per_group and group_names lengths not matching
   expect_error(chronofix_simulate_data(n_per_group = c(10, 10),
@@ -144,7 +144,7 @@ test_that("chronofix_simulate_data handles bad inputs correctly", {
 
 test_that("chronofix_simulate_data handles vector and scalar n_per_group correctly", {
   
-  params <- toy_model_params()
+  params <- toy_data_params()
   
   check_n_per_group <- function(x) {
     unname(vapply(params$group_names, function(nm) sum(x$group == nm), 1))
