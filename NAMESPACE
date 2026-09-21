@@ -9,6 +9,7 @@ export(chronofix_prepare_data)
 export(chronofix_simulate_data)
 export(chronofix_simulate_observation_errors)
 export(chronofix_simulate_true_data)
+export(chronofix_summarise_individual)
 import(dplyr)
 import(openxlsx)
 importFrom(dplyr,
