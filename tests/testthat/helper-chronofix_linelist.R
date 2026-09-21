@@ -1,4 +1,4 @@
-make_mock_data <- function() {
+make_mock_samples <- function(id = "id", group = "group") {
   n_per_group <- 3
   groups <- c("community-alive", "hospitalised-alive", "community-dead")
   n_ind <- n_per_group * length(groups)
@@ -15,12 +15,14 @@ make_mock_data <- function() {
     discharge = as.Date(rep(NA, n_ind))
   )
   
-  observed_data$hospitalisation[observed_data$group == "hospitalised-alive"] <-
-    as.Date("2025-01-05")
-  observed_data$discharge[observed_data$group == "hospitalised-alive"] <-
-    as.Date("2025-01-15")
-  observed_data$death[observed_data$group == "community-dead"] <-
-    as.Date("2025-01-20")
+  names(observed_data)[names(observed_data) == "id"] <- id
+  names(observed_data)[names(observed_data) == "group"] <- group
+  
+  hospitalised_alive <- observed_data[[group]] == "hospitalised-alive"
+  observed_data$hospitalisation[hospitalised_alive] <- as.Date("2025-01-05")
+  observed_data$discharge[hospitalised_alive] <- as.Date("2025-01-15")
+  community_dead <- observed_data[[group]] == "community-dead"
+  observed_data$death[community_dead] <- as.Date("2025-01-20")
   
   estimated_dates <- array(
     as.Date(NA_character_),
@@ -31,7 +33,7 @@ make_mock_data <- function() {
   
   for (i in seq_len(n_ind)) {
     allowed_events <- switch(
-      observed_data$group[i],
+      observed_data[[group]][i],
       "community-alive" = c(1, 3),
       "hospitalised-alive" = c(1, 2, 3, 5),
       "community-dead" = c(1, 3, 4)
@@ -44,16 +46,19 @@ make_mock_data <- function() {
     }
   }
   
-  mcmc <- list(
-    data = list(
+  rownames(estimated_dates) <- observed_data[[id]]
+  colnames(estimated_dates) <- setdiff(names(observed_data), c(id, group))
+  rownames(error_indicators) <- observed_data[[id]]
+  colnames(error_indicators) <- setdiff(names(observed_data), c(id, group))
+  
+  samples <- list(
+    data = chronofix_prepare_data(observed_data, id = id, group = group),
+    augmented_data = list(
       estimated_dates = estimated_dates,
       error_indicators = error_indicators
     )
   )
-  class(mcmc) <- "chronofix_mcmc_samples"
+  class(samples) <- "chronofix_mcmc_samples"
   
-  list(
-    observed = observed_data,
-    mcmc = mcmc
-  )
+  samples
 }

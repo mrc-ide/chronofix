@@ -43,13 +43,18 @@ chronofix_mcmc <- function(data,
                                  flatten_chains = TRUE)
   
   ## Unpack augmented data
-  samples$data <- unpack_augmented_data(samples$data, model$data_packer)
+  samples$augmented_data <- 
+    unpack_augmented_data(samples$augmented_data, model$data_packer)
   id <- attr(data, "id")
   group <- attr(data, "group")
-  rownames(samples$data$estimated_dates) <- data[[id]]
-  colnames(samples$data$estimated_dates) <- setdiff(names(data), c(id, group))
-  rownames(samples$data$error_indicators) <- data[[id]]
-  colnames(samples$data$error_indicators) <- setdiff(names(data), c(id, group))
+  rownames(samples$augmented_data$estimated_dates) <- data[[id]]
+  colnames(samples$augmented_data$estimated_dates) <- 
+    setdiff(names(data), c(id, group))
+  rownames(samples$augmented_data$error_indicators) <- data[[id]]
+  colnames(samples$augmented_data$error_indicators) <- 
+    setdiff(names(data), c(id, group))
+  
+  samples$data <- data
   
   class(samples) <- c(class(samples), "chronofix_mcmc_samples")
   
