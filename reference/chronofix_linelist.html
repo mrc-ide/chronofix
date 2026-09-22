@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">chronofix</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.10</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.11</span>
       </span>
     </div>
 
@@ -45,8 +45,7 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">chronofix_linelist</span><span class="op">(</span></span>
-<span>  <span class="va">mcmc_output</span>,</span>
-<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">samples</span>,</span>
 <span>  error_thresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.5</span>, <span class="fl">0.95</span><span class="op">)</span>,</span>
 <span>  format <span class="op">=</span> <span class="st">"xlsx"</span>,</span>
 <span>  filename <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -58,14 +57,9 @@
     <h2>Arguments</h2>
 
 
-<dl><dt id="arg-mcmc-output">mcmc_output<a class="anchor" aria-label="anchor" href="#arg-mcmc-output"></a></dt>
+<dl><dt id="arg-samples">samples<a class="anchor" aria-label="anchor" href="#arg-samples"></a></dt>
 <dd><p>A <code>chronofix_mcmc_samples</code> object as generated
 by <code><a href="chronofix_mcmc.html">chronofix_mcmc()</a></code>.</p></dd>
-
-
-<dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>Original observed data containing the 'id', 'group',
-and event columns.</p></dd>
 
 
 <dt id="arg-error-thresholds">error_thresholds<a class="anchor" aria-label="anchor" href="#arg-error-thresholds"></a></dt>
