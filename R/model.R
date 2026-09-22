@@ -405,7 +405,8 @@ make_prior <- function(parameters, hyperparameters, domain,
 chronofix_log_likelihood <- function(pars, groups, model_info, date_range,
                                      data_packer) {
   
-  augmented_data <- unpack_augmented_data(attr(pars, "data"), data_packer)
+  augmented_data <- 
+    unpack_augmented_data(attr(pars, "augmented_data"), data_packer)
   
   ll_errors <- 
     sum(chronofix_log_likelihood_errors(pars[["prob_error"]],
@@ -529,7 +530,7 @@ make_augmented_data_update <- function(observed_dates, parameters, groups,
                                        model_info, date_range, control,
                                        density_fn, data_packer) {
   augmented_data_update <- function(pars, rng) {
-    augmented_data <- attr(pars, "data")
+    augmented_data <- attr(pars, "augmented_data")
     
     names(pars) <- parameters
     
@@ -540,7 +541,7 @@ make_augmented_data_update <- function(observed_dates, parameters, groups,
                                   date_range, control, rng)
       augmented_data <- data_packer$pack(augmented_data)
       
-      attr(pars, "data") <- augmented_data
+      attr(pars, "augmented_data") <- augmented_data
       density <- density_fn(pars)
     } else {
       augmented_data <- unpack_augmented_data(augmented_data, data_packer)
@@ -548,11 +549,11 @@ make_augmented_data_update <- function(observed_dates, parameters, groups,
                                               pars, groups, model_info,
                                               date_range, control, rng)
       augmented_data <- data_packer$pack(augmented_data)
-      attr(pars, "data") <- augmented_data
+      attr(pars, "augmented_data") <- augmented_data
       density <- density_fn(pars)
     }
     
-    list(data = augmented_data, density = density)
+    list(augmented_data = augmented_data, density = density)
   } 
   augmented_data_update  
 }

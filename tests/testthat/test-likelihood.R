@@ -177,7 +177,7 @@ test_that("log-likelihood aggregates correctly", {
   augmented_data <- 
     model$data_packer$pack(list(estimated_dates = estimated_dates,
                                 error_indicators = error_indicators))
-  attr(pars, "data") <- augmented_data
+  attr(pars, "augmented_data") <- augmented_data
   ll_aggregated <- model_likelihood$density(pars)
   
   
