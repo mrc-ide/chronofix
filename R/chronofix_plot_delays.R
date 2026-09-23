@@ -115,6 +115,8 @@ chronofix_plot_delays <- function(mcmc_output,
   plot_data$Panel_Title <- factor(plot_data$Panel_Title, levels = unique(plot_data$Panel_Title))
   plot_data$Delay_Title <- factor(plot_data$Delay_Title, levels = unique(plot_data$Delay_Title))
   
+  present_dists <- intersect(c("Gamma", "Log-Normal"), unique(as.character(plot_data$Distribution)))
+  
   dist_colours <- c("Gamma" = "#A7C1E1", "Log-Normal" = "#B7E4C7")
   line_colours <- c("Gamma" = "#4B7BB6", "Log-Normal" = "#52B788")
   
@@ -128,9 +130,9 @@ chronofix_plot_delays <- function(mcmc_output,
       geom_line(aes(y = mean_density), linetype = "dashed",
                 linewidth = 1, show.legend = TRUE) +
       scale_fill_manual(name = "Distribution", values = dist_colours,
-                        limits = names(dist_colours), drop = FALSE) +
+                        limits = present_dists) +
       scale_colour_manual(name = "Distribution", values = line_colours,
-                         limits = names(line_colours), drop = FALSE) +
+                          limits = present_dists) +
       guides(
         fill = guide_legend(override.aes = list(alpha = 0.55, linetype = "dashed")),
         colour = guide_legend()
