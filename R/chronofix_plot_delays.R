@@ -6,44 +6,83 @@
 #' @param facet_by_group Logical, if TRUE, creates a grid with a row per group
 #'  (default TRUE)
 #' @param share_x_axis Logical, if TRUE, plots all distributions on the same
-#'  x-axis scale (default TRUE)
+#'  x-axis scale (default TRUE). Note: the shared axis range is calculated 
+#'  over the filtered set of distributions, so a filtered plot may have 
+#'  a different maximum x-axis than an unfiltered plot.
+#' @param select_group Optional character vector. If provided, only plots delays 
+#'  matching this group (e.g., "hospitalised-alive"). Supports multiple groups.
+#' @param select_delay Optional character vector. If provided, only plots delays 
+#'  matching this label (e.g., "onset to hospitalisation"). Supports multiple delays.
 #' 
 #' @import ggplot2
 #' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
 #' @importFrom ggtext element_markdown element_textbox_simple
 #' @importFrom grid unit
+#' @importFrom cli cli_abort
 #' @import patchwork
 #' @export
 chronofix_plot_delays <- function(mcmc_output,
                                   delay_map,
                                   n_points = 200,
                                   facet_by_group = TRUE,
-                                  share_x_axis = TRUE) {
+                                  share_x_axis = TRUE,
+                                  select_group = NULL,
+                                  select_delay = NULL) {
   
   validate_delay_inputs(mcmc_output, delay_map)
   
   pars_flat <- mcmc_output$pars
   
+  # original row indices so we can still find the correct MCMC parameters
+  # when only plotting some delays/groups
+  delay_map$original_index <- seq_len(nrow(delay_map))
+  delay_map_original <- delay_map
+  
+  if (!is.null(select_group)) {
+    keep <- vapply(delay_map$group,
+                   function(g) any(select_group %in% as.character(unlist(g))),
+                   logical(1))
+    delay_map <- delay_map[keep, ]
+  }
+  
+  if (!is.null(select_delay)) {
+    raw_delay_strings <- paste0(delay_map$from, " to ", delay_map$to)
+    delay_map <- delay_map[raw_delay_strings %in% select_delay, ]
+  }
+  
+  if (nrow(delay_map) == 0) {
+    avail_groups <- unique(unlist(delay_map_original$group))
+    avail_delays <- unique(paste0(delay_map_original$from, " to ", delay_map_original$to))
+    
+    cli::cli_abort(c(
+      "x" = "Filtering resulted in 0 distributions to plot.",
+      "i" = "Check your {.arg select_group} and {.arg select_delay} arguments.",
+      "*" = "Available groups: {.val {avail_groups}}",
+      "*" = "Available delays: {.val {avail_delays}}"
+    ))
+  }
+  
   local_max_x <- numeric(nrow(delay_map))
   
   for (i in seq_len(nrow(delay_map))) {
+    orig_i <- delay_map$original_index[i]
     raw_dist <- as.character(delay_map$distribution[i])
     is_gamma <- grepl("gamma", raw_dist, ignore.case = TRUE)
     
     if (is_gamma) {
-      mean_samps <- pars_flat[paste0("delay", i, "_mean"), ]
-      shape_samps <- pars_flat[paste0("delay", i, "_shape"), ]
+      mean_samps <- pars_flat[paste0("delay", orig_i, "_mean"), ]
+      shape_samps <- pars_flat[paste0("delay", orig_i, "_shape"), ]
       scale_samps <- mean_samps / shape_samps
       local_max_x[i] <- stats::qgamma(0.99,
                                       shape = mean(shape_samps, na.rm = TRUE),
                                       scale = mean(scale_samps, na.rm = TRUE))
       } else {
-      meanlog_samps <- pars_flat[paste0("delay", i, "_meanlog"), ]
-      prec_samps <- pars_flat[paste0("delay", i, "_precisionlog"), ]
-      sdlog_samps <- sqrt(1 / prec_samps)
-      local_max_x[i] <- stats::qlnorm(0.99,
-                                      meanlog = mean(meanlog_samps, na.rm = TRUE),
-                                      sdlog = mean(sdlog_samps, na.rm = TRUE))
+        meanlog_samps <- pars_flat[paste0("delay", orig_i, "_meanlog"), ]
+        prec_samps <- pars_flat[paste0("delay", orig_i, "_precisionlog"), ]
+        sdlog_samps <- sqrt(1 / prec_samps)
+        local_max_x[i] <- stats::qlnorm(0.99,
+                                        meanlog = mean(meanlog_samps, na.rm = TRUE),
+                                        sdlog = mean(sdlog_samps, na.rm = TRUE))
       }
     }
     
@@ -52,6 +91,7 @@ chronofix_plot_delays <- function(mcmc_output,
   plot_data_list <- list()
   
   for (i in seq_len(nrow(delay_map))) {
+    orig_i <- delay_map$original_index[i]
     raw_dist <- as.character(delay_map$distribution[i])
     is_gamma <- grepl("gamma", raw_dist, ignore.case = TRUE)
     dist_clean <- if (is_gamma) "Gamma" else "Log-Normal"
@@ -75,8 +115,8 @@ chronofix_plot_delays <- function(mcmc_output,
     x_seq <- seq(0.01, current_max_x, length.out = n_points)
     
     if (is_gamma) {
-      mean_samps <- pars_flat[paste0("delay", i, "_mean"), ]
-      shape_samps <- pars_flat[paste0("delay", i, "_shape"), ]
+      mean_samps <- pars_flat[paste0("delay", orig_i, "_mean"), ]
+      shape_samps <- pars_flat[paste0("delay", orig_i, "_shape"), ]
       scale_samps <- mean_samps / shape_samps
       
       dens_matrix <- t(sapply(x_seq, function(x) {
@@ -84,8 +124,8 @@ chronofix_plot_delays <- function(mcmc_output,
       }))
       
     } else {
-      meanlog_samps <- pars_flat[paste0("delay", i, "_meanlog"), ]
-      prec_samps <- pars_flat[paste0("delay", i, "_precisionlog"), ]
+      meanlog_samps <- pars_flat[paste0("delay", orig_i, "_meanlog"), ]
+      prec_samps <- pars_flat[paste0("delay", orig_i, "_precisionlog"), ]
       sdlog_samps <- sqrt(1 / prec_samps)
       
       dens_matrix <- t(sapply(x_seq, function(x) {
@@ -229,7 +269,6 @@ chronofix_plot_delays <- function(mcmc_output,
       ) +
       theme(
         legend.position = "top",
-        legend.justification = "right",
         legend.title = element_text(size = 11)
       )
   }
