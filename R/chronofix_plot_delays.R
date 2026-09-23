@@ -67,7 +67,7 @@ chronofix_plot_delays <- function(mcmc_output,
     
     # for facet_by_group = FALSE
     panel_title <- sprintf(
-      "<span style='color: #1F77B4;'>Group: %s</span><br><span style='color: #000000;'>%s</span>",
+      "<span style='color: #334155;'>Group: %s</span><br><span style='color: #000000;'>%s</span>",
       clean_group_wrapped, delay_title
     )
     
@@ -145,8 +145,8 @@ chronofix_plot_delays <- function(mcmc_output,
                                       margin = margin(b = 6, t = 6)),
         strip.background = element_rect(fill = "#f8f9fa", colour = "#cccccc"),
         panel.grid.minor = element_blank(),
-        axis.title.x = element_text(face = "bold", margin = margin(t = 10)),
-        axis.title.y = element_text(face = "bold", margin = margin(r = 10)),
+        axis.title.x = element_text(margin = margin(t = 10)),
+        axis.title.y = element_text(margin = margin(r = 10)),
         legend.title = element_text(face = "bold", size = 11),
         legend.position = "bottom"
       )
@@ -156,7 +156,7 @@ chronofix_plot_delays <- function(mcmc_output,
     theme(plot.title = element_textbox_simple(
       face = "bold",
       size = 11,
-      colour = "#1F77B4",
+      colour = "#334155",
       halign = 0,
       padding = margin(5, 8, 5, 8),
       margin = margin(b = 4),
