@@ -138,10 +138,15 @@ chronofix_plot_delays <- function(mcmc_output,
         colour = guide_legend()
       ) +
       scale_x_continuous(expand = c(0, 0)) + 
-      scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
-      theme_bw(base_size = 12) +
+      scale_y_continuous(
+        expand = expansion(mult = c(0, 0.05)),
+        labels = function(x) {
+          sprintf("%7s", format(x, scientific = FALSE, trim = TRUE, drop0trailing = TRUE))
+          }
+        ) +
+      theme_bw(base_size = 11) +
       theme(
-        strip.text = element_markdown(face = "bold", size = 9, lineheight = 1.2,
+        strip.text = element_markdown(face = "bold", size = 10, lineheight = 1.2,
                                       margin = margin(b = 6, t = 6)),
         strip.background = element_rect(fill = "#f8f9fa", colour = "#cccccc"),
         panel.grid.minor = element_blank(),
@@ -166,35 +171,52 @@ chronofix_plot_delays <- function(mcmc_output,
   
   if (facet_by_group) {
     
-    groups <- unique(plot_data$Group_Title)
-    plot_list <- list()
-    n_panels <- integer(length(groups))
+    groups <- levels(plot_data$Group_Title)
+    delays_by_group <- lapply(groups, function(g) {
+      unique(as.character(plot_data$Delay_Title[plot_data$Group_Title == g]))
+    })
+    names(delays_by_group) <- groups
     
-    for (k in seq_along(groups)) {
-      g <- groups[k]
-      g_data <- plot_data[plot_data$Group_Title == g, ]
-      n_panels[k] <- length(unique(g_data$Delay_Title))
-      is_last <- k == length(groups)
+    max_panels <- max(lengths(delays_by_group))
+    n_rows <- length(groups)
+    
+    cell_plots <- list()
+    
+    for (k in seq_len(n_rows)) {
+      g  <- groups[k]
+      ds <- delays_by_group[[g]]
       
-      plot_list[[k]] <- build_base_plot(g_data) +
-        facet_wrap(~ Delay_Title, scales = facet_scales, nrow = 1) +
-        labs(title = g, x = "Delay (Days)", y = "Probability Density") +
-        group_band_theme()
+      for (j in seq_len(max_panels)) {
+        
+        if (j > length(ds)) {
+          cell_plots[[length(cell_plots) + 1L]] <- patchwork::plot_spacer()
+          next
+        }
+        
+        cell_data <- plot_data[plot_data$Group_Title == g &
+                                 as.character(plot_data$Delay_Title) == ds[j], ]
+        
+        cell_plots[[length(cell_plots) + 1L]] <-
+          build_base_plot(cell_data) +
+          facet_wrap(~ Delay_Title, scales = facet_scales) +
+          labs(
+            title = if (j == 1L) as.character(g) else " ",
+            y = if (j == 1L) "Probability Density" else " ",
+            x = if (k == n_rows) "Delay (Days)" else " "
+          ) +
+          group_band_theme()
+      }
     }
     
-    # one column per delay in the longest row
-    design <- Reduce(c, lapply(seq_along(plot_list), function(k) {
-      patchwork::area(t = k, l = 1, b = k, r = n_panels[k])
-    }))
-    
-    p <- patchwork::wrap_plots(plot_list, design = design) +
-      patchwork::plot_layout(guides = "collect") +
+    p <- patchwork::wrap_plots(cell_plots, ncol = max_panels,
+                               guides = "collect") +
       patchwork::plot_annotation(
         title = "Posterior Estimated Delay Distributions",
         subtitle = "Dashed curve: Posterior Mean. Shaded area: 95% CrI.",
         theme = theme(plot.title = element_text(face = "bold", size = 14),
                       legend.position = "bottom")
-      )
+      ) &
+      theme(legend.position = "bottom")
     
   } else {
     p <- build_base_plot(plot_data) +
