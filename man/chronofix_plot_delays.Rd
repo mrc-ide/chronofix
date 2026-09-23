@@ -9,7 +9,9 @@ chronofix_plot_delays(
   delay_map,
   n_points = 200,
   facet_by_group = TRUE,
-  share_x_axis = TRUE
+  share_x_axis = TRUE,
+  select_group = NULL,
+  select_delay = NULL
 )
 }
 \arguments{
@@ -23,7 +25,15 @@ chronofix_plot_delays(
 (default TRUE)}
 
 \item{share_x_axis}{Logical, if TRUE, plots all distributions on the same
-x-axis scale (default TRUE)}
+x-axis scale (default TRUE). Note: the shared axis range is calculated
+over the filtered set of distributions, so a filtered plot may have
+a different maximum x-axis than an unfiltered plot.}
+
+\item{select_group}{Optional character vector. If provided, only plots delays
+matching this group (e.g., "hospitalised-alive"). Supports multiple groups.}
+
+\item{select_delay}{Optional character vector. If provided, only plots delays
+matching this label (e.g., "onset to hospitalisation"). Supports multiple delays.}
 }
 \description{
 Plot Estimated Delay Distributions

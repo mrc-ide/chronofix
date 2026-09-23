@@ -16,46 +16,36 @@ import(ggplot2)
 import(openxlsx)
 import(patchwork)
 importFrom(cli,cli_abort)
-importFrom(dplyr,
-  "%>%",
-  case_when,
-  group_by,
-  group_modify,
-  inner_join,
-  mutate,
-  select
-)
+importFrom(dplyr,"%>%")
+importFrom(dplyr,case_when)
+importFrom(dplyr,group_by)
+importFrom(dplyr,group_modify)
+importFrom(dplyr,inner_join)
+importFrom(dplyr,mutate)
+importFrom(dplyr,select)
 importFrom(generics,setdiff)
-importFrom(ggtext,
-  element_markdown,
-  element_textbox_simple
-)
+importFrom(ggtext,element_markdown)
+importFrom(ggtext,element_textbox_simple)
 importFrom(grid,unit)
-importFrom(igraph,
-  all_shortest_paths,
-  degree,
-  distances,
-  graph_from_data_frame,
-  topo_sort
-)
+importFrom(igraph,all_shortest_paths)
+importFrom(igraph,degree)
+importFrom(igraph,distances)
+importFrom(igraph,graph_from_data_frame)
+importFrom(igraph,topo_sort)
 importFrom(purrr,map_dfr)
-importFrom(stats,
-  dbeta,
-  dexp,
-  dgamma,
-  dlnorm,
-  dnorm,
-  median,
-  na.omit,
-  qgamma,
-  qlnorm,
-  quantile,
-  rgamma,
-  rlnorm,
-  runif
-)
+importFrom(stats,dbeta)
+importFrom(stats,dexp)
+importFrom(stats,dgamma)
+importFrom(stats,dlnorm)
+importFrom(stats,dnorm)
+importFrom(stats,median)
+importFrom(stats,na.omit)
+importFrom(stats,qgamma)
+importFrom(stats,qlnorm)
+importFrom(stats,quantile)
+importFrom(stats,rgamma)
+importFrom(stats,rlnorm)
+importFrom(stats,runif)
 importFrom(tools,file_ext)
-importFrom(utils,
-  head,
-  tail
-)
+importFrom(utils,head)
+importFrom(utils,tail)
