@@ -1,25 +1,21 @@
 
-test_that("chronofix_linelist requires mcmc_output to be chronofix_mcmc_samples", {
-  mock <- make_mock_data()
-  
+test_that("chronofix_linelist requires samples to be chronofix_mcmc_samples", {
   expect_error(
     chronofix_linelist(
-      mcmc_output = NULL,
-      data = mock$observed
-    ),
-    "Expected 'mcmc_output' to be a 'chronofix_mcmc_samples' object",
+      samples = NULL
+      ),
+    "Expected 'samples' to be a 'chronofix_mcmc_samples' object",
     fixed = TRUE
   )
 })
 
 
 test_that("chronofix_linelist requires error_thresholds in the right format", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   
   expect_error(
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       error_thresholds = 1,
     ),
     "Expected 'error_thresholds' to be a numeric vector of length 3",
@@ -28,8 +24,7 @@ test_that("chronofix_linelist requires error_thresholds in the right format", {
   
   expect_error(
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       error_thresholds = c(0, 0.5, 2),
     ),
     "Expected all values in 'error_thresholds' to be in the range [0, 1]",
@@ -38,8 +33,7 @@ test_that("chronofix_linelist requires error_thresholds in the right format", {
   
   expect_error(
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       error_thresholds = c(-1, 0.5, 0.95),
     ),
     "Expected all values in 'error_thresholds' to be in the range [0, 1]",
@@ -48,8 +42,7 @@ test_that("chronofix_linelist requires error_thresholds in the right format", {
   
   expect_error(
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       error_thresholds = c(0.05, 0.95, 0.5),
     ),
     "Expected values in 'error_thresholds' to be strictly increasing",
@@ -59,12 +52,11 @@ test_that("chronofix_linelist requires error_thresholds in the right format", {
 
 
 test_that("chronofix_linelist rejects unsupported output formats", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   
   expect_error(
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       format = "pdf"
     ),
     "The 'format' argument must be either 'xlsx' or 'csv'.",
@@ -72,31 +64,13 @@ test_that("chronofix_linelist rejects unsupported output formats", {
   )
 })
 
-test_that("chronofix_linelist checks observed event columns match MCMC event dimension", {
-  mock <- make_mock_data()
-  
-  observed_extra_event <- mock$observed
-  observed_extra_event$extra_event <- as.Date("2025-02-01")
-  
-  expect_error(
-    chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = observed_extra_event,
-      format = "csv",
-      filename = tempfile(fileext = ".csv")
-    ),
-    "Only 'id', 'group' and event date columns can be supplied as observed data",
-    fixed = TRUE
-  )
-})
 
 test_that("chronofix_linelist hides p_error columns by default", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   
   result <- suppressMessages({
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       format = "csv",
       filename = tempfile(fileext = ".csv")
     )
@@ -105,13 +79,13 @@ test_that("chronofix_linelist hides p_error columns by default", {
   expect_false(any(grepl("_p_error$", names(result))))
 })
 
+
 test_that("chronofix_linelist includes p_error columns when requested", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   
   result <- suppressMessages({
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       format = "csv",
       filename = tempfile(fileext = ".csv"),
       show_p_error = TRUE
@@ -129,20 +103,20 @@ test_that("chronofix_linelist includes p_error columns when requested", {
   ))
 })
 
+
 test_that("chronofix_linelist distinguishes imputed missing from structural missing", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   
-  i <- which(mock$observed$group == "community-alive")[1]
+  i <- which(mock_samples$data$group == "community-alive")[1]
   report_event <- 3
   
-  mock$mcmc$data$estimated_dates[i, report_event, ] <- 
+  mock_samples$augmented_data$estimated_dates[i, report_event, ] <- 
     date_to_int("2025-01-12") + runif(1)
-  mock$mcmc$data$error_indicators[i, report_event, ] <- NA
+  mock_samples$augmented_data$error_indicators[i, report_event, ] <- NA
   
   result <- suppressMessages({
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       format = "csv",
       filename = tempfile(fileext = ".csv"),
       show_p_error = TRUE
@@ -153,14 +127,14 @@ test_that("chronofix_linelist distinguishes imputed missing from structural miss
   expect_true(is.na(result$report_p_error[i]))
 })
 
+
 test_that("chronofix_linelist writes xlsx output", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   path <- tempfile(fileext = ".xlsx")
   
   result <- suppressMessages({
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       format = "xlsx",
       filename = path
     )
@@ -170,14 +144,14 @@ test_that("chronofix_linelist writes xlsx output", {
   expect_false(any(grepl("_p_error$", names(result))))
 })
 
+
 test_that("chronofix_linelist creates expected worksheets in xlsx output", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   path <- tempfile(fileext = ".xlsx")
   
   suppressMessages({
     chronofix_linelist(
-      mcmc_output = mock$mcmc, 
-      data = mock$observed, 
+      samples = mock_samples, 
       format = "xlsx", 
       filename = path
     )
@@ -188,15 +162,15 @@ test_that("chronofix_linelist creates expected worksheets in xlsx output", {
   expect_equal(sheet_names, c("Reconstructed Dates", "Legend"))
 })
 
+
 test_that("chronofix_linelist flags filename and fileext mismatch", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   path <- tempfile(fileext = ".xlsx")
   
   expect_error(
     result <-
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = mock$observed,
+      samples = mock_samples,
       format = "csv",
       filename = path),
     "Extension mismatch: 'filename' has extension '.xlsx' but 'format' is set to 'csv'.",
@@ -208,8 +182,7 @@ test_that("chronofix_linelist flags filename and fileext mismatch", {
   expect_error(
     result <-
       chronofix_linelist(
-        mcmc_output = mock$mcmc,
-        data = mock$observed,
+        samples = mock_samples,
         format = "xlsx",
         filename = path),
     "Extension mismatch: 'filename' has extension '.csv' but 'format' is set to 'xlsx'.",
@@ -218,14 +191,14 @@ test_that("chronofix_linelist flags filename and fileext mismatch", {
   
 })
 
+
 test_that("chronofix_linelist uses default filename when filename is NULL", {
-  mock <- make_mock_data()
+  mock_samples <- make_mock_samples()
   
   # CSV default
   suppressMessages({
     chronofix_linelist(
-      mcmc_output = mock$mcmc, 
-      data = mock$observed, 
+      samples = mock_samples, 
       format = "csv", 
       filename = NULL
     )
@@ -236,8 +209,7 @@ test_that("chronofix_linelist uses default filename when filename is NULL", {
   # XLSX default
   suppressMessages({
     chronofix_linelist(
-      mcmc_output = mock$mcmc, 
-      data = mock$observed, 
+      samples = mock_samples, 
       format = "xlsx", 
       filename = NULL
     )
@@ -248,17 +220,11 @@ test_that("chronofix_linelist uses default filename when filename is NULL", {
 
 
 test_that("chronofix_linelist replicates custom id and group column names", {
-  mock <- make_mock_data()
-  data <- mock$observed
-  names(data)[names(data) == "id"] <- "number"
-  names(data)[names(data) == "group"] <- "set"
-  
-  data <- chronofix_prepare_data(data, id = "number", group = "set")
+  mock_samples <- make_mock_samples(id = "number", group = "set")
   
   result <- suppressMessages({
     chronofix_linelist(
-      mcmc_output = mock$mcmc,
-      data = data)
+      samples = mock_samples)
   })
   unlink("chronofix_linelist.xlsx")
   
@@ -286,6 +252,7 @@ test_that("chronofix_linelist_status_matrix treats threshold value as Error", {
       "Highly Likely Error")
   )
 })
+
 
 test_that("chronofix_linelist_status_matrix classifies date statuses correctly", {
   mode_dates_num <- matrix(
@@ -331,6 +298,7 @@ test_that("chronofix_linelist_status_matrix classifies date statuses correctly",
   )
 })
 
+
 test_that("chronofix_style_mapper returns correct style keys for known statuses", {
   expect_equal(chronofix_style_mapper("Structurally Missing"), "style_structural")
   expect_equal(chronofix_style_mapper("Imputed Missing"), "style_imputed")
@@ -339,9 +307,11 @@ test_that("chronofix_style_mapper returns correct style keys for known statuses"
   expect_equal(chronofix_style_mapper("Possible Error"), "style_possible_error")
 })
 
+
 test_that("chronofix_style_mapper returns NA for unstyled statuses", {
   expect_true(is.na(chronofix_style_mapper("Correct")))
 })
+
 
 test_that("chronofix_style_mapper handles NA and unexpected inputs safely", {
   expect_true(is.na(chronofix_style_mapper(NA_character_)))

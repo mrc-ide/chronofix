@@ -15,8 +15,8 @@ test_that("Can run mcmc", {
   ## 2 parameters per delay plus prob_error
   expect_equal(dim(samples$pars), c(2 * nrow(delay_map) + 1, 150))
   ## 40 individuals x 5 dates x 150 samples (3 chains of 50 samples)
-  expect_equal(dim(samples$data$error_indicators), c(40, 5, 150))
-  expect_equal(dim(samples$data$estimated_dates), c(40, 5, 150))
+  expect_equal(dim(samples$augmented_data$error_indicators), c(40, 5, 150))
+  expect_equal(dim(samples$augmented_data$estimated_dates), c(40, 5, 150))
 })
 
 
@@ -38,8 +38,8 @@ test_that("Can run mcmc with cascade sampling", {
   ## 2 parameters per delay plus prob_error
   expect_equal(dim(samples$pars), c(2 * nrow(delay_map) + 1, 150))
   ## 40 individuals x 5 dates x 150 samples (3 chains of 50 samples)
-  expect_equal(dim(samples$data$error_indicators), c(40, 5, 150))
-  expect_equal(dim(samples$data$estimated_dates), c(40, 5, 150))
+  expect_equal(dim(samples$augmented_data$error_indicators), c(40, 5, 150))
+  expect_equal(dim(samples$augmented_data$estimated_dates), c(40, 5, 150))
 })
 
 
@@ -61,8 +61,8 @@ test_that("Can run mcmc with single group and single delay", {
   ## 2 parameters per delay plus prob_error
   expect_equal(dim(samples$pars), c(2 * nrow(delay_map) + 1, 150))
   ## 10 individuals x 2 dates x 150 samples (3 chains of 50 samples)
-  expect_equal(dim(samples$data$error_indicators), c(10, 2, 150))
-  expect_equal(dim(samples$data$estimated_dates), c(10, 2, 150))
+  expect_equal(dim(samples$augmented_data$error_indicators), c(10, 2, 150))
+  expect_equal(dim(samples$augmented_data$estimated_dates), c(10, 2, 150))
 })
 
 
@@ -95,6 +95,8 @@ test_that("Can run mcmc with data prepared with chronofix_prepare_data", {
   set.seed(1)
   samples2 <- chronofix_mcmc(data, delay_map, hyperparameters, initial, control)
   
+  ## will be identical except for data
+  samples$data <- NULL
+  samples2$data <- NULL
   expect_identical(samples, samples2)
 })
-

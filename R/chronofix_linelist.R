@@ -1,9 +1,7 @@
 ##' @title Generate and export highlighted reconstructed linelist
 ##'
-##' @param mcmc_output A `chronofix_mcmc_samples` object as generated
+##' @param samples A `chronofix_mcmc_samples` object as generated
 ##'   by `chronofix_mcmc()`.
-##' @param data Original observed data containing the 'id', 'group',
-##'   and event columns.
 ##' @param error_thresholds Numeric vector of length 3, giving the posterior
 ##'   probability thresholds to classify a date as a possible error 
 ##'   (default 0.05), likely error (default 0.5) and highly likely error
@@ -21,18 +19,17 @@
 ##' @importFrom dplyr case_when
 ##' @importFrom stats median
 ##' @importFrom tools file_ext
-chronofix_linelist <- function(mcmc_output,
-                               data,
+chronofix_linelist <- function(samples,
                                error_thresholds = c(0.05, 0.5, 0.95),
                                format = "xlsx",
                                filename = NULL,
                                show_p_error = FALSE) {
   
-  if (!inherits(mcmc_output, "chronofix_mcmc_samples")) {
-    cli::cli_abort("Expected 'mcmc_output' to be a 'chronofix_mcmc_samples' object")
+  if (!inherits(samples, "chronofix_mcmc_samples")) {
+    cli::cli_abort("Expected 'samples' to be a 'chronofix_mcmc_samples' object")
   }
   
-  data <- chronofix_prepare_data(data)
+  data <- samples$data
   id <- attr(data, "id")
   group <- attr(data, "group")
   
@@ -63,8 +60,8 @@ chronofix_linelist <- function(mcmc_output,
     ))
   }
   
-  est_dates_numeric <- mcmc_output$data$estimated_dates
-  error_ind_array <- mcmc_output$data$error_indicators
+  est_dates_numeric <- samples$augmented_data$estimated_dates
+  error_ind_array <- samples$augmented_data$error_indicators
   
   # calculate posterior summaries - mean across iterations/chains for error
   # and mode across iterations/chains for dates
@@ -76,9 +73,6 @@ chronofix_linelist <- function(mcmc_output,
   n_events <- dim(error_ind_array)[2]
   
   event_names <- setdiff(colnames(data), c(id, group))
-  if (length(event_names) != n_events) {
-    stop("Only 'id', 'group' and event date columns can be supplied as observed data")
-  }
   
   results_data <- data.frame(id = data[[id]],
                              group = data[[group]]) 

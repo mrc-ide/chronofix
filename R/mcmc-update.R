@@ -1,6 +1,7 @@
 update_pars_delay <- function(state_chain, control, model, rng) {
   
-  augmented_data <- model$data_packer$unpack(attr(state_chain$pars, "data"))
+  augmented_data <- 
+    model$data_packer$unpack(attr(state_chain$pars, "augmented_data"))
   
   for (i in seq_along(model$info$delay_info$distribution)) {
     state_chain$pars <- update_pars_delay1(i, state_chain$pars, augmented_data,
@@ -204,7 +205,8 @@ update_log_normal_precisionlog_parameters <- function(meanlog, delay_values,
 update_prob_error <- function(state_chain, model, rng) {
   i <- model$parameters == "prob_error"
   
-  augmented_data <- model$data_packer$unpack(attr(state_chain$pars, "data"))
+  augmented_data <- 
+    model$data_packer$unpack(attr(state_chain$pars, "augmented_data"))
   
   beta_pars <- 
     update_prob_error_parameters(augmented_data$error_indicators,

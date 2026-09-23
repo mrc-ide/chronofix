@@ -5,8 +5,7 @@
 \title{Generate and export highlighted reconstructed linelist}
 \usage{
 chronofix_linelist(
-  mcmc_output,
-  data,
+  samples,
   error_thresholds = c(0.05, 0.5, 0.95),
   format = "xlsx",
   filename = NULL,
@@ -14,11 +13,8 @@ chronofix_linelist(
 )
 }
 \arguments{
-\item{mcmc_output}{A \code{chronofix_mcmc_samples} object as generated
+\item{samples}{A \code{chronofix_mcmc_samples} object as generated
 by \code{chronofix_mcmc()}.}
-
-\item{data}{Original observed data containing the 'id', 'group',
-and event columns.}
 
 \item{error_thresholds}{Numeric vector of length 3, giving the posterior
 probability thresholds to classify a date as a possible error
