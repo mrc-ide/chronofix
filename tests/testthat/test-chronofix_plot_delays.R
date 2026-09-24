@@ -1,5 +1,7 @@
 test_that("chronofix_plot_delays calls validation helper", {
-  expect_error(chronofix_plot_delays(), "is missing")
+  expect_error(chronofix_plot_delays(), "`mcmc_output` is missing")
+  expect_error(chronofix_plot_delays(mcmc_output = list(pars = matrix(1))),
+               "`delay_map` is missing")
 })
 
 test_that("chronofix_plot_delays generates a correct standard ggplot (facet_by_group = FALSE)", {
@@ -117,7 +119,20 @@ test_that("chronofix_plot_delays generates a correct patchwork object (facet_by_
   )
   
   expect_s3_class(p, "patchwork")
-  expect_s3_class(p, "ggplot") 
+  expect_s3_class(p, "ggplot")
+  
+  # ragged rows are padded with spacers
+  # row 1: 3 delays, 0 spacers
+  # row 2: 2 delays, 1 spacer
+  # row 3: 1 delay, 2 spacers - 3 spacers total
+  all_cells <- c(p$patches$plots, list(p))
+  n_spacers <- sum(vapply(all_cells,
+                          function(x) inherits(x, "spacer"), logical(1)))
+  expect_equal(n_spacers, 3)
+  
+  # 6 delays + 3 spacers = 9 cells
+  n_cells <- length(p$patches$plots) + 1
+  expect_equal(n_cells, 9)
 })
 
 test_that("chronofix_plot_delays handles edge cases in group names gracefully", {
@@ -275,4 +290,78 @@ test_that("chronofix_plot_delays correctly filters by select_group and select_de
     ),
     "Filtering resulted in 0 distributions to plot"
   )
+})
+
+test_that("filtering preserves the mapping to MCMC parameters", {
+  
+  mock_delay_map <- data.frame(
+    from = c("onset", "onset", "hospitalisation", "onset",
+             "hospitalisation", "onset"),
+    to = c("report", "hospitalisation", "discharge", "hospitalisation",
+           "death", "death"),
+    distribution = c("gamma", "log-normal", "gamma", "gamma",
+                     "log-normal", "gamma"),
+    stringsAsFactors = FALSE
+  )
+  mock_delay_map$group <- as.list(c(
+    "hospitalised-alive", "hospitalised-alive", "hospitalised-alive",
+    "hospitalised-dead", "hospitalised-dead",
+    "community-dead"
+  ))
+  
+  param_names <- c(
+    "delay1_mean", "delay1_shape",
+    "delay2_meanlog", "delay2_precisionlog",
+    "delay3_mean", "delay3_shape",
+    "delay4_mean", "delay4_shape",
+    "delay5_meanlog", "delay5_precisionlog",
+    "delay6_mean", "delay6_shape"
+  )
+  
+  set.seed(1)
+  mock_pars <- matrix(NA, nrow = length(param_names), ncol = 100,
+                      dimnames = list(param_names, NULL))
+  mock_pars["delay1_mean", ] <- runif(100, 4, 6)
+  mock_pars["delay1_shape", ] <- runif(100, 2, 4)
+  mock_pars["delay2_meanlog", ] <- runif(100, 1, 2)
+  mock_pars["delay2_precisionlog", ] <- runif(100, 2, 5)
+  mock_pars["delay3_mean", ] <- runif(100, 5, 10)
+  mock_pars["delay3_shape", ] <- runif(100, 1.5, 3)
+  mock_pars["delay4_mean", ] <- runif(100, 3, 7)
+  mock_pars["delay4_shape", ] <- runif(100, 2, 5)
+  mock_pars["delay5_meanlog", ] <- runif(100, 1.5, 2.5)
+  mock_pars["delay5_precisionlog", ] <- runif(100, 2, 4)
+  mock_pars["delay6_mean", ] <- runif(100, 10, 15)
+  mock_pars["delay6_shape", ] <- runif(100, 3, 6)
+  
+  mock_mcmc_output <- list(pars = mock_pars)
+  
+  # unfiltered plot
+  p_full <- chronofix_plot_delays(
+    mock_mcmc_output, mock_delay_map, 
+    n_points = 200, facet_by_group = FALSE, share_x_axis = FALSE
+  )
+  
+  # peak x-value for "Onset to Death" from the full plot
+  data_full <- p_full$data[p_full$data$Delay_Title == "Onset to Death", ]
+  peak_full <- data_full$x[which.max(data_full$mean_density)]
+  
+  # filtered plot
+  p_sub <- chronofix_plot_delays(
+    mock_mcmc_output, mock_delay_map, 
+    n_points = 200, facet_by_group = FALSE, share_x_axis = FALSE,
+    select_delay = "onset to death"
+  )
+  
+  # peak x-value for "Onset to Death" from the filtered plot
+  data_sub <- p_sub$data[p_sub$data$Delay_Title == "Onset to Death", ]
+  peak_sub <- data_sub$x[which.max(data_sub$mean_density)]
+  
+  # onset to death is the only delay with mean 10-15
+  # check moving to position 1 hasn't pulled delay1's parameters (mean 4-6)
+  expect_gt(peak_sub, 7)
+  
+  # peaks should be the same in both plots
+  expect_equal(peak_sub, peak_full, tolerance = 1e-8)
+  
 })
