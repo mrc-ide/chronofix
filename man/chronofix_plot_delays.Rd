@@ -11,7 +11,8 @@ chronofix_plot_delays(
   facet_by_group = TRUE,
   share_x_axis = TRUE,
   select_group = NULL,
-  select_delay = NULL
+  select_delay = NULL,
+  plot_style = c("ribbon", "samples")
 )
 }
 \arguments{
@@ -34,6 +35,9 @@ matching this group (e.g., "hospitalised-alive"). Supports multiple groups.}
 
 \item{select_delay}{Optional character vector. If provided, only plots delays
 matching this label (e.g., "onset to hospitalisation"). Supports multiple delays.}
+
+\item{plot_style}{Character string. Options are \code{"ribbon"} (95\% CrI, default),
+or \code{"samples"} (all individual posterior draws).}
 }
 \description{
 Plot Estimated Delay Distributions
