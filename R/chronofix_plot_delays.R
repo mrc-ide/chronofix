@@ -13,6 +13,8 @@
 #'  matching this group (e.g., "hospitalised-alive"). Supports multiple groups.
 #' @param select_delay Optional character vector. If provided, only plots delays 
 #'  matching this label (e.g., "onset to hospitalisation"). Supports multiple delays.
+#' @param plot_style Character string. Options are `"ribbon"` (95% CrI, default), 
+#'  or `"samples"` (all individual posterior draws).
 #' 
 #' @import ggplot2
 #' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
@@ -27,9 +29,11 @@ chronofix_plot_delays <- function(mcmc_output,
                                   facet_by_group = TRUE,
                                   share_x_axis = TRUE,
                                   select_group = NULL,
-                                  select_delay = NULL) {
+                                  select_delay = NULL,
+                                  plot_style = c("ribbon", "samples")) {
   
   validate_delay_inputs(mcmc_output, delay_map)
+  plot_style <- match.arg(plot_style)
   
   pars_flat <- mcmc_output$pars
   
@@ -89,6 +93,7 @@ chronofix_plot_delays <- function(mcmc_output,
   global_max_x <- max(local_max_x, na.rm = TRUE)
   
   plot_data_list <- list()
+  sample_data_list <- list()
   
   for (i in seq_len(nrow(delay_map))) {
     orig_i <- delay_map$original_index[i]
@@ -147,13 +152,40 @@ chronofix_plot_delays <- function(mcmc_output,
       mean_density = mean_line,
       upper = quants[2, ] # 97.5%
     )
+    
+    # Individual posterior draws
+    if (plot_style == "samples") {
+      n_draws <- ncol(dens_matrix)
+      
+      sample_data_list[[i]] <- data.frame(
+        Panel_Title = panel_title,
+        Group_Title = group_title,
+        Delay_Title = delay_title,
+        Distribution = dist_clean,
+        x = rep(x_seq, times = n_draws),
+        density = as.vector(dens_matrix),
+        sample_id = paste0(orig_i, "_", rep(seq_len(n_draws),
+                                            each = length(x_seq)))
+      )
+    }
   }
+  
   
   plot_data <- do.call(rbind, plot_data_list)
   plot_data$Distribution <- factor(plot_data$Distribution, levels = c("Gamma", "Log-Normal"))
   plot_data$Group_Title <- factor(plot_data$Group_Title, levels = unique(plot_data$Group_Title))
   plot_data$Panel_Title <- factor(plot_data$Panel_Title, levels = unique(plot_data$Panel_Title))
   plot_data$Delay_Title <- factor(plot_data$Delay_Title, levels = unique(plot_data$Delay_Title))
+  
+  if (plot_style == "samples") {
+    sample_data <- do.call(rbind, sample_data_list)
+    sample_data$Distribution <- factor(sample_data$Distribution, levels = c("Gamma", "Log-Normal"))
+    sample_data$Group_Title <- factor(sample_data$Group_Title, levels = levels(plot_data$Group_Title))
+    sample_data$Panel_Title <- factor(sample_data$Panel_Title, levels = levels(plot_data$Panel_Title))
+    sample_data$Delay_Title <- factor(sample_data$Delay_Title, levels = levels(plot_data$Delay_Title))
+  } else {
+    sample_data <- NULL
+  }
   
   present_dists <- intersect(c("Gamma", "Log-Normal"), unique(as.character(plot_data$Distribution)))
   
@@ -162,13 +194,28 @@ chronofix_plot_delays <- function(mcmc_output,
   
   facet_scales <- if (share_x_axis) "free_y" else "free"
   
-  build_base_plot <- function(df) {
+  plot_subtitle <- switch(
+    plot_style,
+    "ribbon" = "Dashed curve: Posterior predictive density. Shaded area: Pointwise 95% CrI on the density.",
+    "samples" = "Dashed curve: Posterior predictive density. Faint lines: Individual posterior draws."
+  )
+  
+  sample_alpha <- max(0.01, min(0.3, 20 / ncol(pars_flat)))
+  
+  build_base_plot <- function(df, sample_df = NULL) {
     
-    ggplot(df, aes(x = x, fill = Distribution, colour = Distribution)) +
-      geom_ribbon(aes(ymin = lower, ymax = upper),
-                  alpha = 0.55, colour = NA, show.legend = TRUE) +
-      geom_line(aes(y = mean_density), linetype = "dashed",
-                linewidth = 1, show.legend = TRUE) +
+    p <- ggplot(df, aes(x = x, fill = Distribution, colour = Distribution))
+      
+      if (plot_style == "ribbon") {
+        p <- p + geom_ribbon(aes(ymin = lower, ymax = upper),
+                             alpha = 0.55, colour = NA, show.legend = TRUE)
+      } else if (plot_style == "samples" && !is.null(sample_df) && nrow(sample_df) > 0) {
+        p <- p + geom_line(data = sample_df, aes(y = density, group = sample_id),
+                           alpha = sample_alpha, linewidth = 0.2, show.legend = FALSE)
+      }
+      
+    p <- p + geom_line(aes(y = mean_density), linetype = "dashed",
+                       linewidth = 1, show.legend = TRUE) +
       scale_fill_manual(name = "Distribution", values = dist_colours,
                         limits = present_dists) +
       scale_colour_manual(name = "Distribution", values = line_colours,
@@ -195,6 +242,8 @@ chronofix_plot_delays <- function(mcmc_output,
         legend.title = element_text(face = "bold", size = 11),
         legend.position = "bottom"
       )
+    
+    p
   }
   
   group_band_theme <- function() {
@@ -236,8 +285,13 @@ chronofix_plot_delays <- function(mcmc_output,
         cell_data <- plot_data[plot_data$Group_Title == g &
                                  as.character(plot_data$Delay_Title) == ds[j], ]
         
+        cell_sample <- if (!is.null(sample_data)) {
+          sample_data[sample_data$Group_Title == g &
+                        as.character(sample_data$Delay_Title) == ds[j], ]
+        } else NULL
+        
         cell_plots[[length(cell_plots) + 1L]] <-
-          build_base_plot(cell_data) +
+          build_base_plot(cell_data, cell_sample) +
           facet_wrap(~ Delay_Title, scales = facet_scales) +
           labs(
             title = if (j == 1L) as.character(g) else " ",
@@ -252,20 +306,20 @@ chronofix_plot_delays <- function(mcmc_output,
                                guides = "collect") +
       patchwork::plot_annotation(
         title = "Posterior Estimated Delay Distributions",
-        subtitle = "Dashed curve: Posterior Mean. Shaded area: 95% CrI.",
+        subtitle = plot_subtitle,
         theme = theme(plot.title = element_text(face = "bold", size = 14),
                       legend.position = "bottom")
       ) &
       theme(legend.position = "bottom")
     
   } else {
-    p <- build_base_plot(plot_data) +
+    p <- build_base_plot(plot_data, sample_data) +
       facet_wrap(~ Panel_Title, scales = facet_scales, ncol = 3) +
       labs(
         x = "Delay (Days)", 
         y = "Probability Density",
         title = "Posterior Estimated Delay Distributions",
-        subtitle = "Dashed curve: Posterior Mean. Shaded area: 95% CrI."
+        subtitle = plot_subtitle
       ) +
       theme(
         legend.position = "top",
