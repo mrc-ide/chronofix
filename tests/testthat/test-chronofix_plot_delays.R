@@ -365,3 +365,62 @@ test_that("filtering preserves the mapping to MCMC parameters", {
   expect_equal(peak_sub, peak_full, tolerance = 1e-8)
   
 })
+
+test_that("chronofix_plot_delays respects plot_style argument", {
+  
+  mock_delay_map <- data.frame(
+    from = "onset", to = "report", distribution = "gamma",
+    stringsAsFactors = FALSE
+  )
+  mock_delay_map$group <- list("community")
+  
+  set.seed(1)
+  # 100 draws
+  mock_pars <- matrix(runif(200, 1, 5), nrow = 2, ncol = 100, 
+                      dimnames = list(c("delay1_mean", "delay1_shape"), NULL))
+  mock_mcmc_output <- list(pars = mock_pars)
+  
+  # "ribbon" default
+  p_ribbon <- chronofix_plot_delays(
+    mock_mcmc_output, mock_delay_map, 
+    plot_style = "ribbon", facet_by_group = FALSE
+  )
+  
+  # expect two layers: CrI ribbon, line
+  expect_length(p_ribbon$layers, 2)
+  expect_true(inherits(p_ribbon$layers[[1]]$geom, "GeomRibbon"))
+  expect_true(inherits(p_ribbon$layers[[2]]$geom, "GeomLine"))
+  expect_match(p_ribbon$labels$subtitle, "Shaded area: Pointwise 95% CrI")
+  
+  # "samples" style
+  p_samples <- chronofix_plot_delays(
+    mock_mcmc_output, mock_delay_map, 
+    plot_style = "samples", facet_by_group = FALSE
+  )
+  
+  expect_length(p_samples$layers, 2)
+  has_ribbon <- any(vapply(p_samples$layers, 
+                           function(l) inherits(l$geom, "GeomRibbon"), 
+                           logical(1)))
+  expect_false(has_ribbon)
+  
+  expect_true(inherits(p_samples$layers[[1]]$geom, "GeomLine"))
+  expect_true(inherits(p_samples$layers[[2]]$geom, "GeomLine"))
+  expect_match(p_samples$labels$subtitle, "Faint lines: Individual posterior draws")
+  
+  # every draw is plotted
+  n_ids <- length(unique(p_samples$layers[[1]]$data$sample_id))
+  expect_equal(n_ids, ncol(mock_pars))
+  
+  # rejects unknown plot style
+  expect_error(
+    chronofix_plot_delays(mock_mcmc_output, mock_delay_map,
+                          plot_style = "spaghetti"),
+    "should be one of"
+  )
+  
+  # default plot it ribbon
+  p_default <- chronofix_plot_delays(mock_mcmc_output, mock_delay_map,
+                                     facet_by_group = FALSE)
+  expect_true(inherits(p_default$layers[[1]]$geom, "GeomRibbon"))
+})
