@@ -5,17 +5,18 @@
 \title{Plot Estimated Delay Distributions}
 \usage{
 chronofix_plot_delays(
-  mcmc_output,
+  samples,
   n_points = 200,
   facet_by_group = TRUE,
   share_x_axis = TRUE,
   select_group = NULL,
   select_delay = NULL,
-  plot_style = c("ribbon", "samples")
+  plot_style = c("ribbon", "spaghetti")
 )
 }
 \arguments{
-\item{mcmc_output}{Output list from \code{chronofix_mcmc_run()}}
+\item{samples}{A \code{chronofix_mcmc_samples} object as generated
+by \code{chronofix_mcmc()}.}
 
 \item{n_points}{Number of points along the x-axis to evaluate (default 200)}
 
@@ -27,14 +28,17 @@ x-axis scale (default TRUE). Note: the shared axis range is calculated
 over the filtered set of distributions, so a filtered plot may have
 a different maximum x-axis than an unfiltered plot.}
 
-\item{select_group}{Optional character vector. If provided, only plots delays
-matching this group (e.g., "hospitalised-alive"). Supports multiple groups.}
+\item{select_group}{Optional character vector. If provided, only plots
+delays matching this group (e.g., "hospitalised-alive"). Supports
+multiple groups.}
 
-\item{select_delay}{Optional character vector. If provided, only plots delays
-matching this label (e.g., "onset to hospitalisation"). Supports multiple delays.}
+\item{select_delay}{Optional character vector. If provided, only plots
+delays matching this label (e.g., "onset to hospitalisation"). Supports
+multiple delays.}
 
-\item{plot_style}{Character string. Options are \code{"ribbon"} (95\% CrI, default),
-or \code{"samples"} (all individual posterior draws).}
+\item{plot_style}{Character string. Options are \code{"ribbon"}
+(plots a ribbon indicating the 95\% credible interval, default), or
+\code{"spaghetti"} (plots a line for each individual posterior draw).}
 }
 \description{
 Plot Estimated Delay Distributions
