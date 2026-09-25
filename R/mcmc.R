@@ -55,6 +55,7 @@ chronofix_mcmc <- function(data,
     setdiff(names(data), c(id, group))
   
   samples$data <- data
+  samples$delay_map <- delay_map
   
   class(samples) <- c(class(samples), "chronofix_mcmc_samples")
   
