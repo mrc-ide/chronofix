@@ -386,6 +386,9 @@ test_that("chronofix_plot_delays respects plot_style argument", {
     plot_style = "ribbon", facet_by_group = FALSE
   )
   
+  pb <- ggplot_build(p_ribbon)
+  expect_type(pb$layout$panel_params[[1]]$y$get_labels(), "character")
+  
   # expect two layers: CrI ribbon, line
   expect_length(p_ribbon$layers, 2)
   expect_true(inherits(p_ribbon$layers[[1]]$geom, "GeomRibbon"))
@@ -418,6 +421,14 @@ test_that("chronofix_plot_delays respects plot_style argument", {
                           plot_style = "spaghetti"),
     "should be one of"
   )
+  
+  # also works with facet_by_group = TRUE
+  p_patch_samples <- chronofix_plot_delays(
+    mock_mcmc_output, mock_delay_map, 
+    plot_style = "samples", facet_by_group = TRUE
+  )
+  
+  expect_s3_class(p_patch_samples, "patchwork")
   
   # default plot it ribbon
   p_default <- chronofix_plot_delays(mock_mcmc_output, mock_delay_map,
