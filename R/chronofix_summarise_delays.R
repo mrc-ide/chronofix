@@ -16,7 +16,7 @@
 ##'
 ##' @importFrom stats quantile
 ##' @export
-chronofix_get_delays <- function(samples) {
+chronofix_summarise_delays <- function(samples) {
   
   if (!inherits(samples, "chronofix_mcmc_samples")) {
     cli::cli_abort("Expected 'samples' to be a 'chronofix_mcmc_samples' object")

@@ -1,6 +1,6 @@
-test_that("chronofix_get_delays requires samples to be chronofix_mcmc_samples", {
+test_that("chronofix_summarise_delays requires samples to be chronofix_mcmc_samples", {
   expect_error(
-    chronofix_get_delays(
+    chronofix_summarise_delays(
       samples = NULL
     ),
     "Expected 'samples' to be a 'chronofix_mcmc_samples' object",
@@ -9,10 +9,10 @@ test_that("chronofix_get_delays requires samples to be chronofix_mcmc_samples", 
 })
 
 
-test_that("chronofix_get_delays returns posterior delay summaries", {
+test_that("chronofix_summarise_delays returns posterior delay summaries", {
   mock_samples <- make_delay_summary_mock()
   
-  result <- chronofix_get_delays(
+  result <- chronofix_summarise_delays(
     samples = mock_samples
   )
   
@@ -52,10 +52,10 @@ test_that("chronofix_get_delays returns posterior delay summaries", {
   expect_equal(cv_rows$Posterior_Median, c(expected_gamma_cv, expected_ln_cv))
 })
 
-test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
+test_that("chronofix_summarise_delays calculates rounded 95% credible intervals", {
   mock_samples <- make_delay_summary_mock()
   
-  result <- chronofix_get_delays(
+  result <- chronofix_summarise_delays(
     samples = mock_samples
   )
   
@@ -83,11 +83,11 @@ test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
   expect_equal(result$Upper_95_CrI[2], expected_cv1[3])
 })
 
-test_that("chronofix_get_delays handles NAs in MCMC output safely", {
+test_that("chronofix_summarise_delays handles NAs in MCMC output safely", {
   mock_samples <- make_delay_summary_mock()
   mock_samples$pars["delay1_mean", 1] <- NA
   
-  result <- chronofix_get_delays(mock_samples)
+  result <- chronofix_summarise_delays(mock_samples)
   
   mean_row_1 <- subset(result, Delay == "Onset to Report" & Parameter == "Mean")
   
