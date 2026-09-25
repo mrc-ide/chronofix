@@ -13,7 +13,7 @@
 #' @param select_delay Optional character vector. If provided, only plots delays 
 #'  matching this label (e.g., "onset to hospitalisation"). Supports multiple delays.
 #' @param plot_style Character string. Options are `"ribbon"` (95% CrI, default), 
-#'  or `"samples"` (all individual posterior draws).
+#'  or `"spaghetti"` (all individual posterior draws).
 #' 
 #' @import ggplot2
 #' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
@@ -28,7 +28,7 @@ chronofix_plot_delays <- function(mcmc_output,
                                   share_x_axis = TRUE,
                                   select_group = NULL,
                                   select_delay = NULL,
-                                  plot_style = c("ribbon", "samples")) {
+                                  plot_style = c("ribbon", "spaghetti")) {
   
   delay_map <- mcmc_output$delay_map
   validate_delay_inputs(mcmc_output, delay_map)
@@ -92,7 +92,7 @@ chronofix_plot_delays <- function(mcmc_output,
   global_max_x <- max(local_max_x, na.rm = TRUE)
   
   plot_data_list <- list()
-  sample_data_list <- list()
+  spaghetti_data_list <- list()
   
   for (i in seq_len(nrow(delay_map))) {
     orig_i <- delay_map$original_index[i]
@@ -153,17 +153,17 @@ chronofix_plot_delays <- function(mcmc_output,
     )
     
     # Individual posterior draws
-    if (plot_style == "samples") {
+    if (plot_style == "spaghetti") {
       n_draws <- ncol(dens_matrix)
       
-      sample_data_list[[i]] <- data.frame(
+      spaghetti_data_list[[i]] <- data.frame(
         Panel_Title = panel_title,
         Group_Title = group_title,
         Delay_Title = delay_title,
         Distribution = dist_clean,
         x = rep(x_seq, times = n_draws),
         density = as.vector(dens_matrix),
-        sample_id = paste0(orig_i, "_", rep(seq_len(n_draws),
+        draw_id = paste0(orig_i, "_", rep(seq_len(n_draws),
                                             each = length(x_seq)))
       )
     }
@@ -176,14 +176,14 @@ chronofix_plot_delays <- function(mcmc_output,
   plot_data$Panel_Title <- factor(plot_data$Panel_Title, levels = unique(plot_data$Panel_Title))
   plot_data$Delay_Title <- factor(plot_data$Delay_Title, levels = unique(plot_data$Delay_Title))
   
-  if (plot_style == "samples") {
-    sample_data <- do.call(rbind, sample_data_list)
-    sample_data$Distribution <- factor(sample_data$Distribution, levels = c("Gamma", "Log-Normal"))
-    sample_data$Group_Title <- factor(sample_data$Group_Title, levels = levels(plot_data$Group_Title))
-    sample_data$Panel_Title <- factor(sample_data$Panel_Title, levels = levels(plot_data$Panel_Title))
-    sample_data$Delay_Title <- factor(sample_data$Delay_Title, levels = levels(plot_data$Delay_Title))
+  if (plot_style == "spaghetti") {
+    spaghetti_data <- do.call(rbind, spaghetti_data_list)
+    spaghetti_data$Distribution <- factor(spaghetti_data$Distribution, levels = c("Gamma", "Log-Normal"))
+    spaghetti_data$Group_Title <- factor(spaghetti_data$Group_Title, levels = levels(plot_data$Group_Title))
+    spaghetti_data$Panel_Title <- factor(spaghetti_data$Panel_Title, levels = levels(plot_data$Panel_Title))
+    spaghetti_data$Delay_Title <- factor(spaghetti_data$Delay_Title, levels = levels(plot_data$Delay_Title))
   } else {
-    sample_data <- NULL
+    spaghetti_data <- NULL
   }
   
   present_dists <- intersect(c("Gamma", "Log-Normal"), unique(as.character(plot_data$Distribution)))
@@ -196,21 +196,21 @@ chronofix_plot_delays <- function(mcmc_output,
   plot_subtitle <- switch(
     plot_style,
     "ribbon" = "Dashed curve: Posterior predictive density. Shaded area: Pointwise 95% CrI on the density.",
-    "samples" = "Dashed curve: Posterior predictive density. Faint lines: Individual posterior draws."
+    "spaghetti" = "Dashed curve: Posterior predictive density. Faint lines: Individual posterior draws."
   )
   
-  sample_alpha <- max(0.01, min(0.3, 20 / ncol(pars_flat)))
+  spaghetti_alpha <- max(0.01, min(0.3, 20 / ncol(pars_flat)))
   
-  build_base_plot <- function(df, sample_df = NULL) {
+  build_base_plot <- function(df, spaghetti_df = NULL) {
     
     p <- ggplot(df, aes(x = x, fill = Distribution, colour = Distribution))
       
       if (plot_style == "ribbon") {
         p <- p + geom_ribbon(aes(ymin = lower, ymax = upper),
                              alpha = 0.55, colour = NA, show.legend = TRUE)
-      } else if (plot_style == "samples" && !is.null(sample_df) && nrow(sample_df) > 0) {
-        p <- p + geom_line(data = sample_df, aes(y = density, group = sample_id),
-                           alpha = sample_alpha, linewidth = 0.2, show.legend = FALSE)
+      } else if (plot_style == "spaghetti" && !is.null(spaghetti_df) && nrow(spaghetti_df) > 0) {
+        p <- p + geom_line(data = spaghetti_df, aes(y = density, group = draw_id),
+                           alpha = spaghetti_alpha, linewidth = 0.2, show.legend = FALSE)
       }
       
     p <- p + geom_line(aes(y = mean_density), linetype = "dashed",
@@ -284,13 +284,13 @@ chronofix_plot_delays <- function(mcmc_output,
         cell_data <- plot_data[plot_data$Group_Title == g &
                                  as.character(plot_data$Delay_Title) == ds[j], ]
         
-        cell_sample <- if (!is.null(sample_data)) {
-          sample_data[sample_data$Group_Title == g &
-                        as.character(sample_data$Delay_Title) == ds[j], ]
+        cell_spaghetti <- if (!is.null(spaghetti_data)) {
+          spaghetti_data[spaghetti_data$Group_Title == g &
+                        as.character(spaghetti_data$Delay_Title) == ds[j], ]
         } else NULL
         
         cell_plots[[length(cell_plots) + 1L]] <-
-          build_base_plot(cell_data, cell_sample) +
+          build_base_plot(cell_data, cell_spaghetti) +
           facet_wrap(~ Delay_Title, scales = facet_scales) +
           labs(
             title = if (j == 1L) as.character(g) else " ",
@@ -312,7 +312,7 @@ chronofix_plot_delays <- function(mcmc_output,
       theme(legend.position = "bottom")
     
   } else {
-    p <- build_base_plot(plot_data, sample_data) +
+    p <- build_base_plot(plot_data, spaghetti_data) +
       facet_wrap(~ Panel_Title, scales = facet_scales, ncol = 3) +
       labs(
         x = "Delay (Days)", 
