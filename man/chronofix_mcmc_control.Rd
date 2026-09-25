@@ -16,10 +16,9 @@ chronofix_mcmc_control(
   earliest_possible_date = NULL,
   latest_possible_date = NULL,
   date_buffer = 30,
-  prob_update_estimated_dates = 0.1,
-  prob_update_error_indicators = 0.1,
-  prob_error_swap = 1,
-  cascade_sampling = FALSE
+  prob_update_estimated_dates = 1,
+  prob_update_error_indicators = 1,
+  prob_error_swap = 1
 )
 }
 \arguments{
@@ -69,9 +68,6 @@ accordingly) at each iteration in the MCMC}
 \item{prob_error_swap}{The probability of proposing to swap all errors to
 non-errors and vice versa (excluding missing dates) for individuals with at
 least one error and non-error at each iteration in the MCMC}
-
-\item{cascade_sampling}{Logical, indicating whether or not to use cascade
-sampling for estimated dates when updating an error indicator}
 }
 \value{
 List of control parameters
