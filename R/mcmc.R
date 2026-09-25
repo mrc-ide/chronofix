@@ -55,6 +55,7 @@ chronofix_mcmc <- function(data,
     setdiff(names(data), c(id, group))
   
   samples$data <- data
+  samples$delay_map <- delay_map
   
   class(samples) <- c(class(samples), "chronofix_mcmc_samples")
   
@@ -113,9 +114,6 @@ chronofix_mcmc <- function(data,
 ##' non-errors and vice versa (excluding missing dates) for individuals with at
 ##' least one error and non-error at each iteration in the MCMC
 ##' 
-##' @param cascade_sampling Logical, indicating whether or not to use cascade
-##'   sampling for estimated dates when updating an error indicator
-##'
 ##' @return List of control parameters
 ##'
 ##' @export
@@ -130,10 +128,9 @@ chronofix_mcmc_control <- function(n_steps = 1000,
                                    earliest_possible_date = NULL,
                                    latest_possible_date = NULL,
                                    date_buffer = 30,
-                                   prob_update_estimated_dates = 0.1,
-                                   prob_update_error_indicators = 0.1,
-                                   prob_error_swap = 1,
-                                   cascade_sampling = FALSE) {
+                                   prob_update_estimated_dates = 1,
+                                   prob_update_error_indicators = 1,
+                                   prob_error_swap = 1) {
   
   list(n_steps = n_steps,
        burnin = burnin,
@@ -148,8 +145,7 @@ chronofix_mcmc_control <- function(n_steps = 1000,
        date_buffer = date_buffer,
        prob_update_estimated_dates = prob_update_estimated_dates,
        prob_update_error_indicators = prob_update_error_indicators,
-       prob_error_swap = prob_error_swap,
-       cascade_sampling = cascade_sampling)
+       prob_error_swap = prob_error_swap)
 }
 
 ##' Create initial parameter values

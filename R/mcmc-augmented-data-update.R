@@ -75,19 +75,14 @@ update_estimated_dates1 <- function(date, i_group, augmented_data,
     return(augmented_data)
   }
   
-  if (control$cascade_sampling) {
-    sampling_order <- 
-      lapply(i_update, 
-             function(i) {
-               calc_cascade_sampling_order(date, group_info$event_order,
-                                           augmented_data$error_indicators[i, ],
-                                           group_info$is_date_connected,
-                                           group_info$shortest_paths)
-             })
-      
-  } else {
-    sampling_order <- rep(list(date), length(i_update))
-  }
+  sampling_order <- 
+    lapply(i_update, 
+           function(i) {
+             calc_cascade_sampling_order(date, group_info$event_order,
+                                         augmented_data$error_indicators[i, ],
+                                         group_info$is_date_connected,
+                                         group_info$shortest_paths)
+           })
   sampling_order_reverse <- sampling_order
   
   estimated_dates_new <- 
@@ -165,28 +160,22 @@ update_error_indicators1 <- function(date, i_group, augmented_data,
   error_indicators_new <- 
     change_error_indicators(augmented_data$error_indicators, date, i_update)
   
-  if (control$cascade_sampling) {
-    sampling_order <- 
-      lapply(seq_along(i_update), 
-             function(i) {
-               calc_cascade_sampling_order(date, group_info$event_order,
-                                           error_indicators_new[i, ],
-                                           group_info$is_date_connected,
-                                           group_info$shortest_paths)
-             })
-    sampling_order_reverse <- 
-      lapply(i_update, 
-             function(i) {
-               calc_cascade_sampling_order(date, group_info$event_order,
-                                           augmented_data$error_indicators[i, ],
-                                           group_info$is_date_connected,
-                                           group_info$shortest_paths)
-             })
-    
-  } else {
-    sampling_order <- rep(list(date), length(i_update))
-    sampling_order_reverse <- sampling_order
-  }
+  sampling_order <- 
+    lapply(seq_along(i_update), 
+           function(i) {
+             calc_cascade_sampling_order(date, group_info$event_order,
+                                         error_indicators_new[i, ],
+                                         group_info$is_date_connected,
+                                         group_info$shortest_paths)
+           })
+  sampling_order_reverse <- 
+    lapply(i_update, 
+           function(i) {
+             calc_cascade_sampling_order(date, group_info$event_order,
+                                         augmented_data$error_indicators[i, ],
+                                         group_info$is_date_connected,
+                                         group_info$shortest_paths)
+           })
   
   estimated_dates_new <- 
     t(vapply(seq_along(i_update),
