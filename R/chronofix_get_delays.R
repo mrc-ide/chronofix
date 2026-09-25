@@ -1,26 +1,30 @@
-#' @title Get Summary Table of Estimated Delays
-#'
-#' @description
-#' Summarises posterior samples for each delay distribution described in
-#' `delay_map`, returning the derived mean/CV and the native distribution
-#' parameters (shape/scale for Gamma, meanlog/sdlog for Log-Normal), each
-#' with posterior mean, posterior median and 95% credible interval.
-#' 
-#' @param mcmc_output Output list from `chronofix_mcmc_run()`.
-#'
-#' @return A data frame with one row per delay x parameter
-#'   (`Mean`, `CV`, and the two native distribution parameters (shape/scale for
-#'   Gamma, meanlog/sdlog for Log-Normal), giving the `Posterior_Mean`,
-#'   `Posterior_Median` and 95% credible interval (`Lower_95_CrI`, `Upper_95_CrI`).
-#'
-#' @importFrom stats quantile
-#' @export
-chronofix_get_delays <- function(mcmc_output) {
+##' @title Get Summary Table of Estimated Delays
+##'
+##' @description
+##' Summarises posterior samples for each delay distribution described in
+##' `delay_map`, returning the derived mean/CV and the native distribution
+##' parameters (shape/scale for Gamma, meanlog/sdlog for Log-Normal), each
+##' with posterior mean, posterior median and 95% credible interval.
+##' 
+##' @param samples A `chronofix_mcmc_samples` object as generated
+###'   by `chronofix_mcmc()`.
+##'
+##' @return A data frame with one row per delay x parameter
+##'   (`Mean`, `CV`, and the two native distribution parameters (shape/scale for
+##'   Gamma, meanlog/sdlog for Log-Normal), giving the `Posterior_Mean`,
+##'   `Posterior_Median` and 95% credible interval (`Lower_95_CrI`, `Upper_95_CrI`).
+##'
+##' @importFrom stats quantile
+##' @export
+chronofix_get_delays <- function(samples) {
   
-  delay_map <- mcmc_output$delay_map
-  validate_delay_inputs(mcmc_output, delay_map)
+  if (!inherits(samples, "chronofix_mcmc_samples")) {
+    cli::cli_abort("Expected 'samples' to be a 'chronofix_mcmc_samples' object")
+  }
   
-  pars_flat <- mcmc_output$pars
+  delay_map <- samples$delay_map
+  
+  pars_flat <- samples$pars
   
   calc_summ <- function(samps) {
     qs <- unname(round(stats::quantile(samps, probs = c(0.025, 0.5, 0.975), na.rm = TRUE), 3))

@@ -23,6 +23,9 @@ make_delay_summary_mock <- function() {
   pars["delay2_meanlog", ] <- c(1, 2, 3, 4, 5)
   pars["delay2_precisionlog", ] <- c(3, 3, 3, 3, 3)
   
-  list(pars = pars,
-       delay_map = delay_map)
+  mock_samples <- list(pars = pars,
+                       delay_map = delay_map)
+  
+  class(mock_samples) <- "chronofix_mcmc_samples"
+  mock_samples
 }

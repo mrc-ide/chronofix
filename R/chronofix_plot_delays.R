@@ -1,28 +1,38 @@
-#' @title Plot Estimated Delay Distributions
-#' 
-#' @param mcmc_output Output list from `chronofix_mcmc_run()`
-#' @param n_points Number of points along the x-axis to evaluate (default 200)
-#' @param facet_by_group Logical, if TRUE, creates a grid with a row per group
-#'  (default TRUE)
-#' @param share_x_axis Logical, if TRUE, plots all distributions on the same
-#'  x-axis scale (default TRUE). Note: the shared axis range is calculated 
-#'  over the filtered set of distributions, so a filtered plot may have 
-#'  a different maximum x-axis than an unfiltered plot.
-#' @param select_group Optional character vector. If provided, only plots delays 
-#'  matching this group (e.g., "hospitalised-alive"). Supports multiple groups.
-#' @param select_delay Optional character vector. If provided, only plots delays 
-#'  matching this label (e.g., "onset to hospitalisation"). Supports multiple delays.
-#' @param plot_style Character string. Options are `"ribbon"` (95% CrI, default), 
-#'  or `"spaghetti"` (all individual posterior draws).
-#' 
-#' @import ggplot2
-#' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
-#' @importFrom ggtext element_markdown element_textbox_simple
-#' @importFrom grid unit
-#' @importFrom cli cli_abort
-#' @import patchwork
-#' @export
-chronofix_plot_delays <- function(mcmc_output,
+##' @title Plot Estimated Delay Distributions
+##' 
+##' @param samples A `chronofix_mcmc_samples` object as generated
+##'   by `chronofix_mcmc()`.
+##' 
+##' @param n_points Number of points along the x-axis to evaluate (default 200)
+##' 
+##' @param facet_by_group Logical, if TRUE, creates a grid with a row per group
+##'  (default TRUE)
+##'  
+##' @param share_x_axis Logical, if TRUE, plots all distributions on the same
+##'  x-axis scale (default TRUE). Note: the shared axis range is calculated 
+##'  over the filtered set of distributions, so a filtered plot may have 
+##'  a different maximum x-axis than an unfiltered plot.
+##'  
+##' @param select_group Optional character vector. If provided, only plots
+##'  delays matching this group (e.g., "hospitalised-alive"). Supports 
+##'  multiple groups.
+##'  
+##' @param select_delay Optional character vector. If provided, only plots
+##'  delays matching this label (e.g., "onset to hospitalisation"). Supports 
+##'  multiple delays.
+##'  
+##' @param plot_style Character string. Options are `"ribbon"`
+##'  (plots a ribbon indicating the 95% credible interval, default), or
+##'  `"spaghetti"` (plots a line for each individual posterior draw).
+##' 
+##' @import ggplot2
+##' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
+##' @importFrom ggtext element_markdown element_textbox_simple
+##' @importFrom grid unit
+##' @importFrom cli cli_abort
+##' @import patchwork
+##' @export
+chronofix_plot_delays <- function(samples,
                                   n_points = 200,
                                   facet_by_group = TRUE,
                                   share_x_axis = TRUE,
@@ -30,11 +40,14 @@ chronofix_plot_delays <- function(mcmc_output,
                                   select_delay = NULL,
                                   plot_style = c("ribbon", "spaghetti")) {
   
-  delay_map <- mcmc_output$delay_map
-  validate_delay_inputs(mcmc_output, delay_map)
+  if (!inherits(samples, "chronofix_mcmc_samples")) {
+    cli::cli_abort("Expected 'samples' to be a 'chronofix_mcmc_samples' object")
+  }
+  
+  delay_map <- samples$delay_map
   plot_style <- match.arg(plot_style)
   
-  pars_flat <- mcmc_output$pars
+  pars_flat <- samples$pars
   
   # original row indices so we can still find the correct MCMC parameters
   # when only plotting some delays/groups

@@ -1,12 +1,19 @@
-test_that("chronofix_get_delays securely calls validation helper", {
-  expect_error(chronofix_get_delays(), "is missing")
+test_that("chronofix_get_delays requires samples to be chronofix_mcmc_samples", {
+  expect_error(
+    chronofix_get_delays(
+      samples = NULL
+    ),
+    "Expected 'samples' to be a 'chronofix_mcmc_samples' object",
+    fixed = TRUE
+  )
 })
 
+
 test_that("chronofix_get_delays returns posterior delay summaries", {
-  mock <- make_delay_summary_mock()
+  mock_samples <- make_delay_summary_mock()
   
   result <- chronofix_get_delays(
-    mcmc_output = mock
+    samples = mock_samples
   )
   
   expect_s3_class(result, "data.frame")
@@ -46,10 +53,10 @@ test_that("chronofix_get_delays returns posterior delay summaries", {
 })
 
 test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
-  mock <- make_delay_summary_mock()
+  mock_samples <- make_delay_summary_mock()
   
   result <- chronofix_get_delays(
-    mcmc_output = mock
+    samples = mock_samples
   )
   
   expected_mean1 <- round(
@@ -77,10 +84,10 @@ test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
 })
 
 test_that("chronofix_get_delays handles NAs in MCMC output safely", {
-  mock <- make_delay_summary_mock()
-  mock$pars["delay1_mean", 1] <- NA
+  mock_samples <- make_delay_summary_mock()
+  mock_samples$pars["delay1_mean", 1] <- NA
   
-  result <- chronofix_get_delays(mock)
+  result <- chronofix_get_delays(mock_samples)
   
   mean_row_1 <- subset(result, Delay == "Onset to Report" & Parameter == "Mean")
   
