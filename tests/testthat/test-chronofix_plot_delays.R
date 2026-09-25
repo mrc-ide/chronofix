@@ -382,37 +382,37 @@ test_that("chronofix_plot_delays respects plot_style argument", {
   expect_true(inherits(p_ribbon$layers[[2]]$geom, "GeomLine"))
   expect_match(p_ribbon$labels$subtitle, "Shaded area: Pointwise 95% CrI")
   
-  # "samples" style
-  p_samples <- chronofix_plot_delays(
-    mock_mcmc_output, plot_style = "samples", facet_by_group = FALSE
+  # "spaghetti" style
+  p_spaghetti <- chronofix_plot_delays(
+    mock_mcmc_output, plot_style = "spaghetti", facet_by_group = FALSE
   )
   
-  expect_length(p_samples$layers, 2)
-  has_ribbon <- any(vapply(p_samples$layers, 
+  expect_length(p_spaghetti$layers, 2)
+  has_ribbon <- any(vapply(p_spaghetti$layers, 
                            function(l) inherits(l$geom, "GeomRibbon"), 
                            logical(1)))
   expect_false(has_ribbon)
   
-  expect_true(inherits(p_samples$layers[[1]]$geom, "GeomLine"))
-  expect_true(inherits(p_samples$layers[[2]]$geom, "GeomLine"))
-  expect_match(p_samples$labels$subtitle, "Faint lines: Individual posterior draws")
+  expect_true(inherits(p_spaghetti$layers[[1]]$geom, "GeomLine"))
+  expect_true(inherits(p_spaghetti$layers[[2]]$geom, "GeomLine"))
+  expect_match(p_spaghetti$labels$subtitle, "Faint lines: Individual posterior draws")
   
   # every draw is plotted
-  n_ids <- length(unique(p_samples$layers[[1]]$data$sample_id))
+  n_ids <- length(unique(p_spaghetti$layers[[1]]$data$draw_id))
   expect_equal(n_ids, ncol(mock_pars))
   
   # rejects unknown plot style
   expect_error(
-    chronofix_plot_delays(mock_mcmc_output, plot_style = "spaghetti"),
+    chronofix_plot_delays(mock_mcmc_output, plot_style = "xyz"),
     "should be one of"
   )
   
   # also works with facet_by_group = TRUE
-  p_patch_samples <- chronofix_plot_delays(
-    mock_mcmc_output, plot_style = "samples", facet_by_group = TRUE
+  p_patch_spaghetti <- chronofix_plot_delays(
+    mock_mcmc_output, plot_style = "spaghetti", facet_by_group = TRUE
   )
   
-  expect_s3_class(p_patch_samples, "patchwork")
+  expect_s3_class(p_patch_spaghetti, "patchwork")
   
   # default plot it ribbon
   p_default <- chronofix_plot_delays(mock_mcmc_output, facet_by_group = FALSE)
