@@ -1,7 +1,6 @@
 #' @title Plot Estimated Delay Distributions
 #' 
 #' @param mcmc_output Output list from `chronofix_mcmc_run()`
-#' @param delay_map The delay_map used for the model setup
 #' @param n_points Number of points along the x-axis to evaluate (default 200)
 #' @param facet_by_group Logical, if TRUE, creates a grid with a row per group
 #'  (default TRUE)
@@ -24,7 +23,6 @@
 #' @import patchwork
 #' @export
 chronofix_plot_delays <- function(mcmc_output,
-                                  delay_map,
                                   n_points = 200,
                                   facet_by_group = TRUE,
                                   share_x_axis = TRUE,
@@ -32,6 +30,7 @@ chronofix_plot_delays <- function(mcmc_output,
                                   select_delay = NULL,
                                   plot_style = c("ribbon", "samples")) {
   
+  delay_map <- mcmc_output$delay_map
   validate_delay_inputs(mcmc_output, delay_map)
   plot_style <- match.arg(plot_style)
   

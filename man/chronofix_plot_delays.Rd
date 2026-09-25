@@ -6,7 +6,6 @@
 \usage{
 chronofix_plot_delays(
   mcmc_output,
-  delay_map,
   n_points = 200,
   facet_by_group = TRUE,
   share_x_axis = TRUE,
@@ -17,8 +16,6 @@ chronofix_plot_delays(
 }
 \arguments{
 \item{mcmc_output}{Output list from \code{chronofix_mcmc_run()}}
-
-\item{delay_map}{The delay_map used for the model setup}
 
 \item{n_points}{Number of points along the x-axis to evaluate (default 200)}
 

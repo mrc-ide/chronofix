@@ -7,7 +7,6 @@
 #' with posterior mean, posterior median and 95% credible interval.
 #' 
 #' @param mcmc_output Output list from `chronofix_mcmc_run()`.
-#' @param delay_map The delay map used for the model setup.
 #'
 #' @return A data frame with one row per delay x parameter
 #'   (`Mean`, `CV`, and the two native distribution parameters (shape/scale for
@@ -16,8 +15,9 @@
 #'
 #' @importFrom stats quantile
 #' @export
-chronofix_get_delays <- function(mcmc_output, delay_map) {
+chronofix_get_delays <- function(mcmc_output) {
   
+  delay_map <- mcmc_output$delay_map
   validate_delay_inputs(mcmc_output, delay_map)
   
   pars_flat <- mcmc_output$pars

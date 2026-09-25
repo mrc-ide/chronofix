@@ -4,12 +4,10 @@
 \alias{chronofix_get_delays}
 \title{Get Summary Table of Estimated Delays}
 \usage{
-chronofix_get_delays(mcmc_output, delay_map)
+chronofix_get_delays(mcmc_output)
 }
 \arguments{
 \item{mcmc_output}{Output list from \code{chronofix_mcmc_run()}.}
-
-\item{delay_map}{The delay map used for the model setup.}
 }
 \value{
 A data frame with one row per delay x parameter

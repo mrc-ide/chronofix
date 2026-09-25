@@ -6,8 +6,7 @@ test_that("chronofix_get_delays returns posterior delay summaries", {
   mock <- make_delay_summary_mock()
   
   result <- chronofix_get_delays(
-    mcmc_output = mock$mcmc_output,
-    delay_map = mock$delay_map
+    mcmc_output = mock
   )
   
   expect_s3_class(result, "data.frame")
@@ -50,8 +49,7 @@ test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
   mock <- make_delay_summary_mock()
   
   result <- chronofix_get_delays(
-    mcmc_output = mock$mcmc_output,
-    delay_map = mock$delay_map
+    mcmc_output = mock
   )
   
   expected_mean1 <- round(
@@ -80,9 +78,9 @@ test_that("chronofix_get_delays calculates rounded 95% credible intervals", {
 
 test_that("chronofix_get_delays handles NAs in MCMC output safely", {
   mock <- make_delay_summary_mock()
-  mock$mcmc_output$pars["delay1_mean", 1] <- NA
+  mock$pars["delay1_mean", 1] <- NA
   
-  result <- chronofix_get_delays(mock$mcmc_output, mock$delay_map)
+  result <- chronofix_get_delays(mock)
   
   mean_row_1 <- subset(result, Delay == "Onset to Report" & Parameter == "Mean")
   

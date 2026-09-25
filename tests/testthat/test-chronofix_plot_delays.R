@@ -1,8 +1,3 @@
-test_that("chronofix_plot_delays calls validation helper", {
-  expect_error(chronofix_plot_delays(), "`mcmc_output` is missing")
-  expect_error(chronofix_plot_delays(mcmc_output = list(pars = matrix(1))),
-               "`delay_map` is missing")
-})
 
 test_that("chronofix_plot_delays generates a correct standard ggplot (facet_by_group = FALSE)", {
   
@@ -48,11 +43,10 @@ test_that("chronofix_plot_delays generates a correct standard ggplot (facet_by_g
   mock_pars["delay6_mean", ] <- runif(100, min = 10, max = 15)
   mock_pars["delay6_shape", ] <- runif(100, min = 3, max = 6)
   
-  mock_mcmc_output <- list(pars = mock_pars)
+  mock_mcmc_output <- list(pars = mock_pars, delay_map = mock_delay_map)
   
   p <- chronofix_plot_delays(
     mcmc_output = mock_mcmc_output, 
-    delay_map = mock_delay_map, 
     n_points = 30,
     facet_by_group = FALSE,
     share_x_axis = FALSE
@@ -108,11 +102,10 @@ test_that("chronofix_plot_delays generates a correct patchwork object (facet_by_
   mock_pars["delay5_precisionlog", ] <- runif(100, min = 2, max = 4)
   mock_pars["delay6_mean", ] <- runif(100, min = 10, max = 15)
   mock_pars["delay6_shape", ] <- runif(100, min = 3, max = 6)
-  mock_mcmc_output <- list(pars = mock_pars)
+  mock_mcmc_output <- list(pars = mock_pars, delay_map = mock_delay_map)
   
   p <- chronofix_plot_delays(
-    mcmc_output = mock_mcmc_output, 
-    delay_map = mock_delay_map, 
+    mcmc_output = mock_mcmc_output,
     n_points = 30,
     facet_by_group = TRUE,
     share_x_axis = TRUE
@@ -152,9 +145,9 @@ test_that("chronofix_plot_delays handles edge cases in group names gracefully", 
     ncol = 50, # 50 iter * 1 chain
     dimnames = list(param_names, NULL)
   )
-  mock_mcmc_output <- list(pars = mock_pars)
+  mock_mcmc_output <- list(pars = mock_pars, delay_map = mock_delay_map)
   
-  p <- chronofix_plot_delays(mock_mcmc_output, mock_delay_map, n_points = 10,
+  p <- chronofix_plot_delays(mock_mcmc_output, n_points = 10,
                              facet_by_group = FALSE)
   
   # "c("complex_group_name")" should become "Complex Group Name"
@@ -181,9 +174,9 @@ test_that("chronofix_plot_delays handles multiple groups in a single facet", {
     ncol = 50,
     dimnames = list(param_names, NULL)
   )
-  mock_mcmc_output <- list(pars = mock_pars)
+  mock_mcmc_output <- list(pars = mock_pars, delay_map = mock_delay_map)
   
-  p <- chronofix_plot_delays(mock_mcmc_output, mock_delay_map, n_points = 20,
+  p <- chronofix_plot_delays(mock_mcmc_output, n_points = 20,
                              facet_by_group = FALSE)
   
   # Check if the title correctly pasted and capitalised both groups
@@ -223,13 +216,12 @@ test_that("chronofix_plot_delays correctly filters by select_group and select_de
     nrow = 8, ncol = 100, 
     dimnames = list(param_names, NULL)
   )
-  mock_mcmc_output <- list(pars = mock_pars)
+  mock_mcmc_output <- list(pars = mock_pars, delay_map = mock_delay_map)
   
   # Test filtering by select_group
   # (this is also a group that shares a delay with another group)
   p_group <- chronofix_plot_delays(
-    mcmc_output = mock_mcmc_output, 
-    delay_map = mock_delay_map, 
+    mcmc_output = mock_mcmc_output,
     n_points = 10, 
     facet_by_group = FALSE,
     select_group = "community-dead"
@@ -241,7 +233,6 @@ test_that("chronofix_plot_delays correctly filters by select_group and select_de
   # Test filtering by select_delay
   p_delay <- chronofix_plot_delays(
     mcmc_output = mock_mcmc_output, 
-    delay_map = mock_delay_map, 
     n_points = 10, 
     facet_by_group = FALSE,
     select_delay = "hospitalisation to discharge"
@@ -252,7 +243,6 @@ test_that("chronofix_plot_delays correctly filters by select_group and select_de
   # Test filtering by multiple delays simultaneously
   p_multi_delay <- chronofix_plot_delays(
     mcmc_output = mock_mcmc_output, 
-    delay_map = mock_delay_map, 
     n_points = 10, 
     facet_by_group = FALSE,
     select_delay = c("onset to report", "onset to hospitalisation")
@@ -268,7 +258,6 @@ test_that("chronofix_plot_delays correctly filters by select_group and select_de
   # Test filtering by multiple groups simultaneously
   p_multi_group <- chronofix_plot_delays(
     mcmc_output = mock_mcmc_output, 
-    delay_map = mock_delay_map, 
     n_points = 10, 
     facet_by_group = FALSE,
     select_group = c("community-alive", "hospitalised-alive")
@@ -285,7 +274,6 @@ test_that("chronofix_plot_delays correctly filters by select_group and select_de
   expect_error(
     chronofix_plot_delays(
       mcmc_output = mock_mcmc_output, 
-      delay_map = mock_delay_map, 
       select_group = "nonexistent-group"
     ),
     "Filtering resulted in 0 distributions to plot"
@@ -334,12 +322,12 @@ test_that("filtering preserves the mapping to MCMC parameters", {
   mock_pars["delay6_mean", ] <- runif(100, 10, 15)
   mock_pars["delay6_shape", ] <- runif(100, 3, 6)
   
-  mock_mcmc_output <- list(pars = mock_pars)
+  mock_mcmc_output <- list(pars = mock_pars, delay_map = mock_delay_map)
   
   # unfiltered plot
   p_full <- chronofix_plot_delays(
-    mock_mcmc_output, mock_delay_map, 
-    n_points = 200, facet_by_group = FALSE, share_x_axis = FALSE
+    mock_mcmc_output, n_points = 200, 
+    facet_by_group = FALSE, share_x_axis = FALSE
   )
   
   # peak x-value for "Onset to Death" from the full plot
@@ -348,8 +336,8 @@ test_that("filtering preserves the mapping to MCMC parameters", {
   
   # filtered plot
   p_sub <- chronofix_plot_delays(
-    mock_mcmc_output, mock_delay_map, 
-    n_points = 200, facet_by_group = FALSE, share_x_axis = FALSE,
+    mock_mcmc_output, n_points = 200,
+    facet_by_group = FALSE, share_x_axis = FALSE,
     select_delay = "onset to death"
   )
   
@@ -378,12 +366,11 @@ test_that("chronofix_plot_delays respects plot_style argument", {
   # 100 draws
   mock_pars <- matrix(runif(200, 1, 5), nrow = 2, ncol = 100, 
                       dimnames = list(c("delay1_mean", "delay1_shape"), NULL))
-  mock_mcmc_output <- list(pars = mock_pars)
+  mock_mcmc_output <- list(pars = mock_pars, delay_map = mock_delay_map)
   
   # "ribbon" default
   p_ribbon <- chronofix_plot_delays(
-    mock_mcmc_output, mock_delay_map, 
-    plot_style = "ribbon", facet_by_group = FALSE
+    mock_mcmc_output, plot_style = "ribbon", facet_by_group = FALSE
   )
   
   pb <- ggplot_build(p_ribbon)
@@ -397,8 +384,7 @@ test_that("chronofix_plot_delays respects plot_style argument", {
   
   # "samples" style
   p_samples <- chronofix_plot_delays(
-    mock_mcmc_output, mock_delay_map, 
-    plot_style = "samples", facet_by_group = FALSE
+    mock_mcmc_output, plot_style = "samples", facet_by_group = FALSE
   )
   
   expect_length(p_samples$layers, 2)
@@ -417,21 +403,18 @@ test_that("chronofix_plot_delays respects plot_style argument", {
   
   # rejects unknown plot style
   expect_error(
-    chronofix_plot_delays(mock_mcmc_output, mock_delay_map,
-                          plot_style = "spaghetti"),
+    chronofix_plot_delays(mock_mcmc_output, plot_style = "spaghetti"),
     "should be one of"
   )
   
   # also works with facet_by_group = TRUE
   p_patch_samples <- chronofix_plot_delays(
-    mock_mcmc_output, mock_delay_map, 
-    plot_style = "samples", facet_by_group = TRUE
+    mock_mcmc_output, plot_style = "samples", facet_by_group = TRUE
   )
   
   expect_s3_class(p_patch_samples, "patchwork")
   
   # default plot it ribbon
-  p_default <- chronofix_plot_delays(mock_mcmc_output, mock_delay_map,
-                                     facet_by_group = FALSE)
+  p_default <- chronofix_plot_delays(mock_mcmc_output, facet_by_group = FALSE)
   expect_true(inherits(p_default$layers[[1]]$geom, "GeomRibbon"))
 })

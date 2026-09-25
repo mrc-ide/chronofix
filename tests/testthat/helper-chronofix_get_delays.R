@@ -23,8 +23,6 @@ make_delay_summary_mock <- function() {
   pars["delay2_meanlog", ] <- c(1, 2, 3, 4, 5)
   pars["delay2_precisionlog", ] <- c(3, 3, 3, 3, 3)
   
-  list(
-    mcmc_output = list(pars = pars),
-    delay_map = delay_map
-  )
+  list(pars = pars,
+       delay_map = delay_map)
 }
