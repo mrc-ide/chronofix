@@ -103,7 +103,7 @@ chronofix_prepare_data <- function(data, format = "%Y-%m-%d",
     ex <- format(as.Date("2026-10-23"), format = format)
     cli::cli_abort(
       c("Dates found not matching declared format {.val {format}}",
-        i = "Valid example: {.val {ex}}"))
+        i = "Example valid date: {.val {ex}}"))
   }
   
   rownames(prepared_data) <- NULL
