@@ -111,14 +111,16 @@ chronofix_prepare_data <- function(data, format = "%Y-%m-%d",
   date_format_error <- 
     !is.na(data[, date_cols]) & is.na(prepared_data[, date_cols])
   if (any(date_format_error)) {
-    rows_error <- rowSums(date_format_error) > 0
+    has_format_error <- rowSums(date_format_error) > 0
     ex <- format(as.Date("2026-10-23"), format = format)
     msg <- cli::format_inline(
-      "Some dates not matching declared format {.val {format}}")
-    info <- cli::format_inline("Example valid date: {.val {ex}}")
+      "Some dates not matching declared format {.val {format}}.")
+    info <- cli::format_inline("Example valid date: {.val {ex}}.")
+    cross <- cross <- cli::format_inline(
+      "Found {sum(has_format_error)} invalid record{?s}.")
     rlang::abort(
-      c(msg, i = info, x = "Rows with incorrectly formatted dates:"),
-      body = data[rows_error, ] %>% capture.output())
+      c(msg, i = info, x = cross),
+      body = data[has_format_error, ] %>% capture.output())
   }
   
   rownames(prepared_data) <- NULL
