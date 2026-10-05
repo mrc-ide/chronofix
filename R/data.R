@@ -25,6 +25,7 @@
 ##'   `chronofix_data`; once created you should not modify this object.
 ##'   
 ##' @importFrom rlang abort
+##' @importFrom cli format_inline
 ##'
 ##' @export
 chronofix_prepare_data <- function(data, format = "%Y-%m-%d", 
