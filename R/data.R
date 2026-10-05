@@ -97,13 +97,25 @@ chronofix_prepare_data <- function(data, format = "%Y-%m-%d",
     prepared_data[[nm]] <- as.Date(data[[nm]], format = format)
   }
   
+  ex <- format(as.Date("2026-10-23"), format = format)
+  date_format_correct <- !is.na(prepared_data[, date_cols])
+  if (all(!date_format_correct)) {
+    cli::cli_abort(
+      c("All dates not matching declared format {.val {format}}"), 
+        i = "Example valid date: {.val {ex}}")
+  }
+  
   date_format_error <- 
     !is.na(data[, date_cols]) & is.na(prepared_data[, date_cols])
   if (any(date_format_error)) {
+    rows_error <- rowSums(date_format_error) > 0
     ex <- format(as.Date("2026-10-23"), format = format)
-    cli::cli_abort(
-      c("Dates found not matching declared format {.val {format}}",
-        i = "Example valid date: {.val {ex}}"))
+    msg <- cli::format_inline(
+      "Some dates not matching declared format {.val {format}}")
+    info <- cli::format_inline("Example valid date: {.val {ex}}")
+    rlang::abort(
+      c(msg, i = info, x = "Rows with incorrectly formatted dates:"),
+      body = data[rows_error, ] %>% capture.output())
   }
   
   rownames(prepared_data) <- NULL

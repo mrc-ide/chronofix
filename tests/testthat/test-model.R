@@ -324,7 +324,7 @@ test_that("validate_events correctly flags missing columns and date errors", {
   data_invalid_date <- data
   # give a 'community-alive' person an invalid 'discharge' date
   comm_idx <- which(data_invalid_date$group == "community-alive")[1]
-  data_invalid_date$discharge[comm_idx] <- as.Date("2026-01-01")
+  data_invalid_date$discharge[comm_idx] <- "2026-01-01"
   data_invalid_date <- chronofix_prepare_data(data_invalid_date)
   expect_error(
     validate_data_and_delays(data_invalid_date, delay_map),
