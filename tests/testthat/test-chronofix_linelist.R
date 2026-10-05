@@ -317,3 +317,42 @@ test_that("chronofix_style_mapper handles NA and unexpected inputs safely", {
   expect_true(is.na(chronofix_style_mapper(NA_character_)))
   expect_true(is.na(chronofix_style_mapper("Unknown Status")))
 })
+
+
+test_that("chronofix_linelist returns correct date format", {
+  mock_samples <- make_mock_samples()
+  
+  result <- suppressMessages({
+    chronofix_linelist(
+      samples = mock_samples,
+      format = "csv",
+      filename = tempfile(fileext = ".csv"),
+      show_p_error = FALSE
+    )
+  })
+  
+  date_names <- setdiff(names(result), c("id", "group"))
+  
+  for (nm in date_names) {
+    expect_true(all(is.na(result[[nm]]) | !is.na(as.Date(result[[nm]]))))
+  }
+  
+  ## dates of type 30/11/2026
+  mock_samples <- make_mock_samples(format = "%d/%m/%Y")
+  
+  result <- suppressMessages({
+    chronofix_linelist(
+      samples = mock_samples,
+      format = "csv",
+      filename = tempfile(fileext = ".csv"),
+      show_p_error = FALSE
+    )
+  })
+  
+  date_names <- setdiff(names(result), c("id", "group"))
+  
+  for (nm in date_names) {
+    expect_true(all(is.na(result[[nm]]) | 
+                      !is.na(as.Date(result[[nm]], format = "%d/%m/%Y"))))
+  }
+})
