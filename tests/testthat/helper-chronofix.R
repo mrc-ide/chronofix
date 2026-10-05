@@ -40,7 +40,7 @@ toy_data_params <- function(named_groups = TRUE, single_group = NULL) {
   }
   
   # Define other parameters
-  n_per_group <- rep(100, length(unique(delay_info$group)))
+  n_per_group <- rep(10, length(unique(delay_info$group)))
   error_params <- list(prop_missing_data = 0.2, prob_error = 0.05)
   date_range <- as.integer(as.Date(c("2025-03-01", "2025-09-01")))
   
