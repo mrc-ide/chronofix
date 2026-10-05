@@ -39,6 +39,7 @@ importFrom(igraph,
   topo_sort
 )
 importFrom(purrr,map_dfr)
+importFrom(rlang,abort)
 importFrom(stats,
   dbeta,
   dexp,

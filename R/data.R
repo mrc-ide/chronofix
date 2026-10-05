@@ -23,6 +23,8 @@
 ##'
 ##' @return A data.frame, with the addition of the class attribute
 ##'   `chronofix_data`; once created you should not modify this object.
+##'   
+##' @importFrom rlang abort
 ##'
 ##' @export
 chronofix_prepare_data <- function(data, format = "%Y-%m-%d", 
