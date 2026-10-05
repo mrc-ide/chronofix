@@ -10,6 +10,10 @@
 ##' @param data A data.frame containing IDs and dates.  By
 ##'   default we expect a column `id` (or one with the name given as
 ##'   the argument `id`) and two or more date columns.
+##' 
+##' @param format A character string declaring the date format. The default
+##'   is `"%Y-%m-%d"` (e.g. `"2015-06-21"`). For guidance on formats see
+##'   `help(strptime)`
 ##'
 ##' @param id Optional name of a column within `data` to use for
 ##'   unique individual identifiers.
@@ -21,7 +25,8 @@
 ##'   `chronofix_data`; once created you should not modify this object.
 ##'
 ##' @export
-chronofix_prepare_data <- function(data, id = NULL, group = NULL) {
+chronofix_prepare_data <- function(data, format = "%Y-%m-%d", 
+                                   id = NULL, group = NULL) {
   
   if (inherits(data, "chronofix_data")) {
     return(data)
@@ -79,15 +84,32 @@ chronofix_prepare_data <- function(data, id = NULL, group = NULL) {
     }
   }
   
-  if (length(setdiff(names(data), c(id, group))) < 2) {
+  date_cols <- setdiff(names(data), c(id, group))
+  
+  if (length(date_cols) < 2) {
     cli::cli_abort(
       paste("Expected {.arg data} to have at least two columns in addition to",
             "{squote(c(id, group))}"))
   }
   
-  rownames(data) <- NULL
-  attr(data, "id") <- id
-  attr(data, "group") <- group
-  class(data) <- c("chronofix_data", class(data))
-  data
+  prepared_data <- data
+  for (nm in date_cols) {
+    prepared_data[[nm]] <- as.Date(data[[nm]], format = format)
+  }
+  
+  date_format_error <- 
+    !is.na(data[, date_cols]) & is.na(prepared_data[, date_cols])
+  if (any(date_format_error)) {
+    ex <- format(as.Date("2026-10-23"), format = format)
+    cli::cli_abort(
+      c("Dates found not matching declared format {.val {format}}",
+        i = "Valid example: {.val {ex}}"))
+  }
+  
+  rownames(prepared_data) <- NULL
+  attr(prepared_data, "id") <- id
+  attr(prepared_data, "group") <- group
+  attr(prepared_data, "format") <- format
+  class(prepared_data) <- c("chronofix_data", class(data))
+  prepared_data
 }

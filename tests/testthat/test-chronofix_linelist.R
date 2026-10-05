@@ -123,7 +123,7 @@ test_that("chronofix_linelist distinguishes imputed missing from structural miss
     )
   })
   
-  expect_equal(result$report[i], as.Date("2025-01-12"))
+  expect_equal(result$report[i], "2025-01-12")
   expect_true(is.na(result$report_p_error[i]))
 })
 
