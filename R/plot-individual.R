@@ -18,7 +18,7 @@ chronofix_plot_individual <- function(samples, id) {
   id_col <- attr(samples$data, "id")
   group_col <- attr(samples$data, "group")
   
-  which_id <-  which(data[[id_col]] == id)
+  which_id <-  which(samples$data[[id_col]] == id)
   if (length(which_id) == 0) {
     cli::cli_abort("No individual with {.col {id_col}} value of {.val {id}}")
   }
