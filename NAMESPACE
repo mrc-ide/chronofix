@@ -17,7 +17,10 @@ import(dplyr)
 import(ggplot2)
 import(openxlsx)
 import(patchwork)
-importFrom(cli,cli_abort)
+importFrom(cli,
+  cli_abort,
+  format_inline
+)
 importFrom(dplyr,
   "%>%",
   case_when,
@@ -41,6 +44,7 @@ importFrom(igraph,
   topo_sort
 )
 importFrom(purrr,map_dfr)
+importFrom(rlang,abort)
 importFrom(stats,
   dbeta,
   dexp,

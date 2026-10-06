@@ -8,6 +8,7 @@ test_that("chronofix_prepare_data prepares data correctly", {
   
   expect_equal(attr(prepared_data, "id"), "id")
   expect_equal(attr(prepared_data, "group"), "group")
+  expect_equal(attr(prepared_data, "format"), "%Y-%m-%d")
 })
 
 
@@ -92,4 +93,48 @@ test_that("chronofix_prepare_data correctly flags missing columns", {
     chronofix_prepare_data(data_only_onset),
     "Expected `data` to have at least two columns in addition to"
   )
+})
+
+
+test_that("chronofix_prepare_data correctly flags all-NA rows", {
+  toy <- toy_data()
+  data <- toy$data$observed_data
+  
+  # individual has all NA dates
+  data_all_na <- data
+  event_cols <- setdiff(names(data), c("id", "group"))
+  data_all_na[1, event_cols] <- NA # row 1 dates set to all NA
+  expect_error(
+    data_all_na <- chronofix_prepare_data(data_all_na),
+    "cannot have `NA` for all event dates"
+  )
+})
+
+
+test_that("chronofix_prepare_data prepares data correctly with specified
+          date format", {
+  format <- "%d/%m/%Y"
+  toy <- toy_data(format = format)
+  data <- toy$data$observed_data
+  
+  prepared_data <- chronofix_prepare_data(data, format = format)
+  expect_true(inherits((prepared_data), "chronofix_data"))
+  
+  expect_equal(attr(prepared_data, "id"), "id")
+  expect_equal(attr(prepared_data, "group"), "group")
+  expect_equal(attr(prepared_data, "format"), format)
+})
+
+
+test_that("chronofix_prepare_data correctly flags incorrect date formats", {
+  toy <- toy_data(format = "%d/%m/%Y")
+  data <- toy$data$observed_data
+  
+  expect_error(chronofix_prepare_data(data),
+               'All dates not matching declared format "%Y-%m-%d"')
+  
+  data$onset[1:10] <- format(as.Date(data$onset[1:10], format = "%d/%m/%Y"),
+                             format = "%Y-%m-%d")
+  expect_error(chronofix_prepare_data(data, format = "%d/%m/%Y"),
+               'Some dates not matching declared format "%d/%m/%Y"')
 })
