@@ -87,29 +87,50 @@ chronofix_prepare_data <- function(data, format = "%Y-%m-%d",
     }
   }
   
-  date_cols <- setdiff(names(data), c(id, group))
+  event_cols <- setdiff(names(data), c(id, group))
   
-  if (length(date_cols) < 2) {
+  if (length(event_cols) < 2) {
     cli::cli_abort(
       paste("Expected {.arg data} to have at least two columns in addition to",
             "{squote(c(id, group))}"))
   }
   
+  # individual has all NA dates
+  all_na_row <- 
+    rowSums(is.na(data[, event_cols, drop = FALSE])) == length(event_cols)
+  if (any(all_na_row)) {
+    msg <- cli::format_inline(
+      "Individuals cannot have `NA` for all event dates.")
+    cross <- cli::format_inline(
+      "Found {sum(all_na_row)} individual{?s} with no recorded dates")
+    rlang::abort(
+      c(msg, x = cross),
+      body = data[all_na_row, ] %>% capture.output())
+  }
+  
+  ## convert to R dates
   prepared_data <- data
-  for (nm in date_cols) {
+  for (nm in event_cols) {
     prepared_data[[nm]] <- as.Date(data[[nm]], format = format)
   }
   
+  ## check if any dates are in the right format - it is likely the date
+  ## format was misspecified if there are none
   ex <- format(as.Date("2026-10-23"), format = format)
-  date_format_correct <- !is.na(prepared_data[, date_cols])
+  date_format_correct <- !is.na(prepared_data[, event_cols])
   if (all(!date_format_correct)) {
     cli::cli_abort(
       c("All dates not matching declared format {.val {format}}"), 
         i = "Example valid date: {.val {ex}}")
   }
   
+  ## now check if some dates are in the wrong format, and report
+  ## back those records
+  ## dates in the wrong format will have been converted to NA so we
+  ## need to exclude dates that were NA in the original data and then
+  ## check which of the rest are now NA
   date_format_error <- 
-    !is.na(data[, date_cols]) & is.na(prepared_data[, date_cols])
+    !is.na(data[, event_cols]) & is.na(prepared_data[, event_cols])
   if (any(date_format_error)) {
     has_format_error <- rowSums(date_format_error) > 0
     ex <- format(as.Date("2026-10-23"), format = format)

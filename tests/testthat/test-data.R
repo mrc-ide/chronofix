@@ -96,6 +96,21 @@ test_that("chronofix_prepare_data correctly flags missing columns", {
 })
 
 
+test_that("chronofix_prepare_data correctly flags all-NA rows", {
+  toy <- toy_data()
+  data <- toy$data$observed_data
+  
+  # individual has all NA dates
+  data_all_na <- data
+  event_cols <- setdiff(names(data), c("id", "group"))
+  data_all_na[1, event_cols] <- NA # row 1 dates set to all NA
+  expect_error(
+    data_all_na <- chronofix_prepare_data(data_all_na),
+    "cannot have `NA` for all event dates"
+  )
+})
+
+
 test_that("chronofix_prepare_data prepares data correctly with specified
           date format", {
   format <- "%d/%m/%Y"

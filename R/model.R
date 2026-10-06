@@ -199,18 +199,6 @@ validate_events <- function(data, delay_map) {
     ))
   }
   
-  # individual has all NA dates
-  all_na_row <- rowSums(is.na(data[, event_cols, drop = FALSE])) == length(event_cols)
-  if (any(all_na_row)) {
-    msg <- cli::format_inline(
-      "Individuals cannot have `NA` for all event dates.")
-    cross <- cli::format_inline(
-      "Found {sum(all_na_row)} individual{?s} with no recorded dates")
-    rlang::abort(
-      c(msg, x = cross),
-      body = data[all_na_row, ] %>% capture.output())
-  }
-  
   # non-NA dates for events not associated with the individual's group
   groups_in_data <- unique(data[[group]])
   has_invalid_date <- rep(FALSE, nrow(data))
