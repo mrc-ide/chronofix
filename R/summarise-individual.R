@@ -18,8 +18,9 @@ chronofix_summarise_individual <- function(samples, id) {
   
   id_col <- attr(samples$data, "id")
   group_col <- attr(samples$data, "group")
+  format <- attr(samples$data, "format")
   
-  which_id <-  which(data[[id_col]] == id)
+  which_id <-  which(samples$data[[id_col]] == id)
   if (length(which_id) == 0) {
     cli::cli_abort("No individual with {.col {id_col}} value of {.val {id}}")
   }
@@ -38,12 +39,14 @@ chronofix_summarise_individual <- function(samples, id) {
   f <- function(date) {
     prob_error <- sum(error_indicators[date, ]) / ncol(error_indicators)
     
-    observed_date <- samples$data[[date]][which_id]
+    observed_date <- 
+      format(as.Date(samples$data[[date]][which_id]), format = format)
     
     estimated_dates <- 
       floor(samples$augmented_data$estimated_dates[as.character(id), date, ])
     tab <- table(as.Date(estimated_dates))
     tab <- as.data.frame(tab / sum(tab))
+    tab[, 1] <- format(as.Date(tab[, 1]), format = format)
     names(tab) <- c("Estimated date", "Posterior weight")
     
     list(prob_error = prob_error,
