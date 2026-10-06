@@ -17,6 +17,7 @@ chronofix_plot_individual <- function(samples, id) {
   
   id_col <- attr(samples$data, "id")
   group_col <- attr(samples$data, "group")
+  format <- attr(samples$data, "format")
   
   which_id <-  which(samples$data[[id_col]] == id)
   if (length(which_id) == 0) {
@@ -38,10 +39,12 @@ chronofix_plot_individual <- function(samples, id) {
     floor(samples$augmented_data$estimated_dates[which_id, relevant_dates, ])
   df <- as.data.frame(t(estimated_dates)) %>%
     pivot_longer(everything(), names_to = "event", values_to = "date")
+  df$event <- factor(df$event, levels = relevant_dates)
+  df$date <- as.Date(df$date)
   
   ggplot(df, aes(x = date, y = ..density..)) + 
-    stat_bin(binwidth=1) + 
-    scale_x_date(date_breaks ="1 day") +
-    facet_wrap(vars(event), scales = "free_x") +
+    stat_bin(binwidth = 1) + 
+    scale_x_date(date_labels = format) +
+    facet_wrap(vars(event), scales = "free") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
