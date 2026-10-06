@@ -295,6 +295,11 @@ test_that("validate_events correctly flags missing columns and date errors", {
   # missing column in data
   data_missing_col <- data
   data_missing_col$report <- NULL
+  ## need to exclude any all-NA individuals
+  event_cols <- setdiff(names(data_missing_col), c("id", "group"))
+  all_na_row <- rowSums(is.na(data_missing_col[, event_cols, drop = FALSE])) == 
+    length(event_cols)
+  data_missing_col <- data_missing_col[!all_na_row, ]
   data_missing_col <- chronofix_prepare_data(data_missing_col)
   expect_error(
     validate_data_and_delays(data_missing_col, delay_map),
