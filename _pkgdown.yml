@@ -11,6 +11,7 @@ reference:
     - chronofix_mcmc
     - chronofix_mcmc_control
     - chronofix_mcmc_initial
+    - chronofix_hyperparameters
   - title: Post-processing
   - subtitle: Plotting functions
     contents:
