@@ -1,0 +1,28 @@
+url: https://mrc-ide.github.io/chronofix
+template:
+  bootstrap: 5
+
+reference:
+  - title: Pre-processing
+    contents:
+    - chronofix_prepare_data
+  - title: MCMC
+    contents:
+    - chronofix_mcmc
+    - chronofix_mcmc_control
+    - chronofix_mcmc_initial
+  - title: Post-processing
+  - subtitle: Plotting functions
+    contents:
+      - chronofix_plot_delays
+  - subtitle: Summarise functions
+    contents:
+    - chronofix_linelist
+    - chronofix_summarise_delays
+  - title: Simulate data
+    contents:
+    - chronofix_simulate_data
+    - chronofix_simulate_observation_errors
+    - chronofix_simulate_true_data
+
+
