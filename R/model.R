@@ -199,18 +199,6 @@ validate_events <- function(data, delay_map) {
     ))
   }
   
-  # individual has all NA dates
-  all_na_row <- rowSums(is.na(data[, event_cols, drop = FALSE])) == length(event_cols)
-  if (any(all_na_row)) {
-    problem_data <- data[all_na_row, ]
-    print(problem_data)
-    
-    cli::cli_abort(c(
-      "Individuals cannot have `NA` for all event dates.",
-      "x" = "Found {nrow(problem_data)} individual{?s} with no recorded dates (see printed data above)."
-    ))
-  }
-  
   # non-NA dates for events not associated with the individual's group
   groups_in_data <- unique(data[[group]])
   has_invalid_date <- rep(FALSE, nrow(data))
@@ -234,14 +222,15 @@ validate_events <- function(data, delay_map) {
   }
   
   if (any(has_invalid_date)) {
-    problem_data <- data[has_invalid_date, ]
-    print(problem_data)
-    
-    cli::cli_abort(c(
-      "Individuals have dates for events not associated with their group in {.arg delay_map}.",
-      "i" = "This could indicate an error in the grouping assignment or data entry.",
-      "x" = "Found {nrow(problem_data)} invalid record{?s} (see printed data above)."
-    ))
+    msg <- cli::format_inline(
+      "Individuals have dates for events not associated with their group in {.arg delay_map}.")
+    info <- cli::format_inline(
+      "This could indicate an error in the grouping assignment or data entry.")
+    cross <- cli::format_inline(
+      "Found {sum(has_invalid_date)} invalid record{?s}.")
+    rlang::abort(
+      c(msg, i = info, x = cross),
+      body = data[has_invalid_date, ] %>% capture.output())
   }
 }
 

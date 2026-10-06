@@ -10,6 +10,10 @@
 ##' @param data A data.frame containing IDs and dates.  By
 ##'   default we expect a column `id` (or one with the name given as
 ##'   the argument `id`) and two or more date columns.
+##' 
+##' @param format A character string declaring the date format. The default
+##'   is `"%Y-%m-%d"` (e.g. `"2015-06-21"`). For guidance on formats see
+##'   `help(strptime)`
 ##'
 ##' @param id Optional name of a column within `data` to use for
 ##'   unique individual identifiers.
@@ -19,9 +23,13 @@
 ##'
 ##' @return A data.frame, with the addition of the class attribute
 ##'   `chronofix_data`; once created you should not modify this object.
+##'   
+##' @importFrom rlang abort
+##' @importFrom cli format_inline
 ##'
 ##' @export
-chronofix_prepare_data <- function(data, id = NULL, group = NULL) {
+chronofix_prepare_data <- function(data, format = "%Y-%m-%d", 
+                                   id = NULL, group = NULL) {
   
   if (inherits(data, "chronofix_data")) {
     return(data)
@@ -79,15 +87,67 @@ chronofix_prepare_data <- function(data, id = NULL, group = NULL) {
     }
   }
   
-  if (length(setdiff(names(data), c(id, group))) < 2) {
+  event_cols <- setdiff(names(data), c(id, group))
+  
+  if (length(event_cols) < 2) {
     cli::cli_abort(
       paste("Expected {.arg data} to have at least two columns in addition to",
             "{squote(c(id, group))}"))
   }
   
-  rownames(data) <- NULL
-  attr(data, "id") <- id
-  attr(data, "group") <- group
-  class(data) <- c("chronofix_data", class(data))
-  data
+  # individual has all NA dates
+  all_na_row <- 
+    rowSums(is.na(data[, event_cols, drop = FALSE])) == length(event_cols)
+  if (any(all_na_row)) {
+    msg <- cli::format_inline(
+      "Individuals cannot have `NA` for all event dates.")
+    cross <- cli::format_inline(
+      "Found {sum(all_na_row)} individual{?s} with no recorded dates")
+    rlang::abort(
+      c(msg, x = cross),
+      body = data[all_na_row, ] %>% capture.output())
+  }
+  
+  ## convert to R dates
+  prepared_data <- data
+  for (nm in event_cols) {
+    prepared_data[[nm]] <- as.Date(data[[nm]], format = format)
+  }
+  
+  ## check if any dates are in the right format - it is likely the date
+  ## format was misspecified if there are none
+  ex <- format(as.Date("2026-10-23"), format = format)
+  date_format_correct <- !is.na(prepared_data[, event_cols])
+  if (all(!date_format_correct)) {
+    cli::cli_abort(
+      c("All dates not matching declared format {.val {format}}"), 
+        i = "Example valid date: {.val {ex}}")
+  }
+  
+  ## now check if some dates are in the wrong format, and report
+  ## back those records
+  ## dates in the wrong format will have been converted to NA so we
+  ## need to exclude dates that were NA in the original data and then
+  ## check which of the rest are now NA
+  date_format_error <- 
+    !is.na(data[, event_cols]) & is.na(prepared_data[, event_cols])
+  if (any(date_format_error)) {
+    has_format_error <- rowSums(date_format_error) > 0
+    ex <- format(as.Date("2026-10-23"), format = format)
+    msg <- cli::format_inline(
+      "Some dates not matching declared format {.val {format}}.")
+    info <- cli::format_inline("Example valid date: {.val {ex}}.")
+    cross <- cross <- cli::format_inline(
+      "Found {sum(has_format_error)} invalid record{?s}.")
+    rlang::abort(
+      c(msg, i = info, x = cross),
+      body = data[has_format_error, ] %>% capture.output())
+  }
+  
+  rownames(prepared_data) <- NULL
+  attr(prepared_data, "id") <- id
+  attr(prepared_data, "group") <- group
+  attr(prepared_data, "format") <- format
+  class(prepared_data) <- c("chronofix_data", class(data))
+  prepared_data
 }
