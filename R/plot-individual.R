@@ -24,11 +24,12 @@ chronofix_plot_individual <- function(samples, id) {
     cli::cli_abort("No individual with {.col {id_col}} value of {.val {id}}")
   }
   
-  cli::cli_alert_info(paste0(id_col, ": ", id))
   
   if (!is.null(group_col)) {
     group <- samples$data[[group_col]][which_id]
-    cli::cli_alert_info(paste0(group_col, ": ", group))
+    plot_subtitle <- sprintf("%s: %s\n%s: %s", id_col, id, group_col, group)
+  } else {
+    plot_subtitle  <- sprintf("%s: %s\n%s: %s", id_col, id)
   }
   
   error_indicators <- 
@@ -43,8 +44,17 @@ chronofix_plot_individual <- function(samples, id) {
   df$date <- as.Date(df$date)
   
   ggplot(df, aes(x = date, y = ..density..)) + 
-    stat_bin(binwidth = 1) + 
+    stat_bin(binwidth = 1, fill = "#4B7BB6") +
     scale_x_date(date_labels = format) +
     facet_wrap(vars(event), scales = "free") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme_bw() +
+    theme(strip.text = element_markdown(face = "bold", size = 10, lineheight = 1.2,
+                                        margin = margin(b = 6, t = 6)),
+          strip.background = element_rect(fill = "#f8f9fa", colour = "#cccccc")) +
+    labs(
+      x = "Date", 
+      y = "Posterior weight",
+      title = "Posterior Estimated Date Distributions",
+      subtitle = plot_subtitle
+    )
 }
