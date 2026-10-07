@@ -40,15 +40,25 @@ chronofix_plot_individual <- function(samples, id) {
     floor(samples$augmented_data$estimated_dates[which_id, relevant_dates, ])
   df <- as.data.frame(t(estimated_dates)) %>%
     pivot_longer(everything(), names_to = "event", values_to = "date")
-  df$event <- factor(df$event, levels = relevant_dates)
   df$date <- as.Date(df$date)
+  
+  prob_error <- 
+    rowSums(error_indicators[relevant_dates, ]) / ncol(error_indicators)
+  observed_dates <- 
+    format(as.Date(unlist(samples$data[which_id, relevant_dates])), 
+           format = format)
+  labels <- 
+    sprintf(c("<b>%s</b><br>observed date: %s<br> posterior error weight: %s"),
+            relevant_dates, observed_dates, prob_error)
+  df$event <- factor(df$event, levels = relevant_dates,
+                     labels = labels)
   
   ggplot(df, aes(x = date, y = ..density..)) + 
     stat_bin(binwidth = 1, fill = "#4B7BB6") +
     scale_x_date(date_labels = format) +
     facet_wrap(vars(event), scales = "free") +
     theme_bw() +
-    theme(strip.text = element_markdown(face = "bold", size = 10, lineheight = 1.2,
+    theme(strip.text = element_markdown(size = 10, lineheight = 1.2,
                                         margin = margin(b = 6, t = 6)),
           strip.background = element_rect(fill = "#f8f9fa", colour = "#cccccc")) +
     labs(
