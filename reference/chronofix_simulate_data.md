@@ -1,0 +1,262 @@
+# Simulate a dataset with true dates, observed dates and error indicators
+
+Simulate a dataset with true dates, observed dates and error indicators
+
+## Usage
+
+``` r
+chronofix_simulate_data(
+  n_per_group,
+  group_names,
+  delay_info,
+  error_params,
+  date_range,
+  format = "%Y-%m-%d"
+)
+```
+
+## Arguments
+
+- n_per_group:
+
+  Vector of number of individuals to simulate in each group.
+
+- group_names:
+
+  A character or numeric vector of names for the groups being simulated.
+
+- delay_info:
+
+  A data frame that defines the delays between events, and their
+  distributions and parameters. It must contain the columns `from`
+  (character), `to` (character), `group` (list of numeric or character
+  group IDs), `distribution` (character), `mean` (numeric) and `cv`
+  (numeric)
+
+- error_params:
+
+  A list containing `prop_missing_data` and `prob_error`.
+
+- date_range:
+
+  A vector of two integer dates for the simulation range.
+
+- format:
+
+  A character string declaring the date format. The default is
+  `"%Y-%m-%d"` (e.g. `"2015-06-21"`). For guidance on formats see
+  [`help(strptime)`](https://rdrr.io/r/base/strptime.html)
+
+## Value
+
+A list with three data frames: `true_data`, `observed_data`, and
+`error_indicators`, each including `id` and `group` columns.
+
+## Examples
+
+``` r
+# Define the delay_info data frame
+delay_info <- data.frame(
+  from = c("onset", "onset", "onset",
+           "hospitalisation", "onset", "hospitalisation"),
+  to = c("report", "death", "hospitalisation",
+         "discharge", "hospitalisation", "death"),
+  group = I(list(
+    c("community-alive", "community-dead",
+      "hospitalised-alive", "hospitalised-dead"),
+    "community-dead",
+    "hospitalised-alive",
+    "hospitalised-alive", 
+    "hospitalised-dead",
+    "hospitalised-dead")),
+  distribution = c("gamma", "gamma", "gamma", "gamma",
+                   "log-normal", "log-normal"),
+  mean = c(10, 15, 7, 20, 7, 12),
+  cv = c(0.3, 0.4, 0.2, 0.5, 0.2, 0.3)
+)
+
+# Define other parameters
+n_per_group <- rep(10, length(unique(delay_info$group)))
+group_names <- c("community-alive", "community-dead", "hospitalised-alive",
+            "hospitalised-dead")
+error_params <- list(prop_missing_data = 0.2, prob_error = 0.05)
+date_range <- as.integer(as.Date(c("2025-03-01", "2025-09-01")))
+
+# Run simulation
+set.seed(1)
+sim_result <- chronofix_simulate_data(
+  n_per_group = n_per_group,
+  group_names = group_names,
+  delay_info = delay_info,
+  error_params = error_params,
+  date_range = date_range
+)
+
+sim_result$true_data
+#>    id              group    onset hospitalisation   report    death discharge
+#> 1   1    community-alive 20215.57              NA 20229.42       NA        NA
+#> 2   2    community-alive 20190.63              NA 20196.20       NA        NA
+#> 3   3    community-alive 20232.77              NA 20242.30       NA        NA
+#> 4   4    community-alive 20221.78              NA 20236.27       NA        NA
+#> 5   5    community-alive 20184.27              NA 20192.99       NA        NA
+#> 6   6    community-alive 20312.34              NA 20321.76       NA        NA
+#> 7   7    community-alive 20319.83              NA 20330.70       NA        NA
+#> 8   8    community-alive 20310.72              NA 20319.63       NA        NA
+#> 9   9    community-alive 20258.55              NA 20268.32       NA        NA
+#> 10 10    community-alive 20191.73              NA 20202.82       NA        NA
+#> 11 11     community-dead 20268.44              NA 20276.07 20279.62        NA
+#> 12 12     community-dead 20186.91              NA 20194.94 20203.03        NA
+#> 13 13     community-dead 20277.77              NA 20283.71 20297.87        NA
+#> 14 14     community-dead 20262.48              NA 20276.00 20274.72        NA
+#> 15 15     community-dead 20217.71              NA 20226.53 20227.14        NA
+#> 16 16     community-dead 20288.41              NA 20300.72 20304.60        NA
+#> 17 17     community-dead 20195.99              NA 20206.57 20204.06        NA
+#> 18 18     community-dead 20220.98              NA 20232.42 20233.80        NA
+#> 19 19     community-dead 20195.10              NA 20204.26 20208.84        NA
+#> 20 20     community-dead 20207.45              NA 20217.09 20217.31        NA
+#> 21 21 hospitalised-alive 20173.64        20182.68 20183.65       NA  20226.41
+#> 22 22 hospitalised-alive 20186.26        20193.99 20193.27       NA  20223.30
+#> 23 23 hospitalised-alive 20310.33        20317.03 20320.10       NA  20329.45
+#> 24 24 hospitalised-alive 20184.45        20192.42 20193.36       NA  20215.91
+#> 25 25 hospitalised-alive 20246.84        20255.25 20255.52       NA  20279.32
+#> 26 26 hospitalised-alive 20196.29        20202.00 20209.55       NA  20226.66
+#> 27 27 hospitalised-alive 20299.55        20307.20 20305.72       NA  20326.91
+#> 28 28 hospitalised-alive 20191.32        20199.30 20198.73       NA  20209.32
+#> 29 29 hospitalised-alive 20164.26        20171.94 20170.42       NA  20198.99
+#> 30 30 hospitalised-alive 20222.95        20232.34 20230.73       NA  20250.08
+#> 31 31  hospitalised-dead 20307.35        20312.85 20317.91 20326.14        NA
+#> 32 32  hospitalised-dead 20161.43        20168.13 20171.57 20176.53        NA
+#> 33 33  hospitalised-dead 20249.76        20259.00 20260.10 20267.00        NA
+#> 34 34  hospitalised-dead 20306.37        20315.63 20314.58 20329.07        NA
+#> 35 35  hospitalised-dead 20276.75        20284.05 20282.33 20292.73        NA
+#> 36 36  hospitalised-dead 20200.26        20205.99 20212.10 20217.72        NA
+#> 37 37  hospitalised-dead 20277.05        20282.58 20283.85 20291.80        NA
+#> 38 38  hospitalised-dead 20219.33        20226.21 20234.45 20237.39        NA
+#> 39 39  hospitalised-dead 20252.50        20257.71 20268.31 20270.73        NA
+#> 40 40  hospitalised-dead 20175.81        20183.82 20187.57 20193.62        NA
+sim_result$observed_data
+#>    id              group      onset hospitalisation     report      death
+#> 1   1    community-alive       <NA>            <NA> 2025-05-21       <NA>
+#> 2   2    community-alive 2025-04-12            <NA> 2025-04-18       <NA>
+#> 3   3    community-alive 2025-05-24            <NA> 2025-06-03       <NA>
+#> 4   4    community-alive 2025-04-13            <NA> 2025-06-06       <NA>
+#> 5   5    community-alive 2025-04-06            <NA> 2025-04-14       <NA>
+#> 6   6    community-alive 2025-08-12            <NA> 2025-08-21       <NA>
+#> 7   7    community-alive 2025-08-19            <NA> 2025-08-30       <NA>
+#> 8   8    community-alive 2025-08-10            <NA> 2025-08-19       <NA>
+#> 9   9    community-alive       <NA>            <NA> 2025-06-29       <NA>
+#> 10 10    community-alive 2025-03-15            <NA> 2025-04-24       <NA>
+#> 11 11     community-dead 2025-06-29            <NA>       <NA> 2025-07-10
+#> 12 12     community-dead 2025-04-08            <NA> 2025-04-16       <NA>
+#> 13 13     community-dead 2025-07-08            <NA> 2025-07-14       <NA>
+#> 14 14     community-dead 2025-06-23            <NA> 2025-07-07 2025-07-05
+#> 15 15     community-dead 2025-05-09            <NA> 2025-05-18 2025-05-19
+#> 16 16     community-dead       <NA>            <NA> 2025-07-31 2025-08-04
+#> 17 17     community-dead 2025-04-17            <NA> 2025-04-28       <NA>
+#> 18 18     community-dead 2025-05-12            <NA> 2025-05-24 2025-05-25
+#> 19 19     community-dead 2025-04-17            <NA> 2025-04-26 2025-06-19
+#> 20 20     community-dead 2025-04-29            <NA>       <NA>       <NA>
+#> 21 21 hospitalised-alive 2025-03-26      2025-08-12 2025-04-05       <NA>
+#> 22 22 hospitalised-alive 2025-04-08      2025-04-15 2025-04-15       <NA>
+#> 23 23 hospitalised-alive 2025-08-10      2025-08-17 2025-08-20       <NA>
+#> 24 24 hospitalised-alive       <NA>            <NA> 2025-04-15       <NA>
+#> 25 25 hospitalised-alive       <NA>      2025-06-16       <NA>       <NA>
+#> 26 26 hospitalised-alive 2025-04-18            <NA> 2025-05-01       <NA>
+#> 27 27 hospitalised-alive 2025-07-30      2025-08-07 2025-08-05       <NA>
+#> 28 28 hospitalised-alive 2025-04-13      2025-04-21 2025-04-20       <NA>
+#> 29 29 hospitalised-alive 2025-03-17      2025-03-24 2025-03-23       <NA>
+#> 30 30 hospitalised-alive       <NA>            <NA>       <NA>       <NA>
+#> 31 31  hospitalised-dead 2025-08-07      2025-08-12 2025-08-17       <NA>
+#> 32 32  hospitalised-dead 2025-03-14      2025-03-21 2025-03-24       <NA>
+#> 33 33  hospitalised-dead 2025-06-10      2025-06-19 2025-06-21 2025-06-27
+#> 34 34  hospitalised-dead 2025-08-06      2025-08-15 2025-08-14       <NA>
+#> 35 35  hospitalised-dead 2025-07-07      2025-07-15 2025-07-28 2025-07-23
+#> 36 36  hospitalised-dead 2025-04-22      2025-04-27 2025-05-04 2025-07-25
+#> 37 37  hospitalised-dead 2025-07-08      2025-07-13 2025-07-14 2025-07-22
+#> 38 38  hospitalised-dead 2025-05-11      2025-05-18       <NA> 2025-05-29
+#> 39 39  hospitalised-dead 2025-06-13      2025-06-18 2025-06-29 2025-07-01
+#> 40 40  hospitalised-dead       <NA>      2025-04-05 2025-04-09 2025-04-15
+#>     discharge
+#> 1        <NA>
+#> 2        <NA>
+#> 3        <NA>
+#> 4        <NA>
+#> 5        <NA>
+#> 6        <NA>
+#> 7        <NA>
+#> 8        <NA>
+#> 9        <NA>
+#> 10       <NA>
+#> 11       <NA>
+#> 12       <NA>
+#> 13       <NA>
+#> 14       <NA>
+#> 15       <NA>
+#> 16       <NA>
+#> 17       <NA>
+#> 18       <NA>
+#> 19       <NA>
+#> 20       <NA>
+#> 21 2025-05-18
+#> 22 2025-05-15
+#> 23       <NA>
+#> 24 2025-05-07
+#> 25 2025-07-05
+#> 26 2025-05-18
+#> 27       <NA>
+#> 28 2025-05-01
+#> 29       <NA>
+#> 30 2025-06-11
+#> 31       <NA>
+#> 32       <NA>
+#> 33       <NA>
+#> 34       <NA>
+#> 35       <NA>
+#> 36       <NA>
+#> 37       <NA>
+#> 38       <NA>
+#> 39       <NA>
+#> 40       <NA>
+sim_result$error_indicators # true error indicators
+#>    id              group onset hospitalisation report death discharge
+#> 1   1    community-alive    NA              NA  FALSE    NA        NA
+#> 2   2    community-alive FALSE              NA  FALSE    NA        NA
+#> 3   3    community-alive FALSE              NA  FALSE    NA        NA
+#> 4   4    community-alive  TRUE              NA   TRUE    NA        NA
+#> 5   5    community-alive FALSE              NA  FALSE    NA        NA
+#> 6   6    community-alive FALSE              NA  FALSE    NA        NA
+#> 7   7    community-alive FALSE              NA  FALSE    NA        NA
+#> 8   8    community-alive FALSE              NA  FALSE    NA        NA
+#> 9   9    community-alive    NA              NA  FALSE    NA        NA
+#> 10 10    community-alive  TRUE              NA  FALSE    NA        NA
+#> 11 11     community-dead FALSE              NA     NA FALSE        NA
+#> 12 12     community-dead FALSE              NA  FALSE    NA        NA
+#> 13 13     community-dead FALSE              NA  FALSE    NA        NA
+#> 14 14     community-dead FALSE              NA  FALSE FALSE        NA
+#> 15 15     community-dead FALSE              NA  FALSE FALSE        NA
+#> 16 16     community-dead    NA              NA  FALSE FALSE        NA
+#> 17 17     community-dead FALSE              NA  FALSE    NA        NA
+#> 18 18     community-dead FALSE              NA  FALSE FALSE        NA
+#> 19 19     community-dead FALSE              NA  FALSE  TRUE        NA
+#> 20 20     community-dead FALSE              NA     NA    NA        NA
+#> 21 21 hospitalised-alive FALSE            TRUE  FALSE    NA     FALSE
+#> 22 22 hospitalised-alive FALSE           FALSE  FALSE    NA     FALSE
+#> 23 23 hospitalised-alive FALSE           FALSE  FALSE    NA        NA
+#> 24 24 hospitalised-alive    NA              NA  FALSE    NA     FALSE
+#> 25 25 hospitalised-alive    NA           FALSE     NA    NA      TRUE
+#> 26 26 hospitalised-alive FALSE              NA  FALSE    NA     FALSE
+#> 27 27 hospitalised-alive FALSE           FALSE  FALSE    NA        NA
+#> 28 28 hospitalised-alive FALSE           FALSE  FALSE    NA     FALSE
+#> 29 29 hospitalised-alive FALSE           FALSE  FALSE    NA        NA
+#> 30 30 hospitalised-alive    NA              NA     NA    NA     FALSE
+#> 31 31  hospitalised-dead FALSE           FALSE  FALSE    NA        NA
+#> 32 32  hospitalised-dead FALSE           FALSE  FALSE    NA        NA
+#> 33 33  hospitalised-dead FALSE           FALSE  FALSE FALSE        NA
+#> 34 34  hospitalised-dead FALSE           FALSE  FALSE    NA        NA
+#> 35 35  hospitalised-dead FALSE           FALSE   TRUE FALSE        NA
+#> 36 36  hospitalised-dead FALSE           FALSE  FALSE  TRUE        NA
+#> 37 37  hospitalised-dead FALSE           FALSE  FALSE FALSE        NA
+#> 38 38  hospitalised-dead FALSE           FALSE     NA FALSE        NA
+#> 39 39  hospitalised-dead FALSE           FALSE  FALSE FALSE        NA
+#> 40 40  hospitalised-dead    NA           FALSE  FALSE FALSE        NA
+```

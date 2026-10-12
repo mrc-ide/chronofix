@@ -1,0 +1,76 @@
+# Create hyperparameters
+
+Create hyperparameters
+
+## Usage
+
+``` r
+chronofix_hyperparameters(
+  prob_error_shape1 = 1,
+  prob_error_shape2 = 1,
+  gamma_shape_prior_shape = 1,
+  gamma_shape_prior_rate = 1,
+  gamma_mean_prior_shape = 1,
+  gamma_mean_prior_scale = 1,
+  log_normal_meanlog_prior_mean = 0,
+  log_normal_meanlog_prior_precision = 1,
+  log_normal_precisionlog_prior_shape = 1,
+  log_normal_precisionlog_prior_rate = 1
+)
+```
+
+## Arguments
+
+- prob_error_shape1:
+
+  The first shape parameter of the beta prior distribution for the
+  probability of error
+
+- prob_error_shape2:
+
+  The second shape parameter of the beta prior distribution for the
+  probability of error
+
+- gamma_shape_prior_shape:
+
+  The shape parameter of the gamma prior distribution for the shape
+  parameter of a Gamma-distributed delay
+
+- gamma_shape_prior_rate:
+
+  The rate parameter of the gamma prior distribution for the shape
+  parameter of a gamma-distributed delay
+
+- gamma_mean_prior_shape:
+
+  The shape parameter of the inverse-gamma prior distribution for the
+  mean of a Gamma-distributed delay
+
+- gamma_mean_prior_scale:
+
+  The scale parameter of the inverse-gamma prior distribution for the
+  mean of a Gamma-distributed delay
+
+- log_normal_meanlog_prior_mean:
+
+  The mean of the normal prior distribution for the mean on the
+  log-scale of a log-normal-distributed delay
+
+- log_normal_meanlog_prior_precision:
+
+  The precision of the normal prior distribution for the mean on the
+  log-scale of a log-normal-distributed delay
+
+- log_normal_precisionlog_prior_shape:
+
+  The shape parameter of the gamma prior distribution for the precision
+  on the log-scale of a log-normal-distributed delay
+
+- log_normal_precisionlog_prior_rate:
+
+  The rate parameter of the gamma prior distribution for the precision
+  on the log-scale of a log-normal-distributed delay
+
+## Value
+
+List of hyperparameters

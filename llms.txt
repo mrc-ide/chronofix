@@ -1,0 +1,46 @@
+# chronofix
+
+[![](reference/figures/hex-chronofix.png)](https://github.com/mrc-ide/chronofix)
+
+# Package index
+
+## Pre-processing
+
+- [`chronofix_prepare_data()`](https://mrc-ide.github.io/chronofix/reference/chronofix_prepare_data.md)
+  : Prepare data
+
+## MCMC
+
+- [`chronofix_mcmc()`](https://mrc-ide.github.io/chronofix/reference/chronofix_mcmc.md)
+  : Run MCMC
+- [`chronofix_mcmc_control()`](https://mrc-ide.github.io/chronofix/reference/chronofix_mcmc_control.md)
+  : Create control parameters
+- [`chronofix_mcmc_initial()`](https://mrc-ide.github.io/chronofix/reference/chronofix_mcmc_initial.md)
+  : Create initial parameter values
+- [`chronofix_hyperparameters()`](https://mrc-ide.github.io/chronofix/reference/chronofix_hyperparameters.md)
+  : Create hyperparameters
+
+## Post-processing
+
+### Plotting functions
+
+- [`chronofix_plot_delays()`](https://mrc-ide.github.io/chronofix/reference/chronofix_plot_delays.md)
+  : Plot Estimated Delay Distributions
+
+### Summarise functions
+
+- [`chronofix_linelist()`](https://mrc-ide.github.io/chronofix/reference/chronofix_linelist.md)
+  : Generate and export highlighted reconstructed linelist
+- [`chronofix_summarise_delays()`](https://mrc-ide.github.io/chronofix/reference/chronofix_summarise_delays.md)
+  : Get Summary Table of Estimated Delays
+
+## Simulate data
+
+- [`chronofix_simulate_data()`](https://mrc-ide.github.io/chronofix/reference/chronofix_simulate_data.md)
+  : Simulate a dataset with true dates, observed dates and error
+  indicators
+- [`chronofix_simulate_observation_errors()`](https://mrc-ide.github.io/chronofix/reference/chronofix_simulate_observation_errors.md)
+  : Add observation errors
+- [`chronofix_simulate_true_data()`](https://mrc-ide.github.io/chronofix/reference/chronofix_simulate_true_data.md)
+  : Simulate true data
+

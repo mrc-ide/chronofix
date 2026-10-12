@@ -1,20 +1,20 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
-<url><loc>/404.html</loc></url>
-<url><loc>/LICENSE-text.html</loc></url>
-<url><loc>/LICENSE.html</loc></url>
-<url><loc>/authors.html</loc></url>
-<url><loc>/index.html</loc></url>
-<url><loc>/reference/chronofix_hyperparameters.html</loc></url>
-<url><loc>/reference/chronofix_linelist.html</loc></url>
-<url><loc>/reference/chronofix_mcmc.html</loc></url>
-<url><loc>/reference/chronofix_mcmc_control.html</loc></url>
-<url><loc>/reference/chronofix_mcmc_initial.html</loc></url>
-<url><loc>/reference/chronofix_plot_delays.html</loc></url>
-<url><loc>/reference/chronofix_prepare_data.html</loc></url>
-<url><loc>/reference/chronofix_simulate_data.html</loc></url>
-<url><loc>/reference/chronofix_simulate_observation_errors.html</loc></url>
-<url><loc>/reference/chronofix_simulate_true_data.html</loc></url>
-<url><loc>/reference/chronofix_summarise_delays.html</loc></url>
-<url><loc>/reference/index.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/404.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/LICENSE-text.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/LICENSE.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/authors.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/index.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_hyperparameters.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_linelist.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_mcmc.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_mcmc_control.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_mcmc_initial.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_plot_delays.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_prepare_data.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_simulate_data.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_simulate_observation_errors.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_simulate_true_data.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/chronofix_summarise_delays.html</loc></url>
+<url><loc>https://mrc-ide.github.io/chronofix/reference/index.html</loc></url>
 </urlset>
 
