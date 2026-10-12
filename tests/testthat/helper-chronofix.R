@@ -52,7 +52,8 @@ toy_data_params <- function(named_groups = TRUE, single_group = NULL) {
        date_range = date_range)
 }
 
-toy_data <- function(named_groups = TRUE, single_group = NULL) {
+toy_data <- function(named_groups = TRUE, single_group = NULL,
+                     format = "%Y-%m-%d") {
   params <- toy_data_params(named_groups, single_group)
   
   # Run simulation
@@ -61,7 +62,8 @@ toy_data <- function(named_groups = TRUE, single_group = NULL) {
     group_names = params$group_names,
     delay_info = params$delay_info,
     error_params = params$error_params,
-    date_range = params$date_range
+    date_range = params$date_range,
+    format = format
   )
   
   list(delay_map = params$delay_map,

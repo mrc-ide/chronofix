@@ -4,12 +4,16 @@
 \alias{chronofix_prepare_data}
 \title{Prepare data}
 \usage{
-chronofix_prepare_data(data, id = NULL, group = NULL)
+chronofix_prepare_data(data, format = "\%Y-\%m-\%d", id = NULL, group = NULL)
 }
 \arguments{
 \item{data}{A data.frame containing IDs and dates.  By
 default we expect a column \code{id} (or one with the name given as
 the argument \code{id}) and two or more date columns.}
+
+\item{format}{A character string declaring the date format. The default
+is \code{"\%Y-\%m-\%d"} (e.g. \code{"2015-06-21"}). For guidance on formats see
+\code{help(strptime)}}
 
 \item{id}{Optional name of a column within \code{data} to use for
 unique individual identifiers.}

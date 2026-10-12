@@ -32,6 +32,7 @@ chronofix_linelist <- function(samples,
   data <- samples$data
   id <- attr(data, "id")
   group <- attr(data, "group")
+  date_format <- attr(data, "format")
   
   if (!is.numeric(error_thresholds) || length(error_thresholds) != 3) {
     stop("Expected 'error_thresholds' to be a numeric vector of length 3")
@@ -85,7 +86,8 @@ chronofix_linelist <- function(samples,
   )
   
   for (j in seq_len(n_events)) {
-    new_date <- as.Date(mode_dates_num[, j], origin = "1970-01-01")
+    new_date <- 
+      format(as.Date(mode_dates_num[, j], origin = "1970-01-01"), date_format)
     p_err <- prob_error[, j]
     
     results_data[[event_names[j]]] <- new_date
