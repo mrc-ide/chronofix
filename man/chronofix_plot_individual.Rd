@@ -4,17 +4,26 @@
 \alias{chronofix_plot_individual}
 \title{Plot estimated date distributions for an individual}
 \usage{
-chronofix_plot_individual(samples, id)
+chronofix_plot_individual(samples, id, min_window = 7, min_prob = 0.01)
 }
 \arguments{
 \item{samples}{A \code{chronofix_mcmc_samples} object as generated
 by \code{chronofix_mcmc()}}
 
 \item{id}{The id of the individual to be summarised}
+
+\item{min_window}{Minimum number of days shown either side of the
+observed date in each panel. Panels are wider if the plotted dates
+extend further (default 7)}
+
+\item{min_prob}{Dates with posterior probability below this are not
+shown (default 0.01)}
 }
 \value{
-A figure
+A ggplot object showing the distributions of estimated dates for an
+individual
 }
 \description{
-Plot the distributions of estimated dates for an individual
+Plot the posterior distribution of estimated dates for each event for a
+single individual.
 }
