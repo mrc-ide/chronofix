@@ -1,4 +1,5 @@
-make_mock_samples <- function(id = "id", group = "group") {
+make_mock_samples <- function(id = "id", group = "group",
+                              format = "%Y-%m-%d") {
   n_per_group <- 3
   groups <- c("community-alive", "hospitalised-alive", "community-dead")
   n_ind <- n_per_group * length(groups)
@@ -52,7 +53,8 @@ make_mock_samples <- function(id = "id", group = "group") {
   colnames(error_indicators) <- setdiff(names(observed_data), c(id, group))
   
   samples <- list(
-    data = chronofix_prepare_data(observed_data, id = id, group = group),
+    data = chronofix_prepare_data(observed_data, id = id, group = group,
+                                  format = format),
     augmented_data = list(
       estimated_dates = estimated_dates,
       error_indicators = error_indicators

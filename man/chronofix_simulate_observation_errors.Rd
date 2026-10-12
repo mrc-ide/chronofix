@@ -4,7 +4,12 @@
 \alias{chronofix_simulate_observation_errors}
 \title{Add observation errors}
 \usage{
-chronofix_simulate_observation_errors(true_data, error_params, date_range)
+chronofix_simulate_observation_errors(
+  true_data,
+  error_params,
+  date_range,
+  format = "\%Y-\%m-\%d"
+)
 }
 \arguments{
 \item{true_data}{Dataframe containing the true, unobserved dates.}
@@ -12,6 +17,10 @@ chronofix_simulate_observation_errors(true_data, error_params, date_range)
 \item{error_params}{A list containing \code{prop_missing_data} and \code{prob_error}.}
 
 \item{date_range}{A vector of two integer dates for the simulation range.}
+
+\item{format}{A character string declaring the date format. The default
+is \code{"\%Y-\%m-\%d"} (e.g. \code{"2015-06-21"}). For guidance on formats see
+\code{help(strptime)}}
 }
 \description{
 Simulate observed data incorporating observation error from true

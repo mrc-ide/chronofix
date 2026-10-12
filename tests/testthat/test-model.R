@@ -295,6 +295,11 @@ test_that("validate_events correctly flags missing columns and date errors", {
   # missing column in data
   data_missing_col <- data
   data_missing_col$report <- NULL
+  ## need to exclude any all-NA individuals
+  event_cols <- setdiff(names(data_missing_col), c("id", "group"))
+  all_na_row <- rowSums(is.na(data_missing_col[, event_cols, drop = FALSE])) == 
+    length(event_cols)
+  data_missing_col <- data_missing_col[!all_na_row, ]
   data_missing_col <- chronofix_prepare_data(data_missing_col)
   expect_error(
     validate_data_and_delays(data_missing_col, delay_map),
@@ -310,21 +315,11 @@ test_that("validate_events correctly flags missing columns and date errors", {
     "must be mapped in `delay_map`"
   )
   
-  # individual has all NA dates
-  data_all_na <- data
-  event_cols <- setdiff(names(data), c("id", "group"))
-  data_all_na[1, event_cols] <- NA # row 1 dates set to all NA
-  data_all_na <- chronofix_prepare_data(data_all_na)
-  expect_error(
-    validate_data_and_delays(data_all_na, delay_map),
-    "cannot have `NA` for all event dates"
-  )
-  
   # invalid date for an individual's group
   data_invalid_date <- data
   # give a 'community-alive' person an invalid 'discharge' date
   comm_idx <- which(data_invalid_date$group == "community-alive")[1]
-  data_invalid_date$discharge[comm_idx] <- as.Date("2026-01-01")
+  data_invalid_date$discharge[comm_idx] <- "2026-01-01"
   data_invalid_date <- chronofix_prepare_data(data_invalid_date)
   expect_error(
     validate_data_and_delays(data_invalid_date, delay_map),

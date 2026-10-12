@@ -11,6 +11,9 @@
 #'   IDs), `distribution` (character), `mean` (numeric) and `cv` (numeric)
 #' @param error_params A list containing `prop_missing_data` and `prob_error`.
 #' @param date_range A vector of two integer dates for the simulation range.
+##' @param format A character string declaring the date format. The default
+##'   is `"%Y-%m-%d"` (e.g. `"2015-06-21"`). For guidance on formats see
+##'   `help(strptime)`
 #'
 #' @importFrom igraph topo_sort graph_from_data_frame degree
 #' @import dplyr
@@ -65,15 +68,17 @@
 #' sim_result$error_indicators # true error indicators
 #'
 chronofix_simulate_data <- function(n_per_group,
-                          group_names,
-                          delay_info,
-                          error_params,
-                          date_range) {
+                                    group_names,
+                                    delay_info,
+                                    error_params,
+                                    date_range,
+                                    format = "%Y-%m-%d") {
   
   true_data <- chronofix_simulate_true_data(n_per_group, group_names,
-                                  delay_info, date_range)
+                                            delay_info, date_range)
   
-  chronofix_simulate_observation_errors(true_data, error_params, date_range)
+  chronofix_simulate_observation_errors(true_data, error_params, date_range,
+                                        format)
   
 }
 
@@ -187,7 +192,9 @@ chronofix_simulate_true_data <- function(n_per_group, group_names,
 #' @inheritParams chronofix_simulate_data
 #' @param true_data Dataframe containing the true, unobserved dates.
 #' @export
-chronofix_simulate_observation_errors <- function(true_data, error_params, date_range) {
+chronofix_simulate_observation_errors <- function(true_data, error_params, 
+                                                  date_range, 
+                                                  format = "%Y-%m-%d") {
 
   observed_data <- true_data
   error_indicators <- true_data
@@ -199,8 +206,9 @@ chronofix_simulate_observation_errors <- function(true_data, error_params, date_
 
   # Convert true_data continuous dates to observed dates
   for (col in date_cols) {
-    observed_data[[col]] <- as.Date(floor(true_data[[col]]),
-                                    origin = "1970-01-01")
+    observed_data[[col]] <- format(as.Date(floor(true_data[[col]]),
+                                           origin = "1970-01-01"),
+                                   format = format)
   }
   
   p_miss <- error_params$prop_missing_data
@@ -261,8 +269,8 @@ chronofix_simulate_observation_errors <- function(true_data, error_params, date_
       
       # Update the observed data for the columns that had errors
       cols_to_update <- date_cols[col_indices_for_errors]
-      observed_data[i, cols_to_update] <- as.Date(proposed_dates,
-                                                  origin = "1970-01-01")
+      observed_data[i, cols_to_update] <- 
+        format(as.Date(proposed_dates, origin = "1970-01-01"), format = format)
     }
   }
   
