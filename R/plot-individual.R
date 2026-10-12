@@ -68,3 +68,4 @@ chronofix_plot_individual <- function(samples, id) {
       subtitle = plot_subtitle
     )
 }
+
