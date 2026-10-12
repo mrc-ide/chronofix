@@ -32,12 +32,14 @@ chronofix_plot_individual <- function(samples, id) {
     plot_subtitle  <- sprintf("%s: %s\n%s: %s", id_col, id)
   }
   
-  error_indicators <- 
-    samples$augmented_data$error_indicators[as.character(id), , ]
-  relevant_dates <- rownames(error_indicators)[!is.na(error_indicators[, 1])]
-  
   estimated_dates <- 
-    floor(samples$augmented_data$estimated_dates[which_id, relevant_dates, ])
+    floor(samples$augmented_data$estimated_dates[which_id, , ])
+  error_indicators <- samples$augmented_data$error_indicators[which_id, , ]
+  
+  relevant_dates <- rownames(estimated_dates)[!is.na(estimated_dates[, 1])]
+  estimated_dates <- estimated_dates[relevant_dates, ]
+  error_indicators <- error_indicators[relevant_dates, ]
+  
   df <- as.data.frame(t(estimated_dates)) %>%
     pivot_longer(everything(), names_to = "event", values_to = "date")
   df$date <- as.Date(df$date)
@@ -68,4 +70,3 @@ chronofix_plot_individual <- function(samples, id) {
       subtitle = plot_subtitle
     )
 }
-
