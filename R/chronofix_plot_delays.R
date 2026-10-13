@@ -24,6 +24,11 @@
 ##' @param plot_style Character string. Options are `"ribbon"`
 ##'  (plots a ribbon indicating the 95% credible interval, default), or
 ##'  `"spaghetti"` (plots a line for each individual posterior draw).
+##'
+##' @param show_legend Logical, if TRUE (default), shows the legend
+##'
+##' @param show_title Logical, if TRUE (default), shows the plot title and
+##'   subtitle
 ##' 
 ##' @import ggplot2
 ##' @importFrom stats median quantile dgamma dlnorm qgamma qlnorm
@@ -38,7 +43,9 @@ chronofix_plot_delays <- function(samples,
                                   share_x_axis = TRUE,
                                   select_group = NULL,
                                   select_delay = NULL,
-                                  plot_style = c("ribbon", "spaghetti")) {
+                                  plot_style = c("ribbon", "spaghetti"),
+                                  show_legend = TRUE,
+                                  show_title = TRUE) {
   
   if (!inherits(samples, "chronofix_mcmc_samples")) {
     cli::cli_abort("Expected 'samples' to be a 'chronofix_mcmc_samples' object")
@@ -206,11 +213,14 @@ chronofix_plot_delays <- function(samples,
   
   facet_scales <- if (share_x_axis) "free_y" else "free"
   
-  plot_subtitle <- switch(
-    plot_style,
-    "ribbon" = "Dashed curve: Posterior predictive density. Shaded area: Pointwise 95% CrI on the density.",
-    "spaghetti" = "Dashed curve: Posterior predictive density. Faint lines: Individual posterior draws."
-  )
+  plot_title <- if (show_title) "Posterior Estimated Delay Distributions"
+  plot_subtitle <- if (show_title) {
+    switch(
+      plot_style,
+      "ribbon" = "Dashed curve: Posterior predictive density. Shaded area: Pointwise 95% CrI on the density.",
+      "spaghetti" = "Dashed curve: Posterior predictive density. Faint lines: Individual posterior draws."
+    )
+  }
   
   spaghetti_alpha <- max(0.01, min(0.3, 20 / ncol(pars_flat)))
   
@@ -317,7 +327,7 @@ chronofix_plot_delays <- function(samples,
     p <- patchwork::wrap_plots(cell_plots, ncol = max_panels,
                                guides = "collect") +
       patchwork::plot_annotation(
-        title = "Posterior Estimated Delay Distributions",
+        title = plot_title,
         subtitle = plot_subtitle,
         theme = theme(plot.title = element_text(face = "bold", size = 14),
                       legend.position = "bottom")
@@ -330,13 +340,21 @@ chronofix_plot_delays <- function(samples,
       labs(
         x = "Delay (Days)", 
         y = "Probability Density",
-        title = "Posterior Estimated Delay Distributions",
+        title = plot_title,
         subtitle = plot_subtitle
       ) +
       theme(
         legend.position = "top",
         legend.title = element_text(size = 11)
       )
+  }
+  
+  if (!show_legend) {
+    if (inherits(p, "patchwork")) {
+      p <- p & theme(legend.position = "none")
+    } else {
+      p <- p + theme(legend.position = "none")
+    }
   }
   
   return(p)

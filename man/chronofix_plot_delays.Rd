@@ -11,7 +11,9 @@ chronofix_plot_delays(
   share_x_axis = TRUE,
   select_group = NULL,
   select_delay = NULL,
-  plot_style = c("ribbon", "spaghetti")
+  plot_style = c("ribbon", "spaghetti"),
+  show_legend = TRUE,
+  show_title = TRUE
 )
 }
 \arguments{
@@ -39,6 +41,11 @@ multiple delays.}
 \item{plot_style}{Character string. Options are \code{"ribbon"}
 (plots a ribbon indicating the 95\% credible interval, default), or
 \code{"spaghetti"} (plots a line for each individual posterior draw).}
+
+\item{show_legend}{Logical, if TRUE (default), shows the legend}
+
+\item{show_title}{Logical, if TRUE (default), shows the plot title and
+subtitle}
 }
 \description{
 Plot Estimated Delay Distributions
