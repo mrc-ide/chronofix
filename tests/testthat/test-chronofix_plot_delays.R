@@ -436,3 +436,77 @@ test_that("chronofix_plot_delays respects plot_style argument", {
   p_default <- chronofix_plot_delays(mock_samples, facet_by_group = FALSE)
   expect_true(inherits(p_default$layers[[1]]$geom, "GeomRibbon"))
 })
+
+test_that("chronofix_plot_delays respects show_title and show_legend (facet_by_group = FALSE)", {
+  
+  mock_delay_map <- data.frame(
+    from = "onset", to = "report", distribution = "gamma", stringsAsFactors = FALSE
+  )
+  mock_delay_map$group <- list("community")
+  
+  set.seed(1)
+  mock_pars <- matrix(runif(20, 1, 5), nrow = 2, ncol = 10, 
+                      dimnames = list(c("delay1_mean", "delay1_shape"), NULL))
+  mock_samples <- list(pars = mock_pars, delay_map = mock_delay_map)
+  class(mock_samples) <- "chronofix_mcmc_samples"
+  
+  # show_title = FALSE
+  p_no_title <- chronofix_plot_delays(mock_samples, n_points = 10, facet_by_group = FALSE, show_title = FALSE)
+  expect_null(p_no_title$labels$title)
+  expect_null(p_no_title$labels$subtitle)
+  
+  # default (show_title = TRUE)
+  p_title <- chronofix_plot_delays(mock_samples, n_points = 10, facet_by_group = FALSE)
+  expect_identical(p_title$labels$title, "Posterior Estimated Delay Distributions")
+  expect_false(is.null(p_title$labels$subtitle))
+  
+  # show_legend = FALSE
+  p_no_legend <- chronofix_plot_delays(mock_samples, n_points = 10, facet_by_group = FALSE, show_legend = FALSE)
+  expect_identical(p_no_legend$theme$legend.position, "none")
+  
+  # default (show_legend = TRUE)
+  p_legend <- chronofix_plot_delays(mock_samples, n_points = 10, facet_by_group = FALSE)
+  expect_identical(p_legend$theme$legend.position, "top")
+})
+
+test_that("chronofix_plot_delays respects show_title and show_legend (facet_by_group = TRUE)", {
+  
+  mock_delay_map <- data.frame(
+    from = c("onset", "hospitalisation"), 
+    to = c("report", "discharge"), 
+    distribution = c("gamma", "gamma"), 
+    stringsAsFactors = FALSE
+  )
+  mock_delay_map$group <- as.list(c("community", "community"))
+  
+  set.seed(1)
+  param_names <- c("delay1_mean", "delay1_shape", "delay2_mean", "delay2_shape")
+  mock_pars <- matrix(runif(40, 1, 5), nrow = 4, ncol = 10, 
+                      dimnames = list(param_names, NULL))
+  mock_samples <- list(pars = mock_pars, delay_map = mock_delay_map)
+  class(mock_samples) <- "chronofix_mcmc_samples"
+  
+  # show_title = FALSE
+  p_patch_no_title <- chronofix_plot_delays(mock_samples, n_points = 10, facet_by_group = TRUE, show_title = FALSE)
+  expect_null(p_patch_no_title$patches$annotation$title)
+  expect_null(p_patch_no_title$patches$annotation$subtitle)
+  
+  # default (show_title = TRUE)
+  p_patch_title <- chronofix_plot_delays(mock_samples, n_points = 10, facet_by_group = TRUE)
+  expect_identical(p_patch_title$patches$annotation$title, "Posterior Estimated Delay Distributions")
+  expect_false(is.null(p_patch_title$patches$annotation$subtitle))
+  
+  # show_legend = FALSE
+  p_patch_no_legend <- chronofix_plot_delays(mock_samples, n_points = 10, facet_by_group = TRUE, show_legend = FALSE)
+  all_cells_no_legend <- c(p_patch_no_legend$patches$plots, list(p_patch_no_legend))
+  expect_true(all(vapply(all_cells_no_legend, 
+                         function(x) identical(x$theme$legend.position, "none"), 
+                         logical(1))))
+  
+  # default (show_legend = TRUE)
+  p_patch_legend <- chronofix_plot_delays(mock_samples, n_points = 10, facet_by_group = TRUE)
+  all_cells_legend <- c(p_patch_legend$patches$plots, list(p_patch_legend))
+  expect_true(all(vapply(all_cells_legend, 
+                         function(x) identical(x$theme$legend.position, "bottom"), 
+                         logical(1))))
+})

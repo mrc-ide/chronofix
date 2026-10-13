@@ -16,10 +16,12 @@ reference:
   - subtitle: Plotting functions
     contents:
       - chronofix_plot_delays
+      - chronofix_plot_individual
   - subtitle: Summarise functions
     contents:
     - chronofix_linelist
     - chronofix_summarise_delays
+    - chronofix_summarise_individual
   - title: Simulate data
     contents:
     - chronofix_simulate_data
